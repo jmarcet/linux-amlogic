@@ -152,6 +152,8 @@ static int stmmac_probe_config_dt(struct platform_device *pdev,
 	struct device_node *np = pdev->dev.of_node;
 	struct stmmac_dma_cfg *dma_cfg;
 	const struct of_device_id *device;
+	u32 phy_addr;
+
 #if defined (CONFIG_AML_NAND_KEY) || defined (CONFIG_SECURITYKEY)
 	int ret;
 	char *addr =NULL;
@@ -288,6 +290,12 @@ static int stmmac_probe_config_dt(struct platform_device *pdev,
 					      plat->multicast_filter_bins);
 		plat->has_gmac = 1;
 		plat->pmt = 1;
+	}
+
+	if (of_find_property(np, "fixed_phy", NULL)) {
+		plat->phy_bus_name = "fixed";
+		of_property_read_u32(np, "phy_addr", &phy_addr);
+		plat->phy_addr = phy_addr;
 	}
 
 	if (of_device_is_compatible(np, "snps,dwmac-3.610") ||
