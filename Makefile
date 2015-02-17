@@ -373,17 +373,13 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks \
-		   -Werror
+		   -fno-delete-null-pointer-checks
 KBUILD_CFLAGS   += -Werror=enum-compare \
 		   -Werror=comment \
 		   -Werror=implicit-int \
 		   -Werror=missing-braces \
 		   -Werror=unused-value \
-		   -Werror=maybe-uninitialized \
-		   -Werror=unused-variable \
 		   -Werror=format \
-		   -Werror=unused-function \
 		   -Werror=switch \
 		   -Werror=strict-prototypes \
 		   -Werror=declaration-after-statement \
@@ -394,6 +390,7 @@ KBUILD_CFLAGS   += -Werror=enum-compare \
 		   -Werror=return-type \
 		   -Werror=parentheses \
 		   -Werror=int-to-pointer-cast \
+		   -Wno-maybe-uninitialized \
 		   -Wno-error=cpp
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
