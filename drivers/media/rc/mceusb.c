@@ -199,6 +199,7 @@ static bool debug;
 #define VENDOR_TIVO		0x105a
 #define VENDOR_CONEXANT		0x0572
 #define VENDOR_TWISTEDMELON	0x2596
+#define VENDOR_ADAPTEC		0x03f3
 
 enum mceusb_model_type {
 	MCE_GEN2 = 0,		/* Most boards */
@@ -401,6 +402,8 @@ static struct usb_device_id mceusb_dev_table[] = {
 	{ USB_DEVICE(VENDOR_TWISTEDMELON, 0x8016) },
 	/* Twisted Melon Inc. - Manta Transceiver */
 	{ USB_DEVICE(VENDOR_TWISTEDMELON, 0x8042) },
+	/* Adaptec / HP eHome Receiver */
+	{ USB_DEVICE(VENDOR_ADAPTEC, 0x0094) },
 	/* Terminating entry */
 	{ }
 };
