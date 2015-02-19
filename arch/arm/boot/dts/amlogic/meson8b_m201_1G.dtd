@@ -312,6 +312,20 @@ void root_func(){
 	};
 
 /// ***************************************************************************************
+///	-	DISP&MM-A/V Amvideocap
+//$$ MODULE = "DISP&MM-Amvideocap"
+//$$ DEVICE="amvideocap"
+//$$ L2 PROP_STR = "status"
+//$$ L3 PROP_U32 4 ="reg"
+	amvideocap{
+		compatible = "amlogic,amvideocap";
+		dev_name = "amvideocap.0";
+		status = "okay";
+		reserve-memory = <0x00600000>;//1920*1088*3
+		reserve-iomap = "true";
+	};
+
+/// ***************************************************************************************
 ///	-	UART
 //$$ MODULE="UART"
 //$$ DEVICE="uart_ao"
