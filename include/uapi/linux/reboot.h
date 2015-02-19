@@ -60,6 +60,7 @@
 #define	MESON_LOCK_REBOOT				0x08080808
 #define	MESON_USB_BURNER_REBOOT			0x09090909
 #define	MESON_REBOOT_CLEAR				0xdeaddead
+#define	MESON_UBOOT_SUSPEND                    0x0b0b0b0b
 #endif /* CONFIG_PLAT_MESON */
 
 #endif /* _UAPI_LINUX_REBOOT_H */
