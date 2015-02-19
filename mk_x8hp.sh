@@ -10,19 +10,21 @@ function die() {
     exit 1
 }
 
+grep -q Intel /proc/cpuinfo && CROSSARCH="ARCH=arm CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-"
+
 #DTDFILE=meson8m2_n200_2G
-#make ${DTDFILE}.dtd            || die "${DTDFILE}.dtd"
-#make ${DTDFILE}.dtb            || die "${DTDFILE}.dtb"
+#make ${DTDFILE}.dtd                    || die "${DTDFILE}.dtd"
+#make ${DTDFILE}.dtb                    || die "${DTDFILE}.dtb"
 #    --second ./arch/arm/boot/dts/amlogic/${DTDFILE}.dtb
 
-make -j${CPUS} uImage           || die "uImage"
+make ${CROSSARCH} -j${CPUS} uImage      || die "uImage"
 
-make -j${CPUS} modules          || die "modules"
-make modules_install            || die "modules_install"
+make ${CROSSARCH} -j${CPUS} modules     || die "modules"
+make ${CROSSARCH} modules_install       || die "modules_install"
 
 for dtd in `ls arch/arm/boot/dts/amlogic/ | grep ${DTDFILES}`; do
-    make ${dtd}                 || die ${dtd}
-    echo make ${dtd/.dtd/.dtb}  || die ${dtd/.dtd/.dtb}
+    make ${CROSSARCH} ${dtd}                 || die ${dtd}
+    make ${CROSSARCH} ${dtd/.dtd/.dtb}  || die ${dtd/.dtd/.dtb}
 done
 ./dtbTool -o out/dt.img -p scripts/dtc/ arch/arm/boot/dts/amlogic/
 
