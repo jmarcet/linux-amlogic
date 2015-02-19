@@ -351,6 +351,8 @@ static struct usb_device_id mceusb_dev_table[] = {
 	{ USB_DEVICE(VENDOR_FORMOSA, 0xe015) },
 	/* Formosa21 / eHome Infrared Receiver */
 	{ USB_DEVICE(VENDOR_FORMOSA, 0xe016) },
+	/* Formosa21 / eHome Infrared Receiver */
+	{ USB_DEVICE(VENDOR_FORMOSA, 0xe042) },
 	/* Formosa aim / Trust MCE Infrared Receiver */
 	{ USB_DEVICE(VENDOR_FORMOSA, 0xe017),
 	  .driver_info = MCE_GEN2_NO_TX },
