@@ -92,6 +92,7 @@ static struct usb_device_id rtl871x_usb_id_tbl[] = {
 	{USB_DEVICE(0x0DF6, 0x005B)},
 	{USB_DEVICE(0x0DF6, 0x005D)},
 	{USB_DEVICE(0x0DF6, 0x0063)},
+	{USB_DEVICE(0x0DF6, 0x006C)},
 	/* Sweex */
 	{USB_DEVICE(0x177F, 0x0154)},
 	/* Thinkware */
