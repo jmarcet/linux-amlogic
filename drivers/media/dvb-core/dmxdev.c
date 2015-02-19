@@ -1160,7 +1160,8 @@ static int dvb_dvr_do_ioctl(struct file *file,
 
 	switch (cmd) {
 	case DMX_SET_BUFFER_SIZE:
-		ret = dvb_dvr_set_buffer_size(dmxdev, arg);
+		//ret = dvb_dvr_set_buffer_size(dmxdev, arg);
+		ret = 0;
 		break;
 
 	default:

@@ -106,7 +106,7 @@ struct dmxdev {
 	struct dmx_frontend *dvr_orig_fe;
 
 	struct dvb_ringbuffer dvr_buffer;
-#define DVR_BUFFER_SIZE (10*188*1024)
+#define DVR_BUFFER_SIZE (10*188*1024*6)
 
 	struct mutex mutex;
 	spinlock_t lock;
