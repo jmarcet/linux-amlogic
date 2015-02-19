@@ -18,6 +18,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
@@ -420,7 +421,7 @@ static int vh264mvc_event_cb(int type, void *data, void *private_data)
 }
 
 /**/
-long init_canvas( int start_addr, long dpb_size, int dpb_number, int mb_width, int mb_height, buffer_spec_t* buffer_spec) {
+long init_canvas_mvc( int start_addr, long dpb_size, int dpb_number, int mb_width, int mb_height, buffer_spec_t* buffer_spec) {
 
   int dpb_addr, addr;
   int i;
@@ -623,7 +624,7 @@ static void vh264mvc_isr(void)
             index = CANVAS_INDEX_START;
             ANC_CANVAS_ADDR = ANC0_CANVAS_ADDR;
 
-            ret = init_canvas(dpb_start_addr[0], dpb_size, total_dec_frame_buffering[0], mb_width, mb_height, buffer_spec0);
+            ret = init_canvas_mvc(dpb_start_addr[0], dpb_size, total_dec_frame_buffering[0], mb_width, mb_height, buffer_spec0);
 
             if(ret == -1) {
                printk(" Un-expected memory alloc problem\n");
@@ -702,7 +703,7 @@ static void vh264mvc_isr(void)
             index = CANVAS_INDEX_START + total_dec_frame_buffering[0] * 3;
             ANC_CANVAS_ADDR = ANC0_CANVAS_ADDR + total_dec_frame_buffering[0];
 
-            ret = init_canvas(dpb_start_addr[1], dpb_size, total_dec_frame_buffering[1], mb_width, mb_height, buffer_spec1);
+            ret = init_canvas_mvc(dpb_start_addr[1], dpb_size, total_dec_frame_buffering[1], mb_width, mb_height, buffer_spec1);
 
             if(ret == -1) {
                printk(" Un-expected memory alloc problem\n");
