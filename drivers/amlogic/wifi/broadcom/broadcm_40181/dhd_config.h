@@ -15,6 +15,7 @@
 
 #define FW_PATH_AUTO_SELECT 1
 extern char firmware_path[MOD_PARAM_PATHLEN];
+extern char nvram_path[MOD_PARAM_PATHLEN];
 extern int disable_proptx;
 extern uint dhd_doflow;
 #ifdef POWER_OFF_IN_SUSPEND
@@ -111,6 +112,7 @@ typedef struct dhd_conf {
 extern void *bcmsdh_get_drvdata(void);
 void dhd_conf_set_fw_name_by_mac(dhd_pub_t *dhd, bcmsdh_info_t *sdh, char *fw_path);
 void dhd_conf_set_nv_name_by_mac(dhd_pub_t *dhd, bcmsdh_info_t *sdh, char *nv_path);
+void dhd_conf_set_nv_name_by_chip(dhd_pub_t *dhd, char *dst, char *src);
 void dhd_conf_set_fw_name_by_chip(dhd_pub_t *dhd, char *dst, char *src);
 #if defined(HW_OOB)
 void dhd_conf_set_hw_oob_intr(bcmsdh_info_t *sdh, uint chip);

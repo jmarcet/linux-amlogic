@@ -8466,6 +8466,7 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 			                        bus->cl_devid)) {
 				/* Attempt to download binary to the dongle */
 				dhd_conf_set_fw_name_by_chip(dhdp, fw_path, firmware_path); // terence
+				dhd_conf_set_nv_name_by_chip(dhdp, nv_path, nvram_path);
 				if (dhdsdio_probe_init(bus, bus->dhd->osh, bus->sdh) &&
 					dhdsdio_download_firmware(bus, bus->dhd->osh, bus->sdh)) {
 
@@ -8519,6 +8520,7 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 			dhd_conf_set_hw_oob_intr(bus->sdh, bus->sih->chip); // terence 20120615: fix for OOB initial issue
 #endif
 			dhd_conf_set_fw_name_by_chip(dhdp, fw_path, firmware_path);
+			dhd_conf_set_nv_name_by_chip(dhdp, nv_path, nvram_path);
 			if ((bcmerror = dhd_bus_start(dhdp)) != 0)
 				DHD_ERROR(("%s: dhd_bus_start fail with %d\n",
 					__FUNCTION__, bcmerror));

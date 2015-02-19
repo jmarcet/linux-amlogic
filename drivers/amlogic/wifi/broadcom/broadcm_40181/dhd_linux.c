@@ -2936,6 +2936,7 @@ dhd_open(struct net_device *net)
 		if (firmware_path[strlen(firmware_path)-1] == '\n')
 			firmware_path[strlen(firmware_path)-1] = '\0';
 		dhd_conf_set_fw_name_by_chip(&dhd->pub, fw_path, firmware_path);
+		dhd_conf_set_nv_name_by_chip(&dhd->pub, nv_path, nvram_path);
 	}
 
 
@@ -3258,8 +3259,10 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	/* Link to bus module */
 	dhd->pub.bus = bus;
 	dhd->pub.hdrlen = bus_hdrlen;
-	if (strlen(firmware_path) != 0)
+	if (strlen(firmware_path) != 0){
 		dhd_conf_set_fw_name_by_chip(&dhd->pub, fw_path, firmware_path);
+		dhd_conf_set_nv_name_by_chip(&dhd->pub, nv_path, nvram_path);
+	}
 
 	/* Set network interface name if it was provided as module parameter */
 	if (iface_name[0]) {
