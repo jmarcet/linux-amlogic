@@ -617,6 +617,12 @@ config HID_STEELSERIES
 	---help---
 	Support for Steelseries SRW-S1 steering wheel
 
+config HID_SPINELPLUS
+	tristate "Spinel Plus remote control"
+	depends on USB_HID
+	---help---
+	  Say Y here if you have a Spinel Plus (0471:206c/20cc/0613) remote
+
 config HID_SUNPLUS
 	tristate "Sunplus wireless desktop"
 	depends on HID
