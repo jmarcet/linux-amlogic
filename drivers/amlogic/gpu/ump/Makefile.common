@@ -8,10 +8,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-SRC = $(UMP_FILE_PREFIX)common/ump_kernel_common.c \
-	$(UMP_FILE_PREFIX)common/ump_kernel_descriptor_mapping.c \
-	$(UMP_FILE_PREFIX)common/ump_kernel_api.c \
-	$(UMP_FILE_PREFIX)common/ump_kernel_ref_drv.c
+SRC = common/ump_kernel_common.c \
+	common/ump_kernel_descriptor_mapping.c \
+	common/ump_kernel_api.c \
+	common/ump_kernel_ref_drv.c
 
 # Get subversion revision number, fall back to 0000 if no svn info is available
 SVN_REV:=$(shell ((svnversion | grep -qv exported && echo -n 'Revision: ' && svnversion) || git svn info | sed -e 's/$$$$/M/' | grep '^Revision: ' || echo ${MALI_RELEASE_NAME}) 2>/dev/null | sed -e 's/^Revision: //')
