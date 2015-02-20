@@ -380,9 +380,7 @@ KBUILD_CFLAGS   += -Werror=enum-compare \
 		   -Werror=missing-braces \
 		   -Werror=unused-value \
 		   -Werror=format \
-		   -Werror=switch \
 		   -Werror=strict-prototypes \
-		   -Werror=declaration-after-statement \
 		   -Werror=uninitialized \
 		   -Werror=unused-label \
 		   -Werror=undef \
