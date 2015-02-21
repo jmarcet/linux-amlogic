@@ -1636,12 +1636,12 @@ sint validate_recv_ctrl_frame(_adapter *padapter, union recv_frame *precv_frame)
 
 				if(psta->sleepq_len>0)
 					pxmitframe->attrib.mdata = 1;
-                                else
+				else
 					pxmitframe->attrib.mdata = 0;
 
 				pxmitframe->attrib.triggered = 1;
 
-	                        //DBG_871X("handling ps-poll, q_len=%d, tim=%x\n", psta->sleepq_len, pstapriv->tim_bitmap);
+				//DBG_871X("handling ps-poll, q_len=%d, tim=%x\n", psta->sleepq_len, pstapriv->tim_bitmap);
 
 #if 0
 				_exit_critical_bh(&psta->sleep_q.lock, &irqL);		

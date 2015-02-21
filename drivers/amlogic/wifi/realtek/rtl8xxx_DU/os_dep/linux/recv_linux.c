@@ -138,9 +138,7 @@ void rtw_handle_tkip_mic_err(_adapter *padapter,u8 bgroup)
 #ifdef CONFIG_IOCTL_CFG80211
 	enum nl80211_key_type key_type;
 #endif
-#ifndef CONFIG_IOCTL_CFG80211
 	union iwreq_data wrqu;
-#endif	
 	struct iw_michaelmicfailure    ev;
 	struct mlme_priv*              pmlmepriv  = &padapter->mlmepriv;
 	struct security_priv	*psecuritypriv = &padapter->securitypriv;	
@@ -193,12 +191,10 @@ void rtw_handle_tkip_mic_err(_adapter *padapter,u8 bgroup)
 	ev.src_addr.sa_family = ARPHRD_ETHER;
 	_rtw_memcpy( ev.src_addr.sa_data, &pmlmepriv->assoc_bssid[ 0 ], ETH_ALEN );
 
-#ifndef CONFIG_IOCTL_CFG80211
 	_rtw_memset( &wrqu, 0x00, sizeof( wrqu ) );
 	wrqu.data.length = sizeof( ev );
 
 	wireless_send_event( padapter->pnetdev, IWEVMICHAELMICFAILURE, &wrqu, (char*) &ev );
-#endif
 }
 
 void rtw_hostapd_mlme_rx(_adapter *padapter, union recv_frame *precv_frame)

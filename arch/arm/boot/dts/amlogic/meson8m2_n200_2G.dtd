@@ -88,7 +88,7 @@ void root_func(){
 
         cma_0:region@0 {
            region_name = "cma_0";
-           reg = <0 0x01200000>;
+           reg = <0 0x02400000>;
            linux,contiguous-region;
         };
 	};
@@ -189,7 +189,7 @@ void root_func(){
 		compatible = "amlogic,ppmgr";
 		dev_name = "ppmgr";
 		status = "okay";
-		reserve-memory = <0x01000000>; // 16M
+		reserve-memory = <0x02000000>; // 32M
 	};
 
 /// ***************************************************************************************
@@ -228,7 +228,8 @@ void root_func(){
         compatible = "amlogic,vdin";
         dev_name = "vdin0";
         status = "ok";
-	reserve-memory = <0x00100000>;//only for mpeg2vdin use
+	reserve-memory = <0x02700000>;//only for mpeg2vdin use
+	camera_size = <2592 1944>;//camera is 5647,the picture resolution is 2592x1944;so 2592x1944x2x4=41M
 	 reserve-iomap = "true";
         irq = <115>;
         vdin_id = <0>;
@@ -248,7 +249,7 @@ void root_func(){
         compatible = "amlogic,vdin";
         dev_name = "vdin1";
         status = "ok";
-        reserve-memory = <0x01000000>;
+        reserve-memory = <0x04000000>;
         miracast_size = <1920 1080>;//1920x1080x2x4=17M
         reserve-iomap = "true";
         irq = <117>;
@@ -270,6 +271,18 @@ void root_func(){
     };
 
 /// ***************************************************************************************
+///	-	DISP&MM-Video Input Manager
+//$$ MODULE = "DISP&MM-Video Input Manager"
+//$$ DEVICE="vm"
+//$$ L2 PROP_STR = "status"
+   vm{
+		compatible = "amlogic,vm";
+		dev_name = "vm.0";
+		status = "okay";
+        linux,contiguous-region = <&cma_0>;
+	};
+
+/// ***************************************************************************************
 ///	-	ION
 //$$ MODULE="ION"
 //$$ DEVICE="ion_dev"
@@ -280,7 +293,7 @@ void root_func(){
         status = "ok";
         share-memory-name = "ppmgr0";
         share-memory-offset = <0>;
-        share-memory-size = <0x01000000>; //16M
+        share-memory-size = <0x02000000>; //32M
     };
 /// ***************************************************************************************
 ///	-	DISP&MM-Vout
@@ -292,7 +305,7 @@ void root_func(){
 		dev_name = "mesonvout";
 		status = "okay";
 	};
-/*
+
 /// ***************************************************************************************
 ///	-	DISP&MM-A/V Amvideocap
 //$$ MODULE = "DISP&MM-Amvideocap"
@@ -303,10 +316,10 @@ void root_func(){
 		compatible = "amlogic,amvideocap";
 		dev_name = "amvideocap.0";
 		status = "okay";
-		reserve-memory = <0x00600000>;//1920*1088*3
+		reserve-memory = <0x00800000>;//1920*1088*4
 		reserve-iomap = "true";
 	};
-*/
+
 /// ***************************************************************************************
 ///	-	RTC
 //$$ MODULE="RTC"
@@ -729,17 +742,19 @@ sdio{
 //$$ L3 PROP_U32 2="reg"
 //$$ L3 PROP_STR = "pinctrl-names"
 //$$ L2 PROP_CHOICE "I2C_D_pin_match" = "pinctrl-0"
-//	i2c@c1108d20{ /*I2C-D*/
-//		compatible = "amlogic,aml_i2c";
-//		dev_name = "i2c-D";
-//		status = "ok";
-//		reg = <0xc1108d20 0x20>;
-//		device_id = <4>;
-//		pinctrl-names="default";
-//		pinctrl-0=<&d_i2c_master>;
-//		#address-cells = <1>;
-//		#size-cells = <0>;
-//	};
+	i2c@c1108d20{ /*I2C-D*/
+		compatible = "amlogic,aml_i2c";
+		dev_name = "i2c-D";
+		status = "ok";
+		reg = <0xc1108d20 0x20>;
+		device_id = <4>;
+		pinctrl-names="default";
+		pinctrl-0=<&d_i2c_master>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		use_pio = <285>;  /* INT_I2C_MASTER3=71, interrupt mode */
+		master_i2c_speed = <300000>;
+	};
 
 /// ***************************************************************************************
 ///	-	Power
@@ -956,6 +971,45 @@ sdio{
 		};
 	};
 
+/// ***************************************************************************************
+///	-	Camera
+//$$ MODULE="Camera"
+///	-	aml_cams
+//$$ DEVICE = "aml_cams"
+//$$ L2 PROP_STR = "status"
+//$$ L2 PROP_STR 2 = "pinctrl-names"
+//$$ L2 PROP_CHOICE "Camera_pin_0_match" = "pinctrl-0"
+//$$ L2 PROP_CHOICE "Camera_pin_1_match" = "pinctrl-1"
+
+	aml_cams{
+		compatible = "amlogic,cams_prober";
+		status = "okay";
+		pinctrl-names = "gpio","csi";
+		pinctrl-0 = <&aml_cam_gpio_pins> ;
+		pinctrl-1 = <&aml_cam_csi_pins> ;
+ 
+///	-	gc2035
+//$$ DEVICE="gc2035"
+//$$ L2 PROP_STR = "status"
+//$$ L2 PROP_U32 = "front_back"
+//$$ L2 PROP_STR = "i2c_bus"
+//$$ L2 PROP_STR = "gpio_pwdn"
+//$$ L2 PROP_STR = "gpio_rst"
+//$$ L2 PROP_U32 = "mirror_flip"
+//$$ L2 PROP_U32 = "vertical_flip"
+//$$ L2 PROP_STR = "bt_path"
+        cam_0{
+			cam_name = "gc2035";
+			front_back = <0>;
+			i2c_bus = "i2c_bus_d";
+			gpio_pwdn = "GPIOH_5";
+			gpio_rst = "GPIOH_4";
+			mirror_flip = <1>;
+			vertical_flip = <0>;	
+			bt_path = "gpio";
+			status = "okay";
+		};
+		};
 // ***************************************************************************************
 ///	-	Nand
 //$$ MODULE="Nand"
@@ -973,9 +1027,10 @@ sdio{
 		dev_name = "nand";
 		status = "ok";
 		reg = <0xd0048600 0x24>;
-		pinctrl-names = "nand_rb_mod","nand_norb_mod";
-		pinctrl-0 = <&nand_input_state &conf_nand_state &conf_nand_state1 &nand_base>;
-		pinctrl-1 = <&nand_input_state &conf_nand_state &conf_nand_state1 &nand_base>;
+		pinctrl-names = "nand_rb_mod","nand_norb_mod", "nand_cs_pins_only";
+		pinctrl-0 = <&conf_nand_pulldown &conf_nand_pullup &all_nand_pins>;
+		pinctrl-1 = <&conf_nand_pulldown &conf_nand_pullup &all_nand_pins>;
+		pinctrl-2 = <&nand_cs_pins>;
 		device_id = <0>;
 		plat-names = "nandnormal";
 		plat-num = <1>;
@@ -1449,49 +1504,45 @@ sdio{
 			amlogic,pins="GPIOX_12", "GPIOX_13", "GPIOX_14", "GPIOX_15";
 		};
 
-//$$ MATCH "Nand_pin_0_match" = "&nand_input_state"
-//$$ MATCH "Nand_pin_1_match" = "&nand_input_state"
-//$$ L2 PROP_STR 18 = "amlogic,pins"
-//$$ L2 PROP_U32 = "amlogic,enable-output"
-		nand_input_state:nand_input{
-			amlogic,pins = "BOOT_0","BOOT_1","BOOT_2","BOOT_3","BOOT_4",
-						"BOOT_5","BOOT_6","BOOT_7","BOOT_12","BOOT_13",
-						"BOOT_8","BOOT_9","BOOT_10","BOOT_11",
-						"BOOT_14","BOOT_15","BOOT_16","BOOT_17";
-			amlogic,enable-output=<1>;
-		};
-
-//$$ MATCH "Nand_pin_0_match" = "&conf_nand_state"
-//$$ MATCH "Nand_pin_1_match" = "&conf_nand_state"
+//$$ MATCH "Nand_pin_0_match" = "&conf_nand_pulldown"
+//$$ MATCH "Nand_pin_1_match" = "&conf_nand_pulldown"
 //$$ L2 PROP_STR 9 = "amlogic,pins"
 //$$ L2 PROP_U32 = "amlogic,pullup"
-		conf_nand_state: conf_nand{
+		conf_nand_pulldown: conf_nand_pulldown{
 			amlogic,pins = "BOOT_0","BOOT_1","BOOT_2","BOOT_3","BOOT_4",
 						"BOOT_5","BOOT_6","BOOT_7","BOOT_15";
 			amlogic,pullup=<0>;
-	    		amlogic,pullupen=<1>;
+			amlogic,pullupen=<1>;
 		};
-		conf_nand_state1: conf_nand1{
+		conf_nand_pullup: conf_nand_pullup{
 			amlogic,pins = "BOOT_8", "BOOT_10";
 			amlogic,pullup=<1>;
 			amlogic,pullupen=<1>;
 		};
-//$$ MATCH "Nand_pin_0_match" = "&nand_base"
-//$$ MATCH "Nand_pin_1_match" = "&nand_base"
+//$$ MATCH "Nand_pin_0_match" = "&all_nand_pins"
+//$$ MATCH "Nand_pin_1_match" = "&all_nand_pins"
 //$$ L2 PROP_U32 2 = "amlogic,setmask"
 //$$ L2 PROP_U32 3*2 = "amlogic,clrmask"
 //$$ L2 PROP_STR 17 = "amlogic,pins"
-		nand_base: nand{
+		all_nand_pins: all_nand_pins{
 			amlogic,setmask=<2 0x7fe0000>;
 			amlogic,clrmask=<	5 0xe
 							6 0x3f000000
 							4 0x7c000000>;
 			amlogic,pins = "BOOT_0","BOOT_1","BOOT_2","BOOT_3","BOOT_4",
 						"BOOT_5","BOOT_6","BOOT_7","BOOT_8","BOOT_9",
-						"BOOT_10","BOOT_12","BOOT_13",
+						"BOOT_10","BOOT_11","BOOT_12","BOOT_13",
 						"BOOT_14","BOOT_15","BOOT_16","BOOT_17";
+			amlogic,enable-output=<1>;
 		};
-
+		
+		nand_cs_pins: nand_cs{
+			amlogic,setmask=<2 0x3000000>;
+			amlogic,clrmask=<7 0x80000
+							6 0x80000000>;
+			amlogic,pins = "BOOT_8","BOOT_9";
+		};
+		
 //$$ MATCH "Card_pin_0_match" = "&sdhc_b_pins"
 //$$ L2 PROP_U32 2 = "amlogic,setmask"
 //$$ L2 PROP_U32 4 = "amlogic,clrmask"
@@ -1753,6 +1804,23 @@ sdio{
             amlogic,pullupen=<1>;
         };
 
+//$$ MATCH "Camera_pin_0_match" = "&aml_cam_gpio_pins"
+//$$ L2 PROP_U32 4 = "amlogic,setmask"
+//$$ L2 PROP_STR 10 = "amlogic,pins"	
+        aml_cam_gpio_pins: aml_cam_gpio_pins{
+			amlogic,setmask=<3 0x80000
+					         9 0x37c>;
+			amlogic,pins = "GPIOH_9","GPIOY_6","GPIOY_7","GPIOY_8","GPIOY_9","GPIOY_10","GPIOY_11","GPIOY_12","GPIOY_13","GPIOY_14";
+		};
+		
+//$$ MATCH "Camera_pin_1_match" = "&aml_cam_csi_pins"
+//$$ L2 PROP_U32 2 = "amlogic,setmask"
+//$$ L2 PROP_STR = "amlogic,pins"	
+		aml_cam_csi_pins: aml_cam_csi_pins{
+			amlogic,setmask=<3 0x80000>;
+			amlogic,pins = "GPIOH_9";
+		};
+
 //$$ MATCH "I2C_AO_pin_match" = "&ao_i2c_master"
 //$$ L2 PROP_U32 2 = "amlogic,setmask"
 //$$ L2 PROP_U32 2 = "amlogic,clrmask"
@@ -1806,10 +1874,10 @@ sdio{
 //$$ MATCH "I2C_D_pin_match" = "&d_i2c_master"
 //$$ L2 PROP_U32 2 = "amlogic,setmask"
 //$$ L2 PROP_STR 2 = "amlogic,pins"
-//		d_i2c_master:d_i2c{
-//			amlogic,setmask=<4 0xc>;
-//			amlogic,pins="GPIOH_7","GPIOH_8";
-//		};
+		d_i2c_master:d_i2c{
+			amlogic,setmask=<4 0xc>;
+			amlogic,pins="GPIOH_7","GPIOH_8";
+		};
 
 //$$ MATCH "remote_pin_0_match" = "&remote_pins"
 //$$ L2 PROP_U32 2 = "amlogic,setmask"
@@ -1891,21 +1959,15 @@ sdio{
 	};
 /// ***************************************************************************************
 ///	-	Ethernet
-//$$ MODULE="Ethernet"
-//$$ DEVICE="meson-eth"
-//$$ L2 PROP_STR = "status"
-    meson-eth{
-		compatible = "amlogic,meson-eth";
-		dev_name = "meson-eth";
-		status = "okay";
-		ethbaseaddr = <0xfe0c0000>;
-		interruptnum = <40>;
-                phy_interface = <1>;
-                new_maclogic = <1>;
-                reset_pin_enable = <0>;
-                reset_pin = "GPI0H_4";
-                reset_delay = <100>;
-	};
+        ethmac: ethernet@0xc9410000{
+                compatible = "amlogic,meson8m2-rmii-dwmac", "snps,dwmac";
+                reg = <0xc9410000 0x10000
+                       0xc1108108 0x4>;
+                interrupts = <0 8 1>;
+                interrupt-names = "macirq";
+                clocks = "clk81";
+                clock-names = "stmmaceth";
+        };
 
 /// ***************************************************************************************
 ///	-	DVB

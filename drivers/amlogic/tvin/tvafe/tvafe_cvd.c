@@ -196,6 +196,7 @@ static bool sync_sensitivity = true;
 module_param(sync_sensitivity, bool, 0644);
 MODULE_PARM_DESC(sync_sensitivity, "sync_sensitivity\n");
 
+#ifdef TVAFE_SET_CVBS_CDTO_EN
 static uint cdto_clamp = HS_CNT_STANDARD;
 module_param(cdto_clamp, uint, 0644);
 MODULE_PARM_DESC(cdto_clamp, "cdto_clamp\n");
@@ -203,6 +204,7 @@ MODULE_PARM_DESC(cdto_clamp, "cdto_clamp\n");
 static int  cdto_filter_factor = 1;
 module_param(cdto_filter_factor, int, 0644);
 MODULE_PARM_DESC(cdto_filter_factor, "cdto_filter_factor\n");
+#endif
 
 static int noise_judge=0;
 module_param(noise_judge, int, 0644);
@@ -221,9 +223,10 @@ static int pga_default_vale=0x10;
 module_param(pga_default_vale, int, 0644);
 MODULE_PARM_DESC(pga_default_vale, "pga_default_vale\n");
 
-
-
-
+static int pga_delta_val = 0x10;
+module_param(pga_delta_val, int, 0644);
+MODULE_PARM_DESC(pga_delta_val, "pga delta val\n");
+static int dg_ave_last = 0x200;
 
 /*for force fmt*/
 //static enum tvin_sig_fmt_e line525fmt = TVIN_SIG_FMT_NULL;
@@ -253,7 +256,7 @@ static short print_cnt=0;
 
 /*****************************the  version of changing log************************/
 static char last_version_s[]="2013-11-4||10-13";
-static char version_s[] = "2013-11-4||10-13";
+static char version_s[] = "2014-11-17||10-13";
 /***************************************************************************/
 void get_cvd_version(char **ver,char **last_ver)
 {
@@ -289,17 +292,17 @@ static void tvafe_cvd2_memory_init(struct tvafe_cvd2_mem_s *mem, enum tvin_sig_f
 	}
 
 	/* CVD2 mem addr is based on 64bit, system mem is based on 8bit*/
-	WRITE_APB_REG(CVD2_REG_96, cvd2_addr);
-	WRITE_APB_REG(ACD_REG_30, (cvd2_addr + DECODER_MOTION_BUFFER_ADDR_OFFSET));
+	W_APB_REG(CVD2_REG_96, cvd2_addr);
+	W_APB_REG(ACD_REG_30, (cvd2_addr + DECODER_MOTION_BUFFER_ADDR_OFFSET));
 	/* 4frame mode memory setting */
-	WRITE_APB_REG_BITS(ACD_REG_2A , cvd_mem_4f_length[fmt - TVIN_SIG_FMT_CVBS_NTSC_M],
+	W_APB_BIT(ACD_REG_2A , cvd_mem_4f_length[fmt - TVIN_SIG_FMT_CVBS_NTSC_M],
 			REG_4F_MOTION_LENGTH_BIT, REG_4F_MOTION_LENGTH_WID);
 
 	/* vbi memory setting */
-	WRITE_APB_REG(ACD_REG_2F, (cvd2_addr + DECODER_VBI_ADDR_OFFSET));
-	WRITE_APB_REG_BITS(ACD_REG_21, DECODER_VBI_VBI_SIZE,
+	W_APB_REG(ACD_REG_2F, (cvd2_addr + DECODER_VBI_ADDR_OFFSET));
+	W_APB_BIT(ACD_REG_21, DECODER_VBI_VBI_SIZE,
 			AML_VBI_SIZE_BIT, AML_VBI_SIZE_WID);
-	WRITE_APB_REG_BITS(ACD_REG_21, DECODER_VBI_START_ADDR,
+	W_APB_BIT(ACD_REG_21, DECODER_VBI_START_ADDR,
 			AML_VBI_START_ADDR_BIT, AML_VBI_START_ADDR_WID);
 
 	return;
@@ -313,14 +316,18 @@ static void tvafe_cvd2_write_mode_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cv
 	unsigned int i = 0;
 
 	//reset CVD2
-	WRITE_APB_REG_BITS(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
+	W_APB_BIT(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
 
 	/* for rf&cvbs source acd table */
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+	#else
 	if (cvd2->vd_port == TVIN_PORT_CVBS0)
+	#endif
 	{
 		for (i=0; i<(ACD_REG_NUM+1); i++)
 		{
-			WRITE_APB_REG(((ACD_BASE_ADD+i)<<2),
+			W_APB_REG(((ACD_BASE_ADD+i)<<2),
 					(rf_acd_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 		}
 
@@ -330,7 +337,7 @@ static void tvafe_cvd2_write_mode_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cv
 		for (i=0; i<(ACD_REG_NUM+1); i++)
 		{
 
-			WRITE_APB_REG(((ACD_BASE_ADD+i)<<2),
+			W_APB_REG(((ACD_BASE_ADD+i)<<2),
 					(cvbs_acd_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 		}
 
@@ -339,31 +346,31 @@ static void tvafe_cvd2_write_mode_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cv
 	// load CVD2 reg 0x00~3f (char)
 	for (i=0; i<CVD_PART1_REG_NUM; i++)
 	{
-		WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART1_REG_MIN+i)<<2),
+		W_APB_REG(((CVD_BASE_ADD+CVD_PART1_REG_MIN+i)<<2),
 				(cvd_part1_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 	}
 
 	// load CVD2 reg 0x70~ff (char)
 	for (i=0; i<CVD_PART2_REG_NUM; i++)
 	{
-		WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART2_REG_MIN+i)<<2),
+		W_APB_REG(((CVD_BASE_ADD+CVD_PART2_REG_MIN+i)<<2),
 				(cvd_part2_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 	}
 
 	// reload CVD2 reg 0x87, 0x93, 0x94, 0x95, 0x96, 0xe6, 0xfa (int)
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_0)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_0)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][0]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_1)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_1)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][1]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_2)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_2)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][2]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_3)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_3)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][3]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_4)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_4)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][4]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_5)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_5)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][5]);
-	WRITE_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_6)<<2),
+	W_APB_REG(((CVD_BASE_ADD+CVD_PART3_REG_6)<<2),
 			cvd_part3_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][6]);
 
 	//s-video setting => reload reg 0x00~03 & 0x18~1f
@@ -371,63 +378,83 @@ static void tvafe_cvd2_write_mode_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cv
 	{
 		for (i=0; i<4; i++)
 		{
-			WRITE_APB_REG(((CVD_BASE_ADD+i)<<2),
+			W_APB_REG(((CVD_BASE_ADD+i)<<2),
 					(cvd_yc_reg_0x00_0x03[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 		}
 		for (i=0; i<8; i++)
 		{
-			WRITE_APB_REG(((CVD_BASE_ADD+i+0x18)<<2),
+			W_APB_REG(((CVD_BASE_ADD+i+0x18)<<2),
 					(cvd_yc_reg_0x18_0x1f[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][i]));
 		}
 	}
 
 	/* for tuner picture quality */
+
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+#else
 	if (cvd2->vd_port == TVIN_PORT_CVBS0)
+#endif
 	{
-		WRITE_APB_REG(CVD2_REG_B0, 0xf0);
-		WRITE_APB_REG_BITS(CVD2_REG_B2 , 0, ADAPTIVE_CHROMA_MODE_BIT, ADAPTIVE_CHROMA_MODE_WID);
-		WRITE_APB_REG_BITS(CVD2_CONTROL1, 0, CHROMA_BW_LO_BIT, CHROMA_BW_LO_WID);
+		W_APB_REG(CVD2_REG_B0, 0xf0);
+		W_APB_BIT(CVD2_REG_B2 , 0, ADAPTIVE_CHROMA_MODE_BIT, ADAPTIVE_CHROMA_MODE_WID);
+		W_APB_BIT(CVD2_CONTROL1, 0, CHROMA_BW_LO_BIT, CHROMA_BW_LO_WID);
 	}
 	else{
-		WRITE_APB_REG(CVD2_VSYNC_NO_SIGNAL_THRESHOLD, 0xf0);
+		W_APB_REG(CVD2_VSYNC_NO_SIGNAL_THRESHOLD, 0xf0);
 		if(cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I)
 		         /*add for chroma state adjust dynamicly*/
-			 WRITE_APB_REG(CVD2_CHROMA_LOOPFILTER_STATE, cvd_reg8a);
+			 W_APB_REG(CVD2_CHROMA_LOOPFILTER_STATE, cvd_reg8a);
 	}
 #ifdef TVAFE_CVD2_CC_ENABLE
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x00000011);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
-	WRITE_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
-	WRITE_APB_REG(CVD2_VBI_CC_START, 0x00000054);
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
-	WRITE_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
-	WRITE_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x00000011);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
+	W_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
+	W_APB_REG(CVD2_VBI_CC_START, 0x00000054);
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
+	W_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
+	W_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
 #endif
 #if defined(CONFIG_TVIN_TUNER_SI2176)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+#else
 	if (cvd2->vd_port == TVIN_PORT_CVBS0)
+#endif
 	{
-		WRITE_APB_REG_BITS(CVD2_NON_STANDARD_SIGNAL_THRESHOLD, 3, HNON_STD_TH_BIT, HNON_STD_TH_WID);
+		W_APB_BIT(CVD2_NON_STANDARD_SIGNAL_THRESHOLD, 3, HNON_STD_TH_BIT, HNON_STD_TH_WID);
 	}
 #elif defined(CONFIG_TVIN_TUNER_HTM9AW125)
-	if (cvd2->vd_port == TVIN_PORT_CVBS0 && cvd2->config_fmt == TVIN_SIG_FMT_CVBS_NTSC_M)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if (((cvd2->vd_port == TVIN_PORT_CVBS3) || (cvd2->vd_port == TVIN_PORT_CVBS0)) && (cvd2->config_fmt == TVIN_SIG_FMT_CVBS_NTSC_M))
+#else
+	if ((cvd2->vd_port == TVIN_PORT_CVBS0) && (cvd2->config_fmt == TVIN_SIG_FMT_CVBS_NTSC_M))
+#endif
 	{
-		WRITE_APB_REG_BITS(ACD_REG_1B ,0xc,YCSEP_TEST6F_BIT,YCSEP_TEST6F_WID);
+		W_APB_BIT(ACD_REG_1B ,0xc,YCSEP_TEST6F_BIT,YCSEP_TEST6F_WID);
 	}
 #endif
 
 	/* add for board e04&e08  */
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((cvd_reg07_pal != 0x03)            &&
+			((cvd2->vd_port == TVIN_PORT_CVBS3) || (cvd2->vd_port == TVIN_PORT_CVBS0)) &&
+			(cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I)
+	   )
+#else
 	if ((cvd_reg07_pal != 0x03)            &&
 			(cvd2->vd_port == TVIN_PORT_CVBS0) &&
 			(cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I)
 	   )
-		WRITE_APB_REG(CVD2_OUTPUT_CONTROL, cvd_reg07_pal);
+#endif
+		W_APB_REG(CVD2_OUTPUT_CONTROL, cvd_reg07_pal);
 
 	// 3D comb filter buffer assignment
 	tvafe_cvd2_memory_init(mem, cvd2->config_fmt);
 
 	// enable CVD2
-	WRITE_APB_REG_BITS(CVD2_RESET_REGISTER, 0, SOFT_RST_BIT, SOFT_RST_WID);
+	W_APB_BIT(CVD2_RESET_REGISTER, 0, SOFT_RST_BIT, SOFT_RST_WID);
 
 	return;
 }
@@ -441,7 +468,7 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 	unsigned int noise_read=0;
 	unsigned int noise_strenth=0;
 
-	noise_read=READ_APB_REG(CVD2_SYNC_NOISE_STATUS);
+	noise_read=R_APB_REG(CVD2_SYNC_NOISE_STATUS);
 	noise3=noise2;
 	noise2=noise1;
 	noise1=noise_read;
@@ -463,51 +490,59 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 		}
 
 #ifdef CONFIG_AM_SI2176
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+		if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+#else
 		if (cvd2->vd_port == TVIN_PORT_CVBS0)
+#endif
 		{
-			WRITE_APB_REG_BITS(CVD2_NON_STANDARD_SIGNAL_THRESHOLD, 3, HNON_STD_TH_BIT,HNON_STD_TH_WID);
-		        WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x04);
+			W_APB_BIT(CVD2_NON_STANDARD_SIGNAL_THRESHOLD, 3, HNON_STD_TH_BIT,HNON_STD_TH_WID);
+		        W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x04);
 			if(scene_colorful)
-				WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x02);
+				W_APB_REG(CVD2_VSYNC_CNTL, 0x02);
 			if(noise_strenth>48 && noise_judge)
-				WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+				W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
 			else
-				WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
-			WRITE_APB_REG_BITS(CVD2_ACTIVE_VIDEO_VSTART, 0x14, VACTIVE_START_BIT, VACTIVE_START_WID);
-			WRITE_APB_REG_BITS(CVD2_ACTIVE_VIDEO_VHEIGHT, 0xe0, VACTIVE_HEIGHT_BIT, VACTIVE_HEIGHT_WID);
+				W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+			W_APB_BIT(CVD2_ACTIVE_VIDEO_VSTART, 0x14, VACTIVE_START_BIT, VACTIVE_START_WID);
+			W_APB_BIT(CVD2_ACTIVE_VIDEO_VHEIGHT, 0xe0, VACTIVE_HEIGHT_BIT, VACTIVE_HEIGHT_WID);
 		}
 		else
 		{
-			//WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x25);
-			WRITE_APB_REG(TVFE_CLAMP_INTF, 0x8661);
+			//W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
+			W_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x25);
+			W_APB_REG(TVFE_CLAMP_INTF, 0x8661);
 			if(noise_strenth>48 && noise_judge)
-				WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+				W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
 			else
-				WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+				W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
 			if(scene_colorful)
-				WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x02);
-			WRITE_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0x10);
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x08);
+				W_APB_REG(CVD2_VSYNC_CNTL, 0x02);
+			W_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0x10);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x08);
 		}
 #else
-		WRITE_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x25);
-		WRITE_APB_REG(TVFE_CLAMP_INTF, 0x8000);
-		WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+		W_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x25);
+		W_APB_REG(TVFE_CLAMP_INTF, 0x8000);
+		W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 4, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+		if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+#else
 		if (cvd2->vd_port == TVIN_PORT_CVBS0)
+#endif
 		{
-			WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 1,
+			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 1,
 					VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x00);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x00);
 		}
 		else
 		{
 			if(scene_colorful)
-				WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x02);
-			WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 1, DISABLE_HFINE_BIT, DISABLE_HFINE_WID);
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x08);
+				W_APB_REG(CVD2_VSYNC_CNTL, 0x02);
+			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 1, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
+			W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 1, DISABLE_HFINE_BIT, DISABLE_HFINE_WID);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x08);
 		}
 #endif
 	}
@@ -515,46 +550,50 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 	{
         if (cvd_nonstd_dbg_en)
         	pr_info("[tvafe..] %s: out of non-std signal.\n",__func__);
-		WRITE_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x6d);
-		WRITE_APB_REG(TVFE_CLAMP_INTF, 0x8666);
-		WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+		W_APB_REG(CVD2_HSYNC_RISING_EDGE_START, 0x6d);
+		W_APB_REG(TVFE_CLAMP_INTF, 0x8666);
+		W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 5, HSTATE_MAX_BIT, HSTATE_MAX_WID);
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+		if ((cvd2->vd_port == TVIN_PORT_CVBS3)||(cvd2->vd_port == TVIN_PORT_CVBS0))
+#else
 		if (cvd2->vd_port == TVIN_PORT_CVBS0)
+#endif
 		{
 
 #ifdef  CVD_SI2176_RSSI
 			if(cvd_get_rf_strength()<187 && cvd_get_rf_strength()>100 && sync_sensitivity)
 			{
-					WRITE_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0xf0);
-					WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x2);
+					W_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0xf0);
+					W_APB_REG(CVD2_VSYNC_CNTL, 0x2);
 					if (cvd_nonstd_dbg_en)
 						pr_info("[tvafe..] %s: out of non-std signal.rssi=%d \n",__func__,cvd_get_rf_strength());
 			}
 #else
 
-			if(READ_APB_REG(CVD2_SYNC_NOISE_STATUS)>48 && sync_sensitivity){
-					WRITE_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0xf0);
-					WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x2);
+			if(R_APB_REG(CVD2_SYNC_NOISE_STATUS)>48 && sync_sensitivity){
+					W_APB_REG(CVD2_VSYNC_SIGNAL_THRESHOLD, 0xf0);
+					W_APB_REG(CVD2_VSYNC_CNTL, 0x2);
 				if (cvd_nonstd_dbg_en)
-					pr_info("[tvafe..] %s: use the cvd register to judge the rssi.rssi=%u \n",__func__,READ_APB_REG(CVD2_SYNC_NOISE_STATUS));
+					pr_info("[tvafe..] %s: use the cvd register to judge the rssi.rssi=%u \n",__func__,R_APB_REG(CVD2_SYNC_NOISE_STATUS));
 			}
 #endif
 			else{
-				WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x01);
-				WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
+				W_APB_REG(CVD2_VSYNC_CNTL, 0x01);
+				W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
 					VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
 			}
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x32);
-			WRITE_APB_REG_BITS(CVD2_ACTIVE_VIDEO_VSTART, 0x2a, VACTIVE_START_BIT, VACTIVE_START_WID);
-			WRITE_APB_REG_BITS(CVD2_ACTIVE_VIDEO_VHEIGHT, 0xc0, VACTIVE_HEIGHT_BIT, VACTIVE_HEIGHT_WID);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x32);
+			W_APB_BIT(CVD2_ACTIVE_VIDEO_VSTART, 0x2a, VACTIVE_START_BIT, VACTIVE_START_WID);
+			W_APB_BIT(CVD2_ACTIVE_VIDEO_VHEIGHT, 0xc0, VACTIVE_HEIGHT_BIT, VACTIVE_HEIGHT_WID);
 		}
 		else
 		{
-			WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
+			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
 -                                       VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG(CVD2_VSYNC_CNTL, 0x01);
-			WRITE_APB_REG_BITS(CVD2_VSYNC_SIGNAL_THRESHOLD, 0, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
-			WRITE_APB_REG_BITS(CVD2_H_LOOP_MAXSTATE, 0, DISABLE_HFINE_BIT, DISABLE_HFINE_WID);
-			WRITE_APB_REG(CVD2_NOISE_THRESHOLD, 0x32);
+			W_APB_REG(CVD2_VSYNC_CNTL, 0x01);
+			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 0, VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
+			W_APB_BIT(CVD2_H_LOOP_MAXSTATE, 0, DISABLE_HFINE_BIT, DISABLE_HFINE_WID);
+			W_APB_REG(CVD2_NOISE_THRESHOLD, 0x32);
 		}
 	}
 
@@ -566,15 +605,18 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 inline void tvafe_cvd2_reset_pga(void)
 {
 	/* reset pga value */
-	if ((READ_APB_REG_BITS(ADC_REG_05, PGAGAIN_BIT, PGAGAIN_WID) != pga_default_vale) ||
-			(READ_APB_REG_BITS(ADC_REG_06 , PGAMODE_BIT, PGAMODE_WID) != 0))
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	W_APB_BIT(TVFE_VAFE_CTRL1, pga_default_vale, VAFE_PGA_GAIN_BIT, VAFE_PGA_GAIN_WID);
+	#else
+	if ((R_APB_BIT(ADC_REG_05, PGAGAIN_BIT, PGAGAIN_WID) != pga_default_vale) ||
+			(R_APB_BIT(ADC_REG_06 , PGAMODE_BIT, PGAMODE_WID) != 0))
 	{
-		WRITE_APB_REG_BITS(ADC_REG_05 , pga_default_vale, PGAGAIN_BIT, PGAGAIN_WID);
-		WRITE_APB_REG_BITS(ADC_REG_06, 0, PGAMODE_BIT, PGAMODE_WID);
+		W_APB_BIT(ADC_REG_05 , pga_default_vale, PGAGAIN_BIT, PGAGAIN_WID);
+		W_APB_BIT(ADC_REG_06, 0, PGAMODE_BIT, PGAMODE_WID);
 		if (cvd_dbg_en)
 			pr_info("[tvafe..] %s: reset pga value \n",__func__);
 	}
-
+	#endif
 }
 
 #ifdef TVAFE_SET_CVBS_CDTO_EN
@@ -585,13 +627,13 @@ static unsigned int tvafe_cvd2_get_cdto(void)
 {
 	unsigned int cdto = 0;
 
-	cdto = (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_29_24,
+	cdto = (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_29_24,
 				CDTO_INC_29_24_BIT, CDTO_INC_29_24_WID) & 0x0000003f)<<24;
-	cdto += (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_23_16,
+	cdto += (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_23_16,
 				CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID) & 0x000000ff)<<16;
-	cdto += (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_15_8,
+	cdto += (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_15_8,
 				CDTO_INC_15_8_BIT, CDTO_INC_15_8_WID) & 0x000000ff)<<8;
-	cdto += (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_7_0,
+	cdto += (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_7_0,
 				CDTO_INC_7_0_BIT, CDTO_INC_7_0_WID) & 0x000000ff);
 	return cdto;
 }
@@ -601,10 +643,10 @@ static unsigned int tvafe_cvd2_get_cdto(void)
  */
 static void tvafe_cvd2_set_cdto(unsigned int cdto)
 {
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_29_24, (cdto >> 24) & 0x0000003f);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_23_16, (cdto >> 16) & 0x000000ff);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_15_8,  (cdto >>  8) & 0x000000ff);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_7_0,   (cdto >>  0) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_29_24, (cdto >> 24) & 0x0000003f);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_23_16, (cdto >> 16) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_15_8,  (cdto >>  8) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_7_0,   (cdto >>  0) & 0x000000ff);
 }
 
 /*
@@ -685,19 +727,19 @@ static void tvafe_cvd2_get_signal_status(struct tvafe_cvd2_s *cvd2)
 {
 	int data = 0;
 
-	data = READ_APB_REG(CVD2_STATUS_REGISTER1);
+	data = R_APB_REG(CVD2_STATUS_REGISTER1);
 	cvd2->hw_data[cvd2->hw_data_cur].no_sig =      (bool)((data & 0x01) >> NO_SIGNAL_BIT );
 	cvd2->hw_data[cvd2->hw_data_cur].h_lock =      (bool)((data & 0x02) >> HLOCK_BIT     );
 	cvd2->hw_data[cvd2->hw_data_cur].v_lock =      (bool)((data & 0x04) >> VLOCK_BIT     );
 	cvd2->hw_data[cvd2->hw_data_cur].chroma_lock = (bool)((data & 0x08) >> CHROMALOCK_BIT);
 
-	data = READ_APB_REG(CVD2_STATUS_REGISTER2);
+	data = R_APB_REG(CVD2_STATUS_REGISTER2);
 	cvd2->hw_data[cvd2->hw_data_cur].h_nonstd =       (bool)((data & 0x02) >> HNON_STD_BIT         );
 	cvd2->hw_data[cvd2->hw_data_cur].v_nonstd =       (bool)((data & 0x04) >> VNON_STD_BIT         );
 	cvd2->hw_data[cvd2->hw_data_cur].no_color_burst = (bool)((data & 0x08) >> BKNWT_DETECTED_BIT   );
 	cvd2->hw_data[cvd2->hw_data_cur].comb3d_off =     (bool)((data & 0x10) >> STATUS_COMB3D_OFF_BIT);
 
-	data = READ_APB_REG(CVD2_STATUS_REGISTER3);
+	data = R_APB_REG(CVD2_STATUS_REGISTER3);
 	cvd2->hw_data[cvd2->hw_data_cur].pal =      (bool)((data & 0x01) >> PAL_DETECTED_BIT     );
 	cvd2->hw_data[cvd2->hw_data_cur].secam =    (bool)((data & 0x02) >> SECAM_DETECTED_BIT   );
 	cvd2->hw_data[cvd2->hw_data_cur].line625 =  (bool)((data & 0x04) >> LINES625_DETECTED_BIT);
@@ -707,11 +749,11 @@ static void tvafe_cvd2_get_signal_status(struct tvafe_cvd2_s *cvd2)
 	cvd2->hw_data[cvd2->hw_data_cur].vcrff =    (bool)((data & 0x40) >> VCR_FF_BIT           );
 	cvd2->hw_data[cvd2->hw_data_cur].vcrrew =   (bool)((data & 0x80) >> VCR_REW_BIT          );
 
-	cvd2->hw_data[cvd2->hw_data_cur].cordic = READ_APB_REG_BITS(CVD2_CORDIC_FREQUENCY_STATUS,
+	cvd2->hw_data[cvd2->hw_data_cur].cordic = R_APB_BIT(CVD2_CORDIC_FREQUENCY_STATUS,
 			STATUS_CORDIQ_FRERQ_BIT, STATUS_CORDIQ_FRERQ_WID);
 
 	//need the average of 3 fields ?
-	data = READ_APB_REG(ACD_REG_83);
+	data = R_APB_REG(ACD_REG_83);
 	cvd2->hw_data[cvd2->hw_data_cur].acc4xx_cnt = (unsigned char)(data >> RO_BD_ACC4XX_CNT_BIT);
 	cvd2->hw_data[cvd2->hw_data_cur].acc425_cnt = (unsigned char)(data >> RO_BD_ACC425_CNT_BIT);
 	cvd2->hw_data[cvd2->hw_data_cur].acc3xx_cnt = (unsigned char)(data >> RO_BD_ACC3XX_CNT_BIT);
@@ -724,7 +766,7 @@ static void tvafe_cvd2_get_signal_status(struct tvafe_cvd2_s *cvd2)
 	cvd2->hw.acc3xx_cnt = data /3;
 	data = cvd2->hw_data[0].acc358_cnt + cvd2->hw_data[1].acc358_cnt + cvd2->hw_data[2].acc358_cnt ;
 	cvd2->hw.acc358_cnt = data /3;
-	data = READ_APB_REG(ACD_REG_84);
+	data = R_APB_REG(ACD_REG_84);
 	cvd2->hw_data[cvd2->hw_data_cur].secam_detected = (bool)((data & 0x1) >> RO_BD_SECAM_DETECTED_BIT);
 	cvd2->hw.secam_phase = (bool)((data & 0x2) >> RO_DBDR_PHASE_BIT);
 	if(cvd2->hw_data[0].secam_detected && cvd2->hw_data[1].secam_detected && cvd2->hw_data[2].secam_detected)
@@ -936,14 +978,14 @@ enum tvafe_cvbs_video_e tvafe_cvd2_get_lock_status(struct tvafe_cvd2_s *cvd2)
 int tvafe_cvd2_get_atv_format(void)
 {
 	int format;
-	format = READ_APB_REG(CVD2_STATUS_REGISTER3)&0x7;
+	format = R_APB_REG(CVD2_STATUS_REGISTER3)&0x7;
 	return format;
 }
 EXPORT_SYMBOL(tvafe_cvd2_get_atv_format);
 int tvafe_cvd2_get_hv_lock(void)
 {
 	int lock_status;
-	lock_status = READ_APB_REG(CVD2_STATUS_REGISTER1)&0x6;
+	lock_status = R_APB_REG(CVD2_STATUS_REGISTER1)&0x6;
 	return lock_status;
 }
 EXPORT_SYMBOL(tvafe_cvd2_get_hv_lock);
@@ -1047,15 +1089,18 @@ static void tvafe_cvd2_non_std_signal_det(struct tvafe_cvd2_s *cvd2)
 
 	if ((cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I ) && cvd2->hw.line625)
 	{
-		dgain = READ_APB_REG_BITS(CVD2_AGC_GAIN_STATUS_7_0,
+		dgain = R_APB_BIT(CVD2_AGC_GAIN_STATUS_7_0,
 				AGC_GAIN_7_0_BIT, AGC_GAIN_7_0_WID);
-		dgain |= READ_APB_REG_BITS(CVD2_AGC_GAIN_STATUS_11_8,
+		dgain |= R_APB_BIT(CVD2_AGC_GAIN_STATUS_11_8,
 				AGC_GAIN_11_8_BIT, AGC_GAIN_11_8_WID)<<8;
 		if ((dgain >= TVAFE_CVD2_NONSTD_DGAIN_MAX) ||
 				cvd2->hw.h_nonstd ||
-				nonstd_flag ||
+				nonstd_flag
 				//cvd2->hw.v_nonstd ||
-				(READ_APB_REG_BITS(ADC_REG_06, PGAMODE_BIT, PGAMODE_WID)))
+				#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+				 ||(R_APB_BIT(ADC_REG_06, PGAMODE_BIT, PGAMODE_WID))
+				#endif
+				)
 		{
 			cvd2->info.non_std_enable = 1;
 		}
@@ -1183,14 +1228,14 @@ static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 
 		if (cvd2->info.ntsc_switch_cnt <= ntsc_sw_midcnt)
 		{
-			if (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_23_16, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID) != 0x2e)
+			if (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_23_16, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID) != 0x2e)
 			{
-				WRITE_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_23_16, 0x2e, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID);
-				WRITE_APB_REG_BITS(CVD2_PAL_DETECTION_THRESHOLD, 0x40, PAL_DET_TH_BIT, PAL_DET_TH_WID);
-				WRITE_APB_REG_BITS(CVD2_CONTROL0, 0x00, COLOUR_MODE_BIT, COLOUR_MODE_WID);
-				WRITE_APB_REG_BITS(CVD2_COMB_FILTER_CONFIG, 0x2, PALSW_LVL_BIT, PALSW_LVL_WID);
-				WRITE_APB_REG_BITS(CVD2_COMB_LOCK_CONFIG, 0x7, LOSE_CHROMALOCK_LVL_BIT, LOSE_CHROMALOCK_LVL_WID);
-				WRITE_APB_REG_BITS(CVD2_PHASE_OFFSE_RANGE, 0x20, PHASE_OFFSET_RANGE_BIT, PHASE_OFFSET_RANGE_WID);
+				W_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_23_16, 0x2e, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID);
+				W_APB_BIT(CVD2_PAL_DETECTION_THRESHOLD, 0x40, PAL_DET_TH_BIT, PAL_DET_TH_WID);
+				W_APB_BIT(CVD2_CONTROL0, 0x00, COLOUR_MODE_BIT, COLOUR_MODE_WID);
+				W_APB_BIT(CVD2_COMB_FILTER_CONFIG, 0x2, PALSW_LVL_BIT, PALSW_LVL_WID);
+				W_APB_BIT(CVD2_COMB_LOCK_CONFIG, 0x7, LOSE_CHROMALOCK_LVL_BIT, LOSE_CHROMALOCK_LVL_WID);
+				W_APB_BIT(CVD2_PHASE_OFFSE_RANGE, 0x20, PHASE_OFFSET_RANGE_BIT, PHASE_OFFSET_RANGE_WID);
 			}
 			if (!cvd_pr1_chroma_flag && cvd_dbg_en)
 			{
@@ -1201,14 +1246,14 @@ static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 		}
 		else
 		{
-			if (READ_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_23_16, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID) != 0x23)
+			if (R_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_23_16, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID) != 0x23)
 			{
-				WRITE_APB_REG_BITS(CVD2_CHROMA_DTO_INCREMENT_23_16, 0x23, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID);
-				WRITE_APB_REG_BITS(CVD2_PAL_DETECTION_THRESHOLD, 0x1f, PAL_DET_TH_BIT, PAL_DET_TH_WID);
-				WRITE_APB_REG_BITS(CVD2_CONTROL0, 0x02, COLOUR_MODE_BIT, COLOUR_MODE_WID);
-				WRITE_APB_REG_BITS(CVD2_COMB_FILTER_CONFIG, 3, PALSW_LVL_BIT, PALSW_LVL_WID);
-				WRITE_APB_REG_BITS(CVD2_COMB_LOCK_CONFIG, 2, LOSE_CHROMALOCK_LVL_BIT, LOSE_CHROMALOCK_LVL_WID);
-				WRITE_APB_REG_BITS(CVD2_PHASE_OFFSE_RANGE, 0x15, PHASE_OFFSET_RANGE_BIT, PHASE_OFFSET_RANGE_WID);
+				W_APB_BIT(CVD2_CHROMA_DTO_INCREMENT_23_16, 0x23, CDTO_INC_23_16_BIT, CDTO_INC_23_16_WID);
+				W_APB_BIT(CVD2_PAL_DETECTION_THRESHOLD, 0x1f, PAL_DET_TH_BIT, PAL_DET_TH_WID);
+				W_APB_BIT(CVD2_CONTROL0, 0x02, COLOUR_MODE_BIT, COLOUR_MODE_WID);
+				W_APB_BIT(CVD2_COMB_FILTER_CONFIG, 3, PALSW_LVL_BIT, PALSW_LVL_WID);
+				W_APB_BIT(CVD2_COMB_LOCK_CONFIG, 2, LOSE_CHROMALOCK_LVL_BIT, LOSE_CHROMALOCK_LVL_WID);
+				W_APB_BIT(CVD2_PHASE_OFFSE_RANGE, 0x15, PHASE_OFFSET_RANGE_BIT, PHASE_OFFSET_RANGE_WID);
 			}
 			if (!cvd_pr2_chroma_flag && cvd_dbg_en)
 			{
@@ -1218,13 +1263,17 @@ static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 			}
 		}
 	}
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if (force_fmt_flag && ((cvd2->vd_port == TVIN_PORT_CVBS3) || (cvd2->vd_port == TVIN_PORT_CVBS0))){
+#else
 	if(force_fmt_flag && cvd2->vd_port==TVIN_PORT_CVBS0){
+#endif
 		if(cvd_dbg_en)
 			printk("[%s]:ignore the pal/358/443 flag and return\n",__func__);
 		return false;
 	}
 	if(ignore_pal_nt)
-	
+
 {
 		return false;
 	}
@@ -1252,7 +1301,7 @@ static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 			break;
 	}
 	if(ignore_443_358)
-	
+
 {
 		if(ret)
 			return true;
@@ -1576,7 +1625,7 @@ static void tvafe_cvd2_auto_de(struct tvafe_cvd2_s *cvd2)
 	lines->val[0] = lines->val[1];
 	lines->val[1] = lines->val[2];
 	lines->val[2] = lines->val[3];
-	lines->val[3] = READ_APB_REG(CVD2_REG_E6);
+	lines->val[3] = R_APB_REG(CVD2_REG_E6);
 	for (i = 0; i < 4; i++)
 	{
 		if (l_max < lines->val[i])
@@ -1604,7 +1653,7 @@ static void tvafe_cvd2_auto_de(struct tvafe_cvd2_s *cvd2)
 				lines->de_offset = tmp;
 				tmp = ((TVAFE_CVD2_PAL_DE_START      - lines->de_offset) << 16) |
 					(288 + TVAFE_CVD2_PAL_DE_START - lines->de_offset);
-				WRITE_APB_REG(ACD_REG_2E, tmp);
+				W_APB_REG(ACD_REG_2E, tmp);
 				scene_colorful_old=0;
 				if (cvd_dbg_en)
 					pr_info("%s: vlines:%d, de_offset:%d tmp:%x \n",
@@ -1617,7 +1666,7 @@ static void tvafe_cvd2_auto_de(struct tvafe_cvd2_s *cvd2)
 			{
 				tmp = ((TVAFE_CVD2_PAL_DE_START      - lines->de_offset) << 16) |
 					(288 + TVAFE_CVD2_PAL_DE_START - lines->de_offset);
-				WRITE_APB_REG(ACD_REG_2E, tmp);
+				W_APB_REG(ACD_REG_2E, tmp);
 				scene_colorful_old=0;
 				if (cvd_dbg_en)
 					pr_info("%s: vlines:%d, de_offset:%d tmp:%x \n",
@@ -1640,7 +1689,7 @@ void tvafe_cvd2_set_default_de(struct tvafe_cvd2_s * cvd2)
 		return;
 	}
 	/*write default de to register*/
-	WRITE_APB_REG(ACD_REG_2E,  (rf_acd_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][0x2e]));
+	W_APB_REG(ACD_REG_2E,  (rf_acd_table[cvd2->config_fmt-TVIN_SIG_FMT_CVBS_NTSC_M][0x2e]));
 	if(cvd_dbg_en)
 		pr_info("[tvafe..]%s set default de %s.\n",__func__,tvin_sig_fmt_str(cvd2->config_fmt));
 	scene_colorful_old=1;
@@ -1669,23 +1718,25 @@ static void tvafe_cvd2_check_adc_reg(struct tvafe_cvd2_s *cvd2)
 					(i>=0x6a && i<ADC_REG_NUM))
 				continue;
 
-			tmp = READ_APB_REG(((ADC_BASE_ADD + i) << 2));
+			tmp = R_APB_REG(((ADC_BASE_ADD + i) << 2));
 			if (i == 0x06) //pga enable/disable
 			{
 				tmp &= 0x10;
-				if(((cvd2->vd_port >= TVIN_PORT_CVBS0) && (cvd2->vd_port <= TVIN_PORT_CVBS7)) &&
-						(tmp != 0x10))
+				if(((cvd2->vd_port >= TVIN_PORT_CVBS0) && (cvd2->vd_port <= TVIN_PORT_CVBS7))&&(tmp != 0x10))
 					cvd2->info.adc_reload_en = true;
 			}
 			else if (i == 0x17)  //input pga mux
 			{
 				tmp &= 0x30;
-				if (((cvd2->vd_port == TVIN_PORT_CVBS0) && (tmp != 0x00)) ||
+				#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+				if (((cvd2->vd_port == TVIN_PORT_CVBS0) &&
+					(tmp != 0x00)) ||
 						((cvd2->vd_port == TVIN_PORT_CVBS1) && (tmp != 0x10)) ||
 						((cvd2->vd_port == TVIN_PORT_CVBS2) && (tmp != 0x20)) ||
 						((cvd2->vd_port == TVIN_PORT_CVBS3) && (tmp != 0x30))
 				   )
 					cvd2->info.adc_reload_en = true;
+				#endif
 			}
 			else if (i == 0x3d)  //FILTPLLHSYNC
 			{
@@ -1722,7 +1773,7 @@ static void tvafe_cvd2_reinit(struct tvafe_cvd2_s *cvd2)
 		return;
 
 
-
+#ifdef TVAFE_SET_CVBS_CDTO_EN
 	if ((CVD2_CHROMA_DTO_PAL_I != tvafe_cvd2_get_cdto()) &&
 			(cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I))
 	{
@@ -1731,6 +1782,7 @@ static void tvafe_cvd2_reinit(struct tvafe_cvd2_s *cvd2)
 			pr_info("[tvafe..] %s: set default cdto. \n",__func__);
 
 	}
+	#endif
 	/* reset pga value */
 #ifdef TVAFE_SET_CVBS_PGA_EN
 	tvafe_cvd2_reset_pga();
@@ -1814,10 +1866,102 @@ inline enum tvin_sig_fmt_e tvafe_cvd2_get_format(struct tvafe_cvd2_s *cvd2)
  * tvafe cvd2 pag ajustment in vsync interval
  */
 inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 {
 	unsigned short dg_max = 0, dg_min = 0xffff, dg_ave = 0, i = 0, pga = 0;
 	unsigned int tmp = 0;
 	unsigned char step = 0;
+	unsigned int delta_dg = 0;
+
+    if ((cvd_isr_en & 0x100) == 0)
+        return;
+
+	cvd2->info.dgain[0] = cvd2->info.dgain[1];
+	cvd2->info.dgain[1] = cvd2->info.dgain[2];
+	cvd2->info.dgain[2] = cvd2->info.dgain[3];
+	cvd2->info.dgain[3] = R_APB_BIT(CVD2_AGC_GAIN_STATUS_7_0,
+			AGC_GAIN_7_0_BIT, AGC_GAIN_7_0_WID);
+	cvd2->info.dgain[3] |= R_APB_BIT(CVD2_AGC_GAIN_STATUS_11_8,
+			AGC_GAIN_11_8_BIT, AGC_GAIN_11_8_WID)<<8;
+	for (i = 0; i < 4; i++)
+	{
+		if (dg_max < cvd2->info.dgain[i])
+			dg_max = cvd2->info.dgain[i];
+		if (dg_min > cvd2->info.dgain[i])
+			dg_min = cvd2->info.dgain[i];
+		dg_ave += cvd2->info.dgain[i];
+	}
+	if (++cvd2->info.dgain_cnt >= TVAFE_SET_CVBS_PGA_START + TVAFE_SET_CVBS_PGA_STEP)
+	{
+		cvd2->info.dgain_cnt = TVAFE_SET_CVBS_PGA_START;
+	}
+	if (cvd2->info.dgain_cnt == TVAFE_SET_CVBS_PGA_START)
+	{
+		cvd2->info.dgain_cnt = 0;
+		dg_ave = (dg_ave - dg_max - dg_min + 1) >> 1;
+		pga = R_APB_BIT(TVFE_VAFE_CTRL1, VAFE_PGA_GAIN_BIT, VAFE_PGA_GAIN_WID);
+
+		delta_dg = abs((signed short)dg_ave - (signed short)dg_ave_last);
+		if (((dg_ave >= CVD2_DGAIN_LIMITL) && (dg_ave <= CVD2_DGAIN_LIMITH))&&
+			(delta_dg < CVD2_DGAIN_WINDOW*2)){
+			return;
+		}
+		else if((dg_ave < CVD2_DGAIN_LIMITL)&&(pga == 0)){
+			return;
+		}
+		else if((dg_ave > CVD2_DGAIN_LIMITH)&&(pga >= (255+97))){
+			return;
+		}
+		else{
+			if (cvd_dbg_en)
+                                pr_info("%s: dg_ave_last:0x%x dg_ave:0x%x. pga 0x%x.\n",
+                                __func__,dg_ave_last,dg_ave, pga);
+			dg_ave_last = dg_ave;
+		}
+		tmp = abs((signed short)dg_ave - (signed short)CVD2_DGAIN_MIDDLE);
+
+		if (tmp > CVD2_DGAIN_MIDDLE)
+			step = 16;
+		else if (tmp > (CVD2_DGAIN_MIDDLE >> 1))
+			step = 5;
+		else if (tmp > (CVD2_DGAIN_MIDDLE >> 2))
+			step = 2;
+		else
+			step = 1;
+		if((delta_dg > CVD2_DGAIN_MIDDLE)||(delta_dg == 0))
+			step = pga_delta_val;
+		if (dg_ave > CVD2_DGAIN_LIMITH)
+		{
+			pga += step;
+			if (pga >= 255)  //set max value
+				pga = 255;
+		}
+		else
+		{
+			if (pga < step)  //set min value
+				pga = 0;
+			else
+				pga -= step;
+		}
+		if (pga < 2)
+			pga = 2;
+
+		if (pga != R_APB_BIT(TVFE_VAFE_CTRL1, VAFE_PGA_GAIN_BIT, VAFE_PGA_GAIN_WID))
+		{
+			 if (cvd_dbg_en)
+                                pr_info("%s: set pag:0x%x. current dgain 0x%x.\n",__func__, pga,cvd2->info.dgain[3]);
+			W_APB_BIT(TVFE_VAFE_CTRL1, pga, VAFE_PGA_GAIN_BIT, VAFE_PGA_GAIN_WID);
+		}
+	}
+
+	return;
+}
+#else
+{
+	unsigned short dg_max = 0, dg_min = 0xffff, dg_ave = 0, i = 0, pga = 0;
+	unsigned int tmp = 0;
+	unsigned char step = 0;
+	unsigned int delta_dg = 0;
 
     if ((cvd_isr_en & 0x100) == 0)
         return;
@@ -1852,11 +1996,22 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 			//pga += 64;
 			pga += 97;
 		}
-		if (((dg_ave >= CVD2_DGAIN_LIMITL) && (dg_ave <= CVD2_DGAIN_LIMITH)) ||
-				(pga >= (255+97)) ||
-				(pga == 0))
-		{
+		delta_dg = abs((signed short)dg_ave - (signed short)dg_ave_last);
+		if(((dg_ave >= CVD2_DGAIN_LIMITL) && (dg_ave <= CVD2_DGAIN_LIMITH))&&
+			(delta_dg < CVD2_DGAIN_WINDOW*2)){
 			return;
+		}
+		else if((dg_ave < CVD2_DGAIN_LIMITL)&&(pga == 0)){
+			return;
+		}
+		else if((dg_ave > CVD2_DGAIN_LIMITH)&&(pga >= (255+97))){
+			return;
+		}
+		else{
+			if (cvd_dbg_en)
+                                pr_info("%s: dg_ave_last:0x%x dg_ave:0x%x. pga 0x%x.\n",
+                                __func__,dg_ave_last,dg_ave, pga);
+			dg_ave_last = dg_ave;
 		}
 		tmp = abs((signed short)dg_ave - (signed short)CVD2_DGAIN_MIDDLE);
 
@@ -1868,6 +2023,8 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 			step = 2;
 		else
 			step = 1;
+		if((delta_dg > CVD2_DGAIN_MIDDLE)||(delta_dg == 0))
+			step = pga_delta_val;
 		if (dg_ave > CVD2_DGAIN_LIMITH)
 		{
 			pga += step;
@@ -1903,7 +2060,10 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 	}
 
 	return;
-} 
+}
+
+#endif
+
 #endif
 
 #ifdef TVAFE_SET_CVBS_CDTO_EN
@@ -1931,10 +2091,10 @@ static void tvafe_cvd2_cdto_tune(unsigned int cur, unsigned int dest)
 	else
 		cur += step;
 
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_29_24, (cur >> 24) & 0x0000003f);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_23_16, (cur >> 16) & 0x000000ff);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_15_8,  (cur >>  8) & 0x000000ff);
-	WRITE_APB_REG(CVD2_CHROMA_DTO_INCREMENT_7_0,   (cur >>  0) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_29_24, (cur >> 24) & 0x0000003f);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_23_16, (cur >> 16) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_15_8,  (cur >>  8) & 0x000000ff);
+	W_APB_REG(CVD2_CHROMA_DTO_INCREMENT_7_0,   (cur >>  0) & 0x000000ff);
 
 }
 
@@ -2020,7 +2180,11 @@ static inline void tvafe_cvd2_sync_hight_tune(struct tvafe_cvd2_s *cvd2)
 	unsigned int reg_contrast_default = 0;
 
 	if (cvd2->info.non_std_config) { }
-	else if (cvd2->vd_port == TVIN_PORT_CVBS0) { }
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	else if ((cvd2->vd_port == TVIN_PORT_CVBS0) || (cvd2->vd_port == TVIN_PORT_CVBS3)) { }
+	#else
+	else if (cvd2->vd_port == TVIN_PORT_CVBS0)
+	#endif
 	else if ((cvd2->config_fmt == TVIN_SIG_FMT_CVBS_NTSC_M) ||
 			(cvd2->config_fmt == TVIN_SIG_FMT_CVBS_PAL_I))
 	{ //try to detect AVin NTSCM/PALI
@@ -2037,42 +2201,42 @@ static inline void tvafe_cvd2_sync_hight_tune(struct tvafe_cvd2_s *cvd2)
 			reg_contrast_default = 0x7d ;
 		}
 
-		burst_mag_16msb = READ_APB_REG(CVD2_STATUS_BURST_MAGNITUDE_LSB);
-		burst_mag_16lsb = READ_APB_REG(CVD2_STATUS_BURST_MAGNITUDE_MSB);
+		burst_mag_16msb = R_APB_REG(CVD2_STATUS_BURST_MAGNITUDE_LSB);
+		burst_mag_16lsb = R_APB_REG(CVD2_STATUS_BURST_MAGNITUDE_MSB);
 		burst_mag = ((burst_mag_16msb&0xff) << 8) | (burst_mag_16lsb&0xff);
 		if (burst_mag > burst_mag_upper_limitation)
 		{
-			reg_sync_height = READ_APB_REG(CVD2_LUMA_AGC_VALUE);
+			reg_sync_height = R_APB_REG(CVD2_LUMA_AGC_VALUE);
 			if (reg_sync_height > SYNC_HEIGHT_LOWER_LIMIT )
 			{
 				reg_sync_height = reg_sync_height - 1;
-				WRITE_APB_REG(CVD2_LUMA_AGC_VALUE, reg_sync_height&0xff);
+				W_APB_REG(CVD2_LUMA_AGC_VALUE, reg_sync_height&0xff);
 
 				cur_div_result = std_sync_height << 16;
 				do_div(cur_div_result,reg_sync_height);
 				mult_result = cur_div_result * (reg_contrast_default&0xff);
 				final_contrast = (mult_result + 0x8000) >> 16;
 				if (final_contrast > 0xff)
-					WRITE_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, 0xff);
+					W_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, 0xff);
 				else if (final_contrast > 0x50)
-					WRITE_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, final_contrast&0xff);
+					W_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, final_contrast&0xff);
 			}
 		}
 		else if (burst_mag < burst_mag_lower_limitation)
 		{
-			reg_sync_height = READ_APB_REG(CVD2_LUMA_AGC_VALUE);
+			reg_sync_height = R_APB_REG(CVD2_LUMA_AGC_VALUE);
 			if (reg_sync_height < SYNC_HEIGHT_UPPER_LIMIT)
 			{
 				reg_sync_height = reg_sync_height + 1;
-				WRITE_APB_REG(CVD2_LUMA_AGC_VALUE, reg_sync_height&0xff);
+				W_APB_REG(CVD2_LUMA_AGC_VALUE, reg_sync_height&0xff);
 				cur_div_result = std_sync_height << 16;
 				do_div(cur_div_result, reg_sync_height);
 				mult_result = cur_div_result * (reg_contrast_default&0xff);
 				final_contrast = (mult_result + 0x8000) >> 16;
 				if (final_contrast > 0xff)
-					WRITE_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, 0xff);
+					W_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, 0xff);
 				else if (final_contrast > 0x50)
-					WRITE_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, final_contrast&0xff);
+					W_APB_REG(CVD2_LUMA_CONTRAST_ADJUSTMENT, final_contrast&0xff);
 			}
 		}
 	}
@@ -2084,7 +2248,7 @@ static inline void tvafe_cvd2_sync_hight_tune(struct tvafe_cvd2_s *cvd2)
  */
 inline void tvafe_cvd2_check_3d_comb(struct tvafe_cvd2_s *cvd2)
 {
-	unsigned int cvd2_3d_status = READ_APB_REG(CVD2_REG_95);
+	unsigned int cvd2_3d_status = R_APB_REG(CVD2_REG_95);
 
     if ((cvd_isr_en & 0x010) == 0)
         return;
@@ -2100,8 +2264,8 @@ inline void tvafe_cvd2_check_3d_comb(struct tvafe_cvd2_s *cvd2)
 	}
 	if (cvd2_3d_status & 0x1ffff)
 	{
-		WRITE_APB_REG_BITS(CVD2_REG_B2, 1, COMB2D_ONLY_BIT, COMB2D_ONLY_WID);
-		WRITE_APB_REG_BITS(CVD2_REG_B2, 0, COMB2D_ONLY_BIT, COMB2D_ONLY_WID);
+		W_APB_BIT(CVD2_REG_B2, 1, COMB2D_ONLY_BIT, COMB2D_ONLY_WID);
+		W_APB_BIT(CVD2_REG_B2, 0, COMB2D_ONLY_BIT, COMB2D_ONLY_WID);
 		//if (cvd_dbg_en)
 		//    pr_info("%s: reset 3d comb  sts:0x%x \n",__func__, cvd2_3d_status);
 	}
@@ -2112,13 +2276,13 @@ inline void tvafe_cvd2_check_3d_comb(struct tvafe_cvd2_s *cvd2)
 */
 inline void tvafe_cvd2_hold_rst(struct tvafe_cvd2_s *cvd2)
 {
-	WRITE_APB_REG_BITS(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
+	W_APB_BIT(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
 }
 
 void tvafe_cvd2_set_reg8a(unsigned int v)
 {
 	cvd_reg8a = v;
-	WRITE_APB_REG(CVD2_CHROMA_LOOPFILTER_STATE, cvd_reg8a);
+	W_APB_REG(CVD2_CHROMA_LOOPFILTER_STATE, cvd_reg8a);
 }
 
 

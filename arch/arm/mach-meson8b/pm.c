@@ -81,6 +81,7 @@ static void uart_change_buad(unsigned reg,unsigned clk_rate){
 	aml_clr_reg32_mask(reg, 0x7FFFFF);
 	aml_set_reg32_bits(reg, (((clk_rate / (115200 * 4)) - 1) & 0x7fffff)|(1<<23), 0, 24);
 }
+
 static void wait_uart_empty(void)
 {
 	do{
@@ -105,7 +106,8 @@ void clk_switch(int flag)
 					udelay(10);
 					aml_set_reg32_mask(clks[i].clk_addr,(1<<8));//switch to pll
 					udelay(10);
-					uart_change_buad(P_AO_UART_REG5,uart_rate_clk);
+					if(!(aml_read_reg32(P_AO_UART_REG5) & (1 << 24)))//Not from crystal pad
+						uart_change_buad(P_AO_UART_REG5,uart_rate_clk);
 					clks[i].clk_flag = 0;
 				}
                 	printk(KERN_INFO "clk %s(%x) on\n", clks[i].clk_name, ((clks[i].clk_addr)&0xffff)>>2);
@@ -122,7 +124,8 @@ void clk_switch(int flag)
 					udelay(10);
 					aml_clr_reg32_mask(clks[i].clk_addr, (1 << 7)); // switch to 24M
 					udelay(10);
-					uart_change_buad(P_AO_UART_REG5,uart_rate_clk);
+					if(!(aml_read_reg32(P_AO_UART_REG5) & (1 << 24)))//Not from crystal pad
+						uart_change_buad(P_AO_UART_REG5,uart_rate_clk);
 					clks[i].clk_flag=1;
 				}
 			} 

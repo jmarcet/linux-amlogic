@@ -6177,10 +6177,7 @@ unsigned int OnAction_p2p(_adapter *padapter, union recv_frame *precv_frame)
 	u8 *pframe = precv_frame->u.hdr.rx_data;
 	uint len = precv_frame->u.hdr.len;
 	struct	wifidirect_info	*pwdinfo = &( padapter->wdinfo );
-	
 
-	DBG_871X("%s\n", __FUNCTION__);
-	
 	//check RA matches or not
 	if (!_rtw_memcmp(myid(&(padapter->eeprompriv)), GetAddr1Ptr(pframe), ETH_ALEN))//for if1, sta/ap mode
 		return _SUCCESS;
@@ -7589,6 +7586,7 @@ void issue_assocreq(_adapter *padapter)
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	int	bssrate_len = 0, sta_bssrate_len = 0;
 	u8	cbw40_enable = 0;
+	u8	vs_ie_length = 0;
 #ifdef CONFIG_P2P
 	struct wifidirect_info	*pwdinfo = &(padapter->wdinfo);
 	u8					p2pie[ 255 ] = { 0x00 };
@@ -7869,17 +7867,18 @@ void issue_assocreq(_adapter *padapter)
 				if ((_rtw_memcmp(pIE->data, RTW_WPA_OUI, 4)) ||
 						(_rtw_memcmp(pIE->data, WMM_OUI, 4)) ||
 						(_rtw_memcmp(pIE->data, WPS_OUI, 4)))
-				{
-					if(!padapter->registrypriv.wifi_spec)
+				{	
+					vs_ie_length = pIE->Length;
+					if((!padapter->registrypriv.wifi_spec) && (_rtw_memcmp(pIE->data, WPS_OUI, 4)))
 					{
 						//Commented by Kurt 20110629
 						//In some older APs, WPS handshake
 						//would be fail if we append vender extensions informations to AP
-						if(_rtw_memcmp(pIE->data, WPS_OUI, 4)){
-							pIE->Length=14;
-						}
+
+						vs_ie_length = 14;
 					}
-					pframe = rtw_set_ie(pframe, _VENDOR_SPECIFIC_IE_, pIE->Length, pIE->data, &(pattrib->pktlen));
+					
+					pframe = rtw_set_ie(pframe, _VENDOR_SPECIFIC_IE_, vs_ie_length, pIE->data, &(pattrib->pktlen));
 				}
 				break;
 
@@ -11264,7 +11263,7 @@ void rtw_start_auto_ap(_adapter *adapter)
 
 	rtw_set_802_11_infrastructure_mode(adapter, Ndis802_11APMode);
 
-	rtw_setopmode_cmd(adapter, Ndis802_11APMode);
+	rtw_setopmode_cmd(adapter, Ndis802_11APMode, _TRUE);
 }
 
 static int rtw_auto_ap_start_beacon(_adapter *adapter)
@@ -11963,20 +11962,37 @@ u8 setauth_hdl(_adapter *padapter, unsigned char *pbuf)
 
 u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
 {
-	unsigned short				ctrl;
+	u16	ctrl = 0;
+	s16 cam_id = 0;
 	struct setkey_parm		*pparm = (struct setkey_parm *)pbuf;
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
-	unsigned char					null_sta[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	unsigned char null_addr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	u8 *addr;
 
 	//main tx key for wep.
 	if(pparm->set_tx)
 		pmlmeinfo->key_index = pparm->keyid;
-	
-	//write cam
-	ctrl = BIT(15) | ((pparm->algorithm) << 2) | pparm->keyid;	
 
-	write_cam(padapter, pparm->keyid, ctrl, null_sta, pparm->key);
+	cam_id = rtw_camid_alloc(padapter, NULL, pparm->keyid);
+
+	if (cam_id < 0){
+	} else {
+		if (cam_id > 3) /* not default key, searched by A2 */
+			addr = get_bssid(&padapter->mlmepriv);
+		else
+			addr = null_addr;
+		
+		ctrl = BIT(15) | BIT(6) |((pparm->algorithm) << 2) | pparm->keyid;
+		write_cam(padapter, cam_id, ctrl, addr, pparm->key);
+		DBG_871X_LEVEL(_drv_always_, "set group key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n"
+			,cam_id, MAC_ARG(addr), pparm->keyid, security_type_str(pparm->algorithm));
+	}
+
+	#ifdef DYNAMIC_CAMID_ALLOC
+	if (cam_id >=0 && cam_id <=3)
+		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_DK_CFG, (u8*)_TRUE);
+	#endif
 
 	//allow multicast packets to driver
 	rtw_hal_set_hwreg(padapter, HW_VAR_ON_RCR_AM, null_addr);
@@ -11986,135 +12002,50 @@ u8 setkey_hdl(_adapter *padapter, u8 *pbuf)
 
 u8 set_stakey_hdl(_adapter *padapter, u8 *pbuf)
 {
-	u16 ctrl=0;
-	u8 cam_id;//cam_entry
+	u16 ctrl = 0;
+	s16 cam_id = 0;
+	u8 ret = H2C_SUCCESS;
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	struct set_stakey_parm	*pparm = (struct set_stakey_parm *)pbuf;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct sta_info *psta;
 #ifdef CONFIG_TDLS
 	struct tdls_info	*ptdlsinfo = &padapter->tdlsinfo;
-	struct sta_priv	*pstapriv = &padapter->stapriv;
-	struct sta_info	*psta;
 #endif //CONFIG_TDLS
 
-	//cam_entry:
-	//0~3 for default key
-	
-	//for concurrent mode (ap+sta):
-	//default key is disable, using sw encrypt/decrypt
-	//cam_entry = 4 //for sta mode (macid=0)
-	//cam_entry(macid+3) = 5 ~ N//for ap mode (aid=1~N, macid=2 ~N)
+	if(pparm->algorithm == _NO_PRIVACY_)
+		goto write_to_cam;
 
-	//for concurrent mode (sta+sta):
-	//default key is disable, using sw encrypt/decrypt
-	//cam_entry = 4 //mapping to macid=0
-	//cam_entry = 5 //mapping to macid=2
-
-#ifdef CONFIG_CONCURRENT_MODE
-	if((pmlmeinfo->state&0x03) == WIFI_FW_STATION_STATE)
-	{
-		struct sta_priv	*pstapriv = &padapter->stapriv;
-		struct sta_info	*psta;
-		
-		psta = rtw_get_stainfo(pstapriv, pmlmeinfo->network.MacAddress);
-
-		if(psta && psta->mac_id==2)
-		{
-			cam_id = 5;
-		}
-		else
-		{
-			cam_id = 4;
-		}
-/*		
-		if(padapter->iface_type > PRIMARY_IFACE)
-		{
-			cam_id = 5;
-		}
-		else
-		{
-			cam_id = 4;
-		}
-*/		
-	}	
-#else
-	cam_id = 4;
-#endif
-
-
-	if((pmlmeinfo->state&0x03) == WIFI_FW_AP_STATE)
-	{
-	
-		struct sta_info *psta;
-		struct sta_priv *pstapriv = &padapter->stapriv;
-
-		if(pparm->algorithm == _NO_PRIVACY_)	// clear cam entry
-		{
-			clear_cam_entry(padapter, pparm->id);
-			return H2C_SUCCESS_RSP;
-		}
-		
-		psta = rtw_get_stainfo(pstapriv, pparm->addr);
-		if(psta)
-		{			
-			ctrl = (BIT(15) | ((pparm->algorithm) << 2));
-
-			DBG_871X("r871x_set_stakey_hdl(): enc_algorithm=%d\n", pparm->algorithm);
-
-			if((psta->mac_id<1) || (psta->mac_id>(NUM_STA-4)))
-			{
-				DBG_871X("r871x_set_stakey_hdl():set_stakey failed, mac_id(aid)=%d\n", psta->mac_id);
-				return H2C_REJECTED;
-			}	
-				 
-			cam_id = (psta->mac_id + 3);//0~3 for default key, cmd_id=macid + 3, macid=aid+1;
-
-			DBG_871X("Write CAM, mac_addr=%x:%x:%x:%x:%x:%x, cam_entry=%d\n", pparm->addr[0], 
-						pparm->addr[1], pparm->addr[2], pparm->addr[3], pparm->addr[4],
-						pparm->addr[5], cam_id);
-
-			write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
-	
-			return H2C_SUCCESS_RSP;
-		
-		}
-		else
-		{
-			DBG_871X("r871x_set_stakey_hdl(): sta has been free\n");
-			return H2C_REJECTED;
-		}
-		
+	psta = rtw_get_stainfo(pstapriv, pparm->addr);
+	if (!psta) {
+		DBG_871X_LEVEL(_drv_always_, "%s sta:"MAC_FMT" not found\n", __func__, MAC_ARG(pparm->addr));
+		ret = H2C_REJECTED;
+		goto exit;
 	}
-
-	//below for sta mode
-	
-	if(pparm->algorithm == _NO_PRIVACY_)	// clear cam entry
-	{
-		clear_cam_entry(padapter, pparm->id);
-		return H2C_SUCCESS;
-	}
-	
-	ctrl = BIT(15) | ((pparm->algorithm) << 2);	
-	
-#ifdef CONFIG_TDLS
-	if(ptdlsinfo->clear_cam!=0){
-		clear_cam_entry(padapter, ptdlsinfo->clear_cam);
-		ptdlsinfo->clear_cam=0;
-
-		return H2C_SUCCESS;
-	}
-
-	psta = rtw_get_stainfo(pstapriv, pparm->addr);//Get TDLS Peer STA
-	if( psta->tdls_sta_state&TDLS_LINKED_STATE ){
-		write_cam(padapter, psta->mac_id, ctrl, pparm->addr, pparm->key);
-	}
-	else
-#endif //CONFIG_TDLS	
-	write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
 
 	pmlmeinfo->enc_algo = pparm->algorithm;
-	
-	return H2C_SUCCESS;
+	cam_id = rtw_camid_alloc(padapter, psta, 0);
+	if (cam_id < 0)
+		goto exit;
+
+write_to_cam:
+	if(pparm->algorithm == _NO_PRIVACY_) {
+		while((cam_id = rtw_camid_search(padapter, pparm->addr, -1)) >= 0) {
+			DBG_871X_LEVEL(_drv_always_, "clear key for addr:"MAC_FMT", camid:%d\n", MAC_ARG(pparm->addr), cam_id);
+			clear_cam_entry(padapter, cam_id);
+			rtw_camid_free(padapter,cam_id);
+		}
+	} else {
+		DBG_871X_LEVEL(_drv_always_, "set pairwise key camid:%d, addr:"MAC_FMT", kid:%d, type:%s\n",
+			cam_id, MAC_ARG(pparm->addr), pparm->keyid, security_type_str(pparm->algorithm));
+		ctrl = BIT(15) | ((pparm->algorithm) << 2) | pparm->keyid;
+		write_cam(padapter, cam_id, ctrl, pparm->addr, pparm->key);
+	}
+	ret = H2C_SUCCESS_RSP;
+
+exit:
+	return ret;
 }
 
 u8 add_ba_hdl(_adapter *padapter, unsigned char *pbuf)
@@ -12157,6 +12088,31 @@ u8 add_ba_hdl(_adapter *padapter, unsigned char *pbuf)
 	return 	H2C_SUCCESS;
 }
 
+u8 chk_bmc_sleepq_cmd(_adapter* padapter)
+{
+	struct cmd_obj *ph2c;
+	struct cmd_priv *pcmdpriv = &(padapter->cmdpriv);
+	u8 res = _SUCCESS;
+
+_func_enter_;
+
+	if ((ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj))) == NULL)
+	{
+		res= _FAIL;
+		goto exit;
+	}
+
+	init_h2fwcmd_w_parm_no_parm_rsp(ph2c, GEN_CMD_CODE(_ChkBMCSleepq));
+
+	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
+
+exit:
+
+_func_exit_;
+
+	return res;
+}
+
 u8 set_tx_beacon_cmd(_adapter* padapter)
 {
 	struct cmd_obj	*ph2c;
@@ -12166,15 +12122,15 @@ u8 set_tx_beacon_cmd(_adapter* padapter)
 	struct mlme_ext_info	*pmlmeinfo = &(pmlmeext->mlmext_info);
 	u8	res = _SUCCESS;
 	int len_diff = 0;
-	
-_func_enter_;	
-	
+
+_func_enter_;
+
 	if ((ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj))) == NULL)
 	{
 		res= _FAIL;
 		goto exit;
 	}
-	
+
 	if ((ptxBeacon_parm = (struct Tx_Beacon_param *)rtw_zmalloc(sizeof(struct Tx_Beacon_param))) == NULL)
 	{
 		rtw_mfree((unsigned char *)ph2c, sizeof(struct	cmd_obj));
@@ -12183,21 +12139,20 @@ _func_enter_;
 	}
 
 	_rtw_memcpy(&(ptxBeacon_parm->network), &(pmlmeinfo->network), sizeof(WLAN_BSSID_EX));
-	
+
 	len_diff = update_hidden_ssid(
 		ptxBeacon_parm->network.IEs+_BEACON_IE_OFFSET_
 		, ptxBeacon_parm->network.IELength-_BEACON_IE_OFFSET_
 		, pmlmeinfo->hidden_ssid_mode
 	);
 	ptxBeacon_parm->network.IELength += len_diff;
-		
+
 	init_h2fwcmd_w_parm_no_rsp(ph2c, ptxBeacon_parm, GEN_CMD_CODE(_TX_Beacon));
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-	
 exit:
-	
+
 _func_exit_;
 
 	return res;
@@ -12276,6 +12231,75 @@ u8 h2c_msg_hdl(_adapter *padapter, unsigned char *pbuf)
 	return H2C_SUCCESS;
 }
 
+u8 chk_bmc_sleepq_hdl(_adapter *padapter, unsigned char *pbuf)
+{
+#ifdef CONFIG_AP_MODE
+	_irqL irqL;
+	struct sta_info *psta_bmc;
+	_list	*xmitframe_plist, *xmitframe_phead;
+	struct xmit_frame *pxmitframe=NULL;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct sta_priv  *pstapriv = &padapter->stapriv;
+
+	//for BC/MC Frames
+	psta_bmc = rtw_get_bcmc_stainfo(padapter);
+	if(!psta_bmc)
+		return H2C_SUCCESS;
+
+	if((pstapriv->tim_bitmap&BIT(0)) && (psta_bmc->sleepq_len>0))
+	{
+#ifndef CONFIG_PCI_HCI
+		rtw_msleep_os(10);// 10ms, ATIM(HIQ) Windows
+#endif
+		//_enter_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
+		_enter_critical_bh(&pxmitpriv->lock, &irqL);
+
+		xmitframe_phead = get_list_head(&psta_bmc->sleep_q);
+		xmitframe_plist = get_next(xmitframe_phead);
+
+		while ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE)
+		{
+			pxmitframe = LIST_CONTAINOR(xmitframe_plist, struct xmit_frame, list);
+
+			xmitframe_plist = get_next(xmitframe_plist);
+
+			rtw_list_delete(&pxmitframe->list);
+
+			psta_bmc->sleepq_len--;
+			if(psta_bmc->sleepq_len>0)
+				pxmitframe->attrib.mdata = 1;
+			else
+				pxmitframe->attrib.mdata = 0;
+
+			pxmitframe->attrib.triggered=1;
+
+			if (xmitframe_hiq_filter(pxmitframe) == _TRUE)
+				pxmitframe->attrib.qsel = 0x11;//HIQ
+
+			#if 0
+			_exit_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
+			if(rtw_hal_xmit(padapter, pxmitframe) == _TRUE)
+			{
+				rtw_os_xmit_complete(padapter, pxmitframe);
+			}
+			_enter_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
+			#endif
+			rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
+		}
+
+		//_exit_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
+		_exit_critical_bh(&pxmitpriv->lock, &irqL);
+
+		if (padapter->interface_type != RTW_PCIE) {
+			/* check hi queue and bmc_sleepq */
+			rtw_chk_hi_queue_cmd(padapter);
+		}
+	}
+#endif
+
+	return H2C_SUCCESS;
+}
+
 u8 tx_beacon_hdl(_adapter *padapter, unsigned char *pbuf)
 {
 	if(send_beacon(padapter)==_FAIL)
@@ -12283,75 +12307,11 @@ u8 tx_beacon_hdl(_adapter *padapter, unsigned char *pbuf)
 		DBG_871X("issue_beacon, fail!\n");
 		return H2C_PARAMETERS_ERROR;
 	}
-#ifdef CONFIG_AP_MODE
-	else //tx bc/mc frames after update TIM 
-	{	
-		_irqL irqL;
-		struct sta_info *psta_bmc;
-		_list	*xmitframe_plist, *xmitframe_phead;
-		struct xmit_frame *pxmitframe=NULL;
-		struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
-		struct sta_priv  *pstapriv = &padapter->stapriv;
-		
-		//for BC/MC Frames
-		psta_bmc = rtw_get_bcmc_stainfo(padapter);
-		if(!psta_bmc)
-			return H2C_SUCCESS;
-	
-		if((pstapriv->tim_bitmap&BIT(0)) && (psta_bmc->sleepq_len>0))
-		{				
-#ifndef CONFIG_PCI_HCI
-			rtw_msleep_os(10);// 10ms, ATIM(HIQ) Windows
-#endif
-			//_enter_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
-			_enter_critical_bh(&pxmitpriv->lock, &irqL);
 
-			xmitframe_phead = get_list_head(&psta_bmc->sleep_q);
-			xmitframe_plist = get_next(xmitframe_phead);
-
-			while ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE)
-			{			
-				pxmitframe = LIST_CONTAINOR(xmitframe_plist, struct xmit_frame, list);
-
-				xmitframe_plist = get_next(xmitframe_plist);
-
-				rtw_list_delete(&pxmitframe->list);
-
-				psta_bmc->sleepq_len--;
-				if(psta_bmc->sleepq_len>0)
-					pxmitframe->attrib.mdata = 1;
-				else
-					pxmitframe->attrib.mdata = 0;
-
-				pxmitframe->attrib.triggered=1;
-
-				pxmitframe->attrib.qsel = 0x11;//HIQ
-
-#if 0
-				_exit_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
-				if(rtw_hal_xmit(padapter, pxmitframe) == _TRUE)
-				{		
-					rtw_os_xmit_complete(padapter, pxmitframe);
-				}
-				_enter_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
-
-#endif
-				rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
-
-				//pstapriv->tim_bitmap &= ~BIT(0);				
-		
-			}	
-	
-			//_exit_critical_bh(&psta_bmc->sleep_q.lock, &irqL);
-	               _exit_critical_bh(&pxmitpriv->lock, &irqL);
-
-		}
-
-	}
-#endif
+	/* tx bc/mc frames after update TIM */
+	chk_bmc_sleepq_hdl(padapter, NULL);
 
 	return H2C_SUCCESS;
-	
 }
 
 void change_band_update_ie(_adapter *padapter, WLAN_BSSID_EX *pnetwork)

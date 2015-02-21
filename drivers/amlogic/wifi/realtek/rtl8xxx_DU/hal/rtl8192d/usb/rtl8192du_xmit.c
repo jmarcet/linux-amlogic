@@ -759,24 +759,30 @@ s32 rtl8192du_xmitframe_complete(_adapter *padapter, struct xmit_priv *pxmitpriv
 
 				pxmitframe = LIST_CONTAINOR(xmitframe_plist, struct xmit_frame, list);
 
-#ifndef USB_PACKET_OFFSET_SZ
-				len = xmitframe_need_length(pxmitframe) + TXDESC_SIZE + ((USB_92D_DUMMY_OFFSET - 1) * PACKET_OFFSET_SZ);
-#else
-				len = xmitframe_need_length(pxmitframe) + TXDESC_SIZE;
-#endif //USB_PACKET_OFFSET_SZ
-				if (pbuf + _RND8(len) > aggMaxLength)
-				{
+				if(_FAIL == rtw_hal_busagg_qsel_check(padapter,pfirstframe->attrib.qsel,pxmitframe->attrib.qsel)) {
 					bulkstart = _TRUE;
 				}
 				else
 				{
-					rtw_list_delete(&pxmitframe->list);
-					ptxservq->qcnt--;
-					phwxmit[ac_index].accnt--;
+					#ifndef USB_PACKET_OFFSET_SZ
+					len = xmitframe_need_length(pxmitframe) + TXDESC_SIZE + ((USB_92D_DUMMY_OFFSET - 1) * PACKET_OFFSET_SZ);
+					#else
+					len = xmitframe_need_length(pxmitframe) + TXDESC_SIZE;
+					#endif //USB_PACKET_OFFSET_SZ
+					if (pbuf + _RND8(len) > aggMaxLength)
+					{
+						bulkstart = _TRUE;
+					}
+					else
+					{
+						rtw_list_delete(&pxmitframe->list);
+						ptxservq->qcnt--;
+						phwxmit[ac_index].accnt--;
 
-					//Remove sta node when there is no pending packets.
-					if (_rtw_queue_empty(&ptxservq->sta_pending) == _TRUE)
-						rtw_list_delete(&ptxservq->tx_pending);
+						//Remove sta node when there is no pending packets.
+						if (_rtw_queue_empty(&ptxservq->sta_pending) == _TRUE)
+							rtw_list_delete(&ptxservq->tx_pending);
+					}
 				}
 			}
 			else

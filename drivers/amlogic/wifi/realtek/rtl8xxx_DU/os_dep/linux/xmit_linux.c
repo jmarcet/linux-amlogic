@@ -32,6 +32,7 @@
 #include <osdep_intf.h>
 #include <circ_buf.h>
 
+#define DBG_DUMP_OS_QUEUE_CTL 0
 
 uint rtw_remainder_len(struct pkt_file *pfile)
 {
@@ -206,21 +207,65 @@ void rtw_os_xmit_resource_free(_adapter *padapter, struct xmit_buf *pxmitbuf,u32
 #endif
 }
 
+void dump_os_queue(void *sel, _adapter *padapter)
+{
+	struct net_device *ndev = padapter->pnetdev;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
+	int i;
+
+	for (i=0;i<4;i++) {
+		DBG_871X_SEL_NL(sel, "os_queue[%d]:%s\n"
+			, i, __netif_subqueue_stopped(ndev, i)?"stopped":"waked");
+	}
+#else
+	DBG_871X_SEL_NL(sel, "os_queue:%s\n"
+			, netif_queue_stopped(ndev)?"stopped":"waked");
+#endif
+}
+
+inline static bool rtw_os_need_wake_queue(_adapter *padapter, u16 qidx)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+
+	if (pxmitpriv->hwxmits[qidx].accnt < NR_XMITFRAME/2) {
+		return _TRUE;
+	}
+	return _FALSE;
+#else
+	return _TRUE;
+#endif
+}
+
+inline static bool rtw_os_need_stop_queue(_adapter *padapter, u16 qidx)
+{
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
+	if (pxmitpriv->hwxmits[qidx].accnt > NR_XMITFRAME/2) {
+			return _TRUE;
+	}
+#endif
+	return _FALSE;
+}
+
 void rtw_os_pkt_complete(_adapter *padapter, _pkt *pkt)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
-	u16	queue;
-	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	u16	qidx;
 
-	queue = skb_get_queue_mapping(pkt);
-	if(__netif_subqueue_stopped(padapter->pnetdev, queue) &&
-		(pxmitpriv->hwxmits[queue].accnt < NR_XMITFRAME/2))
-	{
-		netif_wake_subqueue(padapter->pnetdev, queue);
+	qidx = skb_get_queue_mapping(pkt);
+	if (rtw_os_need_wake_queue(padapter, qidx)) {
+		if (DBG_DUMP_OS_QUEUE_CTL)
+			DBG_871X(FUNC_ADPT_FMT": netif_wake_subqueue[%d]\n", FUNC_ADPT_ARG(padapter), qidx);
+		netif_wake_subqueue(padapter->pnetdev, qidx);
 	}
 #else
-	if (netif_queue_stopped(padapter->pnetdev))
+	if (rtw_os_need_wake_queue(padapter, 0)) {
+		if (DBG_DUMP_OS_QUEUE_CTL)
+			DBG_871X(FUNC_ADPT_FMT": netif_wake_queue\n", FUNC_ADPT_ARG(padapter));
 		netif_wake_queue(padapter->pnetdev);
+	}
 #endif
 
 	rtw_skb_free(pkt);
@@ -262,7 +307,49 @@ void rtw_os_xmit_schedule(_adapter *padapter)
 #endif
 }
 
+static bool rtw_check_xmit_resource(_adapter *padapter, _pkt *pkt)
+{
+	bool busy = _FALSE;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+#if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,35))
+	u16	qidx;
 
+	qidx = skb_get_queue_mapping(pkt);
+	if (rtw_os_need_stop_queue(padapter, qidx)) {
+		if (DBG_DUMP_OS_QUEUE_CTL)
+			DBG_871X(FUNC_ADPT_FMT": netif_stop_subqueue[%d]\n", FUNC_ADPT_ARG(padapter), qidx);
+		netif_stop_subqueue(padapter->pnetdev, qidx);
+		busy = _TRUE;
+	}
+#endif
+	return busy;
+}
+
+void rtw_os_wake_queue_at_free_stainfo(_adapter *padapter, int *qcnt_freed)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35))
+	int i;
+
+	for (i=0;i<4;i++) {
+		if (qcnt_freed[i] == 0)
+			continue;
+
+		if(rtw_os_need_wake_queue(padapter, i)) {
+			if (DBG_DUMP_OS_QUEUE_CTL)
+				DBG_871X(FUNC_ADPT_FMT": netif_wake_subqueue[%d]\n", FUNC_ADPT_ARG(padapter), i);
+			netif_wake_subqueue(padapter->pnetdev, i);
+		}
+	}
+#else
+	if (qcnt_freed[0] || qcnt_freed[1] || qcnt_freed[2] || qcnt_freed[3]) {
+		if(rtw_os_need_wake_queue(padapter, 0)) {
+			if (DBG_DUMP_OS_QUEUE_CTL)
+				DBG_871X(FUNC_ADPT_FMT": netif_wake_queue\n", FUNC_ADPT_ARG(padapter));
+			netif_wake_queue(padapter->pnetdev);
+		}
+	}
+#endif
+}
 
 #ifdef CONFIG_TX_MCAST2UNI
 int rtw_mlcst2unicst(_adapter *padapter, struct sk_buff *skb)
@@ -358,21 +445,18 @@ _func_enter_;
 		goto drop_packet;
 	}
 
-#if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,35))
-	queue = skb_get_queue_mapping(pkt);
-	/* No free space for Tx, tx_worker is too slow */
-	if (pxmitpriv->hwxmits[queue].accnt > NR_XMITFRAME/2) {
-		//DBG_871X("%s(): stop netif_subqueue[%d]\n", __FUNCTION__, queue);
-		netif_stop_subqueue(padapter->pnetdev, queue);
+	if (rtw_check_xmit_resource(padapter, pkt) == _TRUE)
 		return NETDEV_TX_BUSY;
-	}
-#endif
 
 #ifdef CONFIG_TX_MCAST2UNI
 	if ( !rtw_mc2u_disable
 		&& check_fwstate(pmlmepriv, WIFI_AP_STATE) == _TRUE
 		&& ( IP_MCAST_MAC(pkt->data)
-			|| ICMPV6_MCAST_MAC(pkt->data) )
+			|| ICMPV6_MCAST_MAC(pkt->data)
+			#ifdef CONFIG_TX_BCAST2UNI
+			|| is_broadcast_mac_addr(pkt->data)
+			#endif
+			)
 		&& (padapter->registrypriv.wifi_spec == 0)
 		)
 	{
@@ -402,7 +486,7 @@ _func_enter_;
 
 drop_packet:
 	pxmitpriv->tx_drop++;
-	rtw_skb_free(pkt);
+	rtw_os_pkt_complete(padapter, pkt);
 	RT_TRACE(_module_xmit_osdep_c_, _drv_notice_, ("rtw_xmit_entry: drop, tx_drop=%d\n", (u32)pxmitpriv->tx_drop));
 
 exit:

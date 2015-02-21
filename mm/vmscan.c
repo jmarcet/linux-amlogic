@@ -1818,7 +1818,7 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	 * This scanning priority is essentially the inverse of IO cost.
 	 */
 	anon_prio = vmscan_swappiness(sc);
-	if((totalram_pages <= 0x20000) && vm_swap_full()){
+	if(atomic_long_read(&nr_swap_pages) * 3 < total_swap_pages){
 		anon_prio >>= 1;
 	}
 	file_prio = 200 - anon_prio;

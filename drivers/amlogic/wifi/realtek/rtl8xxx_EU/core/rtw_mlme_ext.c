@@ -13970,7 +13970,23 @@ int rtw_chk_start_clnt_join(_adapter *padapter, u8 *ch, u8 *bw, u8 *offset)
 	struct mlme_ext_priv *pbuddy_mlmeext;
 	struct mlme_ext_info	*pbuddy_pmlmeinfo;
 	struct mlme_priv *pbuddy_mlmepriv;
+#endif
 
+	if (!ch || !bw || !offset) {
+		connect_allow = _FALSE;
+		rtw_warn_on(1);
+		goto exit;
+	}
+
+	if (cur_ch == 0) {
+		connect_allow = _FALSE;
+		DBG_871X_LEVEL(_drv_err_, FUNC_ADPT_FMT" cur_ch:%u\n"
+			, FUNC_ADPT_ARG(padapter), cur_ch);
+		rtw_warn_on(1);
+		goto exit;
+	}
+
+#ifdef CONFIG_CONCURRENT_MODE
 	if (!rtw_buddy_adapter_up(padapter)) {
 		goto exit;
 	}
@@ -14104,13 +14120,9 @@ int rtw_chk_start_clnt_join(_adapter *padapter, u8 *ch, u8 *bw, u8 *offset)
 		}
 	}	
 
-exit:
 #endif /* CONFIG_CONCURRENT_MODE */
 
-	if (!ch || !bw || !offset) {
-		rtw_warn_on(1);
-		connect_allow = _FALSE;
-	}
+exit:
 
 	if (connect_allow == _TRUE) {
 		DBG_871X("start_join_set_ch_bw: ch=%d, bwmode=%d, ch_offset=%d\n", cur_ch, cur_bw, cur_ch_offset);
@@ -14217,11 +14229,7 @@ u8 set_chplan_hdl(_adapter *padapter, unsigned char *pbuf)
 	init_channel_list(padapter, pmlmeext->channel_set, pmlmeext->max_chan_nums, &pmlmeext->channel_list);	
 
 #ifdef CONFIG_IOCTL_CFG80211
-	if ((padapter->rtw_wdev != NULL) && (padapter->rtw_wdev->wiphy)) {
-		struct regulatory_request request;
-		request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
-		rtw_reg_notifier(padapter->rtw_wdev->wiphy, &request);
-	}
+	rtw_reg_notify_by_driver(padapter);
 #endif //CONFIG_IOCTL_CFG80211
 
 	return 	H2C_SUCCESS;

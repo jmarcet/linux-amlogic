@@ -328,6 +328,16 @@ int proc_get_wifi_spec(struct seq_file *m, void *v)
 	return 0;
 }
 
+static int proc_get_mac_qinfo(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
+
+	rtw_hal_get_hwreg(adapter, HW_VAR_DUMP_MAC_QUEUE_INFO, (u8 *)m);
+
+	return 0;
+}
+
 static int proc_get_cam(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
@@ -425,6 +435,7 @@ const struct rtw_proc_hdl adapter_proc_hdls [] = {
 	{"adapter_state", proc_get_adapter_state, NULL},
 	{"trx_info", proc_get_trx_info, NULL},
 	{"rate_ctl", proc_get_rate_ctl, proc_set_rate_ctl},
+	{"mac_qinfo", proc_get_mac_qinfo, NULL},
 	{"cam", proc_get_cam, proc_set_cam},
 	{"cam_cache", proc_get_cam_cache, NULL},
 	{"suspend_info", proc_get_suspend_resume_info, NULL},

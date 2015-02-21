@@ -1233,6 +1233,7 @@ void rtl8192du_recv_tasklet(void *priv)
 	_pkt			*pskb;
 	_adapter		*padapter = (_adapter*)priv;
 	struct recv_priv	*precvpriv = &padapter->recvpriv;
+	struct recv_buf *precvbuf = NULL;
 	
 	while (NULL != (pskb = skb_dequeue(&precvpriv->rx_skb_queue)))
 	{
@@ -1258,7 +1259,13 @@ void rtl8192du_recv_tasklet(void *priv)
 #endif //CONFIG_USB_RX_AGGREGATION, no usb rx aggregation, no copy
 				
 	}
-	
+
+	while (NULL != (precvbuf = rtw_dequeue_recvbuf(&precvpriv->recv_buf_pending_queue)))
+	{
+		precvbuf->pskb = NULL;
+		precvbuf->reuse = _FALSE;
+		rtw_read_port(padapter, precvpriv->ff_hwaddr, 0, (unsigned char *)precvbuf);
+	}
 }
 
 
@@ -1409,8 +1416,9 @@ _func_enter_;
 			if(precvbuf->pskb == NULL)		
 			{
 				RT_TRACE(_module_hci_ops_os_c_,_drv_err_,("init_recvbuf(): alloc_skb fail!\n"));
+				rtw_enqueue_recvbuf(precvbuf, &precvpriv->recv_buf_pending_queue);
 				return _FAIL;
-			}	
+			}
 
 			tmpaddr = (SIZE_PTR)precvbuf->pskb->data;
 	        	alignment = tmpaddr & (RECVBUFF_ALIGN_SZ-1);

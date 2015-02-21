@@ -39,7 +39,7 @@
 #include "../tvin_frontend.h"
 #include "hdmirx_drv.h"           /* For user used */
 #include "hdmi_rx_reg.h"
-#if CEC_FUNC_ENABLE
+#ifdef CEC_FUNC_ENABLE
 #include "hdmirx_cec.h"
 #endif
 
@@ -50,7 +50,13 @@
 #define TVHDMI_DEVICE_NAME        "hdmirx"
 #define TVHDMI_CLASS_NAME         "hdmirx"
 #define INIT_FLAG_NOT_LOAD 0x80
-#define HDMI_DE_REPEAT_DONE_FLAG 0xF0
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+  #define HDMI_DE_REPEAT_DONE_FLAG 0x0
+  int hdmirx_de_repeat_enable = 0;
+#else
+  #define HDMI_DE_REPEAT_DONE_FLAG 0xF0
+  int hdmirx_de_repeat_enable = 1;
+#endif
 
 
 /* 50ms timer for hdmirx main loop (HDMI_STATE_CHECK_FREQ is 20) */
@@ -67,9 +73,9 @@ extern void clk_off(void);
 extern void hdmirx_wr_top (unsigned long addr, unsigned long data);
 int resume_flag = 0;
 static int force_colorspace = 0;
-int cur_colorspace = 0xff;
-static int hdmi_yuv444_enable = 1;
-int hdmirx_de_repeat_enable = 1;
+//int cur_colorspace = 0xff;
+static int hdmi_yuv444_enable = 0;
+
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
 module_param(resume_flag, int, 0664);
@@ -77,8 +83,8 @@ module_param(resume_flag, int, 0664);
 MODULE_PARM_DESC(force_colorspace, "\n force_colorspace \n");
 module_param(force_colorspace, int, 0664);
 
-MODULE_PARM_DESC(cur_colorspace, "\n cur_colorspace \n");
-module_param(cur_colorspace, int, 0664);
+//MODULE_PARM_DESC(cur_colorspace, "\n cur_colorspace \n");
+//module_param(cur_colorspace, int, 0664);
 
 module_param(hdmi_yuv444_enable, int, 0664);
 MODULE_PARM_DESC(hdmi_yuv444_enable, "hdmi_yuv444_enable");
@@ -126,8 +132,9 @@ void hdmirx_timer_handler(unsigned long arg)
 	struct hdmirx_dev_s *devp = (struct hdmirx_dev_s *)arg;
 
 	hdmirx_hw_monitor();
-#if CEC_FUNC_ENABLE
-	hdmirx_cec_rx_monitor();
+#ifdef CEC_FUNC_ENABLE
+	cec_update_cec_map();
+	//hdmirx_cec_rx_monitor();
 	hdmirx_cec_tx_monitor();
 #endif
 	devp->timer.expires = jiffies + TIMER_STATE_CHECK;
@@ -149,12 +156,20 @@ int hdmirx_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
 	struct hdmirx_dev_s *devp;
 
-	open_flage = 1;
 	devp = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp_hdmirx_suspend = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp->param.port = port;
 	hdmirx_hw_enable();
 	hdmirx_hw_init(port);
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	if((open_flage)&&(rx.phy.fast_switching)) //for fast switch
+	{
+		hdmirx_phy_fast_switching(1);
+		return 0;
+	}
+	
+#endif
+	open_flage = 1;
 	/* timer */
 	init_timer(&devp->timer);
 	devp->timer.data = (ulong)devp;
@@ -338,7 +353,7 @@ enum tvin_sig_fmt_e hdmirx_get_fmt(struct tvin_frontend_s *fe)
 extern unsigned char is_frame_packing(void);
 extern unsigned char is_alternative(void);
 
-void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
+void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
 	unsigned char _3d_structure, _3d_ext_data;
 	enum tvin_sig_fmt_e sig_fmt;
@@ -369,7 +384,7 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		hdmi_yuv444_enable &&
 		(prop->color_format == TVIN_RGB444))
 		prop->dest_cfmt = TVIN_YUV444;
-	cur_colorspace = prop->color_format;
+	//cur_colorspace = prop->color_format;
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if (hdmirx_hw_get_3d_structure(&_3d_structure, &_3d_ext_data) >= 0) {
 		if (_3d_structure == 0x0) {        /* frame packing */
@@ -410,9 +425,14 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		prop->trans_fmt = TVIN_TFMT_3D_LA;
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
-	prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1) | HDMI_DE_REPEAT_DONE_FLAG;
+	if(hdmirx_de_repeat_enable)
+		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1) | HDMI_DE_REPEAT_DONE_FLAG;
+	else
+		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1);
 
-	//patch for 4k*2k fmt buffer limit
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+
+#else
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
 		prop->hs = 64;
 		prop->he = 64;
@@ -422,6 +442,7 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 	} else if(TVIN_SIG_FMT_HDMI_3840_2160_00HZ == sig_fmt) {
 		prop->scaling4h = 1080;
 	}
+#endif
 }
 
 bool hdmirx_check_frame_skip(struct tvin_frontend_s *fe)
@@ -436,7 +457,7 @@ static struct tvin_state_machine_ops_s hdmirx_sm_ops = {
 	.fmt_config       = NULL,
 	.adc_cal          = NULL,
 	.pll_lock         = hdmirx_pll_lock,
-	.get_sig_propery  = hdmirx_get_sig_propery,
+	.get_sig_propery  = hdmirx_get_sig_property,
 	.vga_set_param    = NULL,
 	.vga_get_param    = NULL,
 	.check_frame_skip = hdmirx_check_frame_skip,
@@ -462,12 +483,77 @@ static int hdmirx_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
+#ifdef CEC_FUNC_ENABLE
 
 static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
+
+	//unsigned int delay_cnt = 0;
+	void __user *argp = (void __user *)arg;
+	if (argp == NULL) {
+		return -ENOSYS;
+	}
+
+	if (_IOC_TYPE(cmd) != HDMI_IOC_MAGIC) {
+		pr_err("%s invalid command: %u\n", __func__, cmd);
+		return -ENOSYS;
+	}
+
+
+	/* Get the per-device structure that contains this cdev */
+	//devp = file->private_data;
+
+	switch (cmd)
+	{
+		case HDMI_IOC_CEC_ON:
+			hdmirx_cec_fun_onoff(1);
+			break;
+		case HDMI_IOC_CEC_OFF:
+			hdmirx_cec_fun_onoff(0);
+			break;
+		case HDMI_IOC_CEC_ARC_ON:
+			hdmirx_cec_arc_onoff(1);
+			break;
+		case HDMI_IOC_CEC_ARC_OFF:
+			hdmirx_cec_arc_onoff(0);
+			break;
+		case HDMI_IOC_CEC_CLEAR_BUFFER:
+			hdmirx_cec_clear_rx_buffer();
+			break;
+		case HDMI_IOC_CEC_GET_MSG_CNT:{
+			int cnt;
+			cnt = hdmirx_get_cec_msg_cnt();
+			if (copy_to_user(argp, &cnt, sizeof(int)))
+				ret = -EFAULT;
+			break;
+		}
+		case HDMI_IOC_CEC_GET_MSG:{
+			struct _cec_msg *msg = NULL;
+			msg = hdmirx_get_rx_msg();
+			if (msg != NULL) {
+				if (copy_to_user(argp, msg, sizeof(struct _cec_msg)))
+					ret = -EFAULT;
+			}
+			break;
+		}
+		case HDMI_IOC_CEC_SENT_MSG:{
+			struct _cec_msg msg;
+			if (copy_from_user(&msg, argp, sizeof(struct _cec_msg))) {
+				ret = -EFAULT;
+				break;
+			}
+			cec_post_msg_to_buf(&msg);
+			break;
+		}
+		default:
+			ret = -ENOIOCTLCMD;
+			//pr_info("%s %d is not supported command\n", __func__, cmd);
+			break;
+	}
 	return ret;
 }
+#endif
 
 /*
  * File operations structure
@@ -477,7 +563,9 @@ static struct file_operations hdmirx_fops = {
 	.owner		= THIS_MODULE,
 	.open		= hdmirx_open,
 	.release	= hdmirx_release,
+#ifdef CEC_FUNC_ENABLE
 	.unlocked_ioctl	= hdmirx_ioctl,
+#endif
 };
 
 /* attr */
@@ -728,13 +816,10 @@ static int hdmirx_probe(struct platform_device *pdev)
 		goto fail_kmalloc_hdev;
 	}
 	memset(hdevp, 0, sizeof(struct hdmirx_dev_s));
+
 	/*@to get from bsp*/
-	if(pdev->id == -1){
-		hdevp->index = 0;
-	} else {
-		pr_info("%s: failed to get device id\n", __func__);
-		goto fail_get_id;
-	}
+	hdevp->index = pdev->id;
+
 	/* create cdev and reigser with sysfs */
 	ret = hdmirx_add_cdev(&hdevp->cdev, &hdmirx_fops, hdevp->index);
 	if (ret) {
@@ -782,7 +867,9 @@ static int hdmirx_probe(struct platform_device *pdev)
 	/* frontend */
 	tvin_frontend_init(&hdevp->frontend, &hdmirx_dec_ops, &hdmirx_sm_ops, hdevp->index);
 	sprintf(hdevp->frontend.name, "%s", TVHDMI_NAME);
-	tvin_reg_frontend(&hdevp->frontend);
+	if (tvin_reg_frontend(&hdevp->frontend) < 0) {
+		pr_info("hdmirx: driver probe error!!! \n");
+	}
 
 	hdmirx_hw_enable();
     /* set all hpd status  */
@@ -808,7 +895,7 @@ fail_create_debug_file:
 fail_create_device:
 	cdev_del(&hdevp->cdev);
 fail_add_cdev:
-fail_get_id:
+//fail_get_id:
 	kfree(hdevp);
 fail_kmalloc_hdev:
 	return ret;
@@ -945,6 +1032,8 @@ void hdmirx_irq_init(void);
 static int __init hdmirx_init(void)
 {
 	int ret = 0;
+	struct platform_device *pdev;
+
 	if(init_flag & INIT_FLAG_NOT_LOAD)
 		return 0;
 
@@ -960,6 +1049,16 @@ static int __init hdmirx_init(void)
 		ret = PTR_ERR(hdmirx_clsp);
 		goto fail_class_create;
 	}
+
+    pdev = platform_device_alloc(TVHDMI_NAME,0);
+    if(IS_ERR(pdev)){
+    	pr_info(KERN_ERR "[hdmirx..]%s alloc platform device error.\n", __func__);
+    	goto fail_class_create;
+    }
+    if(platform_device_add(pdev)){
+    	pr_info(KERN_ERR "[hdmirx..]%s failed register platform device.\n", __func__);
+    	goto fail_class_create;
+    }
 
 	ret = platform_driver_register(&hdmirx_driver);
 	if (ret != 0) {

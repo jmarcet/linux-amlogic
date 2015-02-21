@@ -12,3 +12,5 @@ obj-$(CONFIG_RTL8188DU) += realtek/rtl8xxx_DU/
 obj-$(CONFIG_RTL8188EU) += realtek/rtl8xxx_EU/
 obj-$(CONFIG_RTL8188EU_MP) += realtek/rtl8xxx_EU_MP/
 obj-$(CONFIG_SDIO_DHD_CDC_WIFI_40181_MODULE) += broadcom/broadcm_40181/
+obj-$(CONFIG_BCMDHD_141_AMPAK) += broadcom/bcmdhd_1_141_xx/
+obj-$(CONFIG_BCMDHD_4354_AMPAK) += broadcom/broadcm_4354/

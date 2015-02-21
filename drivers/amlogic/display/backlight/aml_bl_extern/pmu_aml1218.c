@@ -102,7 +102,10 @@ static int bl_extern_power_on(void)
     }
 #endif
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 1);
+    	  if(bl_ext_config->gpio_on == 2)
+    				bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    		else		
+        		bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_on);
     }
 
     printk("%s\n", __FUNCTION__);
@@ -118,7 +121,10 @@ static int bl_extern_power_off(void)
     int ret = 0;
 
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 0);
+    		if(bl_ext_config->gpio_off == 2)
+    				bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    		else		
+        		bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_off);
     }
 #ifdef CONFIG_AMLOGIC_BOARD_HAS_PMU
     pmu_driver = aml_pmu_get_driver();

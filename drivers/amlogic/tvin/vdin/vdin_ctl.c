@@ -33,12 +33,12 @@
 #define TVIN_MAX_PIXCLK 20000
 
 #if defined (VDIN_V2)
-#define TVIN_MAX_HACTIVE     4096
-#define TVIN_MAX_VACTIVE     4096
+static short max_hactive = 4096;
 #else
-#define TVIN_MAX_HACTIVE     1920
-#define TVIN_MAX_VACTIVE     1080
+static short max_hactive = 1920;
 #endif
+module_param(max_hactive, short, 0664);
+MODULE_PARM_DESC(max_hactive, "the max hactive of vdin");
 
 /*
 *protection for vga vertical de adjustment,if vertical blanking too short
@@ -341,8 +341,26 @@ static struct vdin_matrix_lup_s vdin_matrix_lup[] =
 
 inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 {
-	if(devp->prop.color_format == devp->prop.dest_cfmt)
-		devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+	if(devp->prop.color_format == devp->prop.dest_cfmt){
+		switch(devp->prop.color_format){
+			case TVIN_YUV422:
+			case TVIN_YUYV422:
+			case TVIN_YVYU422:
+			case TVIN_UYVY422:
+			case TVIN_VYUY422:
+				devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
+				break;
+			case TVIN_YUV444:
+				devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV444;
+				break;
+			case TVIN_RGB444:
+				devp->format_convert = VDIN_FORMAT_CONVERT_RGB_RGB;
+				break;
+			default:
+				devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+				break;
+		}
+	}
 	else {
 		switch(devp->prop.color_format){
 			case TVIN_YUV422:
@@ -1516,7 +1534,7 @@ inline void vdin_set_default_regmap(unsigned int offset)
 
 
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	// [   18]        meas.rst              = 0
 	// [   17]        meas.widen_hs_vs_en   = 1
@@ -1635,14 +1653,14 @@ void vdin_enable_module(unsigned int offset, bool enable)
 	if (enable)
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 		//vdin_hw_enable(offset);
 		//todo: check them
 	}
 	else
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
 		vdin_hw_disable(offset);
 	}
 }
@@ -1926,9 +1944,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
         if((devp->prop.scaling4w < devp->h_active) && (devp->prop.scaling4w > 0)) {
 	        vdin_set_hscale(offset,devp->h_active,devp->prop.scaling4w);
                 devp->h_active = devp->prop.scaling4w;
-        } else if (devp->h_active > TVIN_MAX_HACTIVE) {
-                vdin_set_hscale(offset,devp->h_active,TVIN_MAX_HACTIVE);
-                devp->h_active = TVIN_MAX_HACTIVE;
+        } else if (devp->h_active > max_hactive) {
+                vdin_set_hscale(offset,devp->h_active,max_hactive);
+                devp->h_active = max_hactive;
         }
 	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
 
@@ -2007,7 +2025,7 @@ inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	WR(VDIN_COM_CTRL0,0x80000911);
 	WR(VDIN_COM_GCLK_CTRL,0x0);

@@ -664,7 +664,8 @@ endif
 ifeq ($(CONFIG_PLATFORM_ARM_ANDROID_AML), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH ?= arm
-CROSS_COMPILE ?= arm-none-linux-gnueabi-
+CROSS_COMPILE := arm-linux-gnueabihf-
+KSRC := ../../../../../../common
 KVER:= 3.10
 endif
 

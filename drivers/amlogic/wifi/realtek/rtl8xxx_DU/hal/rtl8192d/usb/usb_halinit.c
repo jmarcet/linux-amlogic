@@ -1750,7 +1750,10 @@ static void _InitHWLed(PADAPTER Adapter)
 #ifdef CONFIG_WOWLAN
 static void dump_wakup_reason(_adapter *padapter)
 {
-	switch(rtw_read8(padapter, REG_WOWLAN_REASON))
+	u8 reason=0;
+	reason = rtw_read8(padapter, REG_WOWLAN_REASON);
+	DBG_871X("wake on wlan reason: %d \n", reason);
+	switch(reason)
 	{
 		case Rx_Pairwisekey:
 			DBG_871X("Rx_Pairwisekey\n");
@@ -4652,60 +4655,6 @@ _func_enter_;
 				}
 			}
 			break;
-		case HW_VAR_BASIC_RATE:
-			{
-				u16	BrateCfg = 0;
-				u8	RateIndex = 0, b2GBand = _FALSE;
-				struct mlme_ext_priv	*pmlmeext = &Adapter->mlmeextpriv;
-				
-				// 2007.01.16, by Emily
-				// Select RRSR (in Legacy-OFDM and CCK)
-				// For 8190, we select only 24M, 12M, 6M, 11M, 5.5M, 2M, and 1M from the Basic rate.
-				// We do not use other rates.
-				HalSetBrateCfg( Adapter, val, &BrateCfg );
-
-				if(pHalData->CurrentBandType92D == BAND_ON_2_4G)
-					b2GBand = _TRUE;
-				else
-					b2GBand = _FALSE;
-
-				if(b2GBand)
-				{
-					//CCK 2M ACK should be disabled for some BCM and Atheros AP IOT
-					//because CCK 2M has poor TXEVM
-					//CCK 5.5M & 11M ACK should be enabled for better performance
-					pHalData->BasicRateSet = BrateCfg = (BrateCfg |0xd )& 0x15d;
-					BrateCfg |= 0x1; // default enable 1M ACK rate
-				}
-				else // 5G
-				{
-					pHalData->BasicRateSet &= 0xFF0;
-					BrateCfg |= 0x10; // default enable 6M ACK rate
-				}
-
-				DBG_8192C("HW_VAR_BASIC_RATE: BrateCfg(%#x)\n", BrateCfg);
-
-				// Set RRSR rate table.
-				rtw_write8(Adapter, REG_RRSR, BrateCfg&0xff);
-				rtw_write8(Adapter, REG_RRSR+1, (BrateCfg>>8)&0xff);
-				rtw_write8(Adapter, REG_RRSR+2, rtw_read8(Adapter, REG_RRSR+2)&0xf0);
-
-				//if(pHalData->FirmwareVersion > 0xe)
-				//{
-				//	SetRTSRateWorkItemCallback(Adapter);
-				//}
-				//else
-				//{
-					// Set RTS initial rate
-					while(BrateCfg > 0x1)
-					{
-						BrateCfg = (BrateCfg>> 1);
-						RateIndex++;
-					}
-					rtw_write8(Adapter, REG_INIRTS_RATE_SEL, RateIndex);
-				//}
-			}
-			break;
 		case HW_VAR_TXPAUSE:
 			rtw_write8(Adapter, REG_TXPAUSE, *((u8 *)val));	
 			break;
@@ -4918,13 +4867,6 @@ _func_enter_;
 
 				rtw_write8(Adapter, REG_RRSR+2, regTmp);
 			}
-			break;
-		case HW_VAR_SEC_CFG:
-#ifdef CONFIG_CONCURRENT_MODE			
-			rtw_write8(Adapter, REG_SECCFG, 0x0c |BIT(5));//only enable tx enc and rx dec engine.
-#else //CONFIG_CONCURRENT_MODE
-			rtw_write8(Adapter, REG_SECCFG, *((u8 *)val));
-#endif //CONFIG_CONCURRENT_MODE
 			break;
 		case HW_VAR_DM_FUNC_OP:
 			if(val[0])
@@ -5312,8 +5254,6 @@ _func_enter_;
 						break;
 	
 					case WOWLAN_DISABLE:
-						Adapter->pwrctrlpriv.wowlan_mode=_FALSE;
-						DBG_8192C("wake on wlan reason 0x%02x\n", rtw_read8(Adapter, REG_WOWLAN_REASON));
 						//rtl8192d_set_wowlan_cmd(Adapter);
 						//rtw_msleep_os(10);
 						break;

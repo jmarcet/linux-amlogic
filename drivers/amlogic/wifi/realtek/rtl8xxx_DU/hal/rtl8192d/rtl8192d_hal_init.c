@@ -2480,10 +2480,120 @@ void SetHwReg8192D(_adapter *adapter, u8 variable, u8 *val)
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
 
 	switch (variable) {
+	case HW_VAR_BASIC_RATE:
+	{
+		struct mlme_ext_info *mlmext_info = &adapter->mlmeextpriv.mlmext_info;
+		u16 input_b = 0, masked = 0, ioted = 0, BrateCfg = 0;
+		u16 rrsr_2g_force_mask = (RRSR_11M|RRSR_5_5M|RRSR_1M);
+		u16 rrsr_2g_allow_mask = (RRSR_24M|RRSR_12M|RRSR_6M|RRSR_11M|RRSR_5_5M|RRSR_2M|RRSR_1M);
+		u16 rrsr_5g_force_mask = (RRSR_6M);
+		u16 rrsr_5g_allow_mask = (RRSR_54M|RRSR_48M|RRSR_36M|RRSR_24M|RRSR_18M|RRSR_12M|RRSR_9M|RRSR_6M);
+		u8 RateIndex = 0;
+	
+		HalSetBrateCfg(adapter, val, &BrateCfg);
+		input_b = BrateCfg;
+	
+		/* apply force and allow mask */
+		if(hal_data->CurrentBandType92D == BAND_ON_2_4G)
+		{
+			BrateCfg |= rrsr_2g_force_mask;
+			BrateCfg &= rrsr_2g_allow_mask;
+		}
+		else // 5G
+		{
+			BrateCfg |= rrsr_5g_force_mask;
+			BrateCfg &= rrsr_5g_allow_mask;
+		}
+		masked = BrateCfg;
+	
+		/* IOT consideration */
+		if (mlmext_info->assoc_AP_vendor == ciscoAP) {
+			/* if peer is cisco and didn't use ofdm rate, we enable 6M ack */
+			if((BrateCfg & (RRSR_24M|RRSR_12M|RRSR_6M)) == 0)
+				BrateCfg |= RRSR_6M;
+		}
+		ioted = BrateCfg;
+	
+		hal_data->BasicRateSet = BrateCfg;
+	
+		DBG_8192C("HW_VAR_BASIC_RATE: %#x -> %#x -> %#x\n", input_b, masked, ioted);
+	
+		// Set RRSR rate table.
+		rtw_write16(adapter, REG_RRSR, BrateCfg);
+		rtw_write8(adapter, REG_RRSR+2, rtw_read8(adapter, REG_RRSR+2)&0xf0);
+	
+		// Set RTS initial rate
+		while(BrateCfg > 0x1)
+		{
+			BrateCfg = (BrateCfg>> 1);
+			RateIndex++;
+		}
+		rtw_write8(adapter, REG_INIRTS_RATE_SEL, RateIndex);
+	}
+		break;
 	default:
 		SetHwReg(adapter, variable, val);
 		break;
 	}
+}
+
+struct qinfo_92d {
+	u32 head:8;
+	u32 fw_num:8;
+	u32 pkt_num:8;
+	u32 cpu_head:8;
+};
+
+struct bcn_qinfo_92d {
+	u8 head;
+	u8 fw_num;
+	u8 tail;
+};
+
+void dump_qinfo_92d(void *sel, struct qinfo_92d *info, const char *tag)
+{
+	//if (info->pkt_num)
+	DBG_871X_SEL_NL(sel, "%shead:0x%02x, fw_num:%u, pkt_num:%u, cpu_head:0x%02x\n"
+		, tag ? tag : "", info->head, info->fw_num, info->pkt_num, info->cpu_head
+	);
+}
+
+void dump_bcn_qinfo_92d(void *sel, struct bcn_qinfo_92d *info, const char *tag)
+{
+	//if (info->pkt_num)
+	DBG_871X_SEL_NL(sel, "%shead:0x%02x, tail:0x%02x, fw_num:%u\n"
+		, tag ? tag : "", info->head, info->tail, info->fw_num
+	);
+}
+
+void dump_mac_qinfo_92d(void *sel, _adapter *adapter)
+{
+	u32 vo_q_info;
+	u32 vi_q_info;
+	u32 be_q_info;
+	u32 bk_q_info;
+	u32 mg_q_info;
+	u32 hi_q_info;
+	u8 bcn_q_info[3];
+	int i;
+
+	vo_q_info = rtw_read32(adapter, REG_VOQ_INFO);
+	vi_q_info = rtw_read32(adapter, REG_VIQ_INFO);
+	be_q_info = rtw_read32(adapter, REG_BEQ_INFO);
+	bk_q_info = rtw_read32(adapter, REG_BKQ_INFO);
+	mg_q_info = rtw_read32(adapter, REG_MGQ_INFO);
+	hi_q_info = rtw_read32(adapter, REG_HGQ_INFO);
+
+	for(i=0;i<3;i++)
+		bcn_q_info[i] = rtw_read8(adapter, REG_BCNQ_INFO+i);
+
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&vo_q_info, "VO ");
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&vi_q_info, "VI ");
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&be_q_info, "BE ");
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&bk_q_info, "BK ");
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&mg_q_info, "MG ");
+	dump_qinfo_92d(sel, (struct qinfo_92d *)&hi_q_info, "HI ");
+	dump_bcn_qinfo_92d(sel, (struct bcn_qinfo_92d *)bcn_q_info, "BCN ");
 }
 
 void GetHwReg8192D(_adapter *adapter, u8 variable, u8 *val)
@@ -2491,6 +2601,12 @@ void GetHwReg8192D(_adapter *adapter, u8 variable, u8 *val)
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
 
 	switch (variable) {
+	case HW_VAR_CHK_HI_QUEUE_EMPTY:
+		*val = ((rtw_read32(adapter, REG_HGQ_INFO)&0x00ffff00)==0) ? _TRUE:_FALSE;
+		break;
+	case HW_VAR_DUMP_MAC_QUEUE_INFO:
+		dump_mac_qinfo_92d(val, adapter);
+		break;
 	default:
 		GetHwReg(adapter, variable, val);
 		break;

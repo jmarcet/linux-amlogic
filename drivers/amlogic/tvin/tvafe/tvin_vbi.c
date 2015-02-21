@@ -36,6 +36,7 @@
 /* Local include */
 #include "tvafe_regs.h"
 #include "tvin_vbi.h"
+#include "../tvin_global.h"
 
 #define VBI_NAME               "vbi"
 #define VBI_DRIVER_NAME        "vbi"
@@ -84,13 +85,13 @@ static void vbi_enable_lines(unsigned short start_line, unsigned short end_line,
 
     for(i = VBI_LINE_MIN; i <= VBI_LINE_MAX ; i++) {
         if ((i < start_line) || (i > end_line)){
-            WRITE_APB_REG((CVD2_VBI_DATA_TYPE_LINE7 + i - VBI_LINE_MIN), 0);
+            W_APB_REG((CVD2_VBI_DATA_TYPE_LINE7 + i - VBI_LINE_MIN), 0);
             continue;
         }
         if (i == VBI_LINE_MIN) {
-            WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE6, data_type);
+            W_APB_REG(CVD2_VBI_DATA_TYPE_LINE6, data_type);
         } else {
-            WRITE_APB_REG((CVD2_VBI_DATA_TYPE_LINE7 + i - VBI_LINE_MIN), data_type);
+            W_APB_REG((CVD2_VBI_DATA_TYPE_LINE7 + i - VBI_LINE_MIN), data_type);
             if (vbi_dbg_en)
                 pr_info("[vbi..]: set line:%d type to 0x%x \n", i, data_type);
         }
@@ -100,72 +101,72 @@ static void vbi_enable_lines(unsigned short start_line, unsigned short end_line,
 #ifdef VBI_ON_M6TV
 static void vbi_hw_init(struct vbi_dev_s *devp)
 {
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x11);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
-	WRITE_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
-	WRITE_APB_REG(CVD2_VBI_CC_START, 0x00000054);
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x11);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
+	W_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
+	W_APB_REG(CVD2_VBI_CC_START, 0x00000054);
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
 }
 #else
 static void vbi_hw_init(struct vbi_dev_s *devp)
 {
 	/* vbi memory setting */
-	WRITE_APB_REG(ACD_REG_2F, devp->mem_start >> 3);
-	WRITE_APB_REG_BITS(ACD_REG_21, ((devp->mem_size >> 3) - 1), 16, 16);
-	WRITE_APB_REG_BITS(ACD_REG_21, 0, AML_VBI_START_ADDR_BIT, AML_VBI_START_ADDR_WID);
+	W_APB_REG(ACD_REG_2F, devp->mem_start >> 3);
+	W_APB_BIT(ACD_REG_21, ((devp->mem_size >> 3) - 1), 16, 16);
+	W_APB_BIT(ACD_REG_21, 0, AML_VBI_START_ADDR_BIT, AML_VBI_START_ADDR_WID);
 
 #if defined(VBI_CC_SUPPORT)
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x11);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
-	WRITE_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
-	WRITE_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
-	WRITE_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
-	WRITE_APB_REG(CVD2_VBI_CC_START, 0x00000054);
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x11);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
+	W_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
+	W_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
+	W_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
+	W_APB_REG(CVD2_VBI_CC_START, 0x00000054);
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000015);
 #endif
 
 #if defined(VBI_TT_SUPPORT)
 	//625B
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE6,  0x66);  // > /sys/class/amdbg/reg             //  0x6    0x6
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE7 , 0x66);  // > /sys/class/amdbg/reg             //  0x7    0x7
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE8 , 0x66);  // > /sys/class/amdbg/reg             //  0x8    0x8
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE9 , 0x66);  // > /sys/class/amdbg/reg             //  0x9    0x9
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE10, 0x66);  // > /sys/class/amdbg/reg             //  0xa    0xa
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE11, 0x66);  // > /sys/class/amdbg/reg             //  0xb    0xb
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE12, 0x66);  // > /sys/class/amdbg/reg             //  0xc    0xc
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE13, 0x66);  // > /sys/class/amdbg/reg             //  0xd    0xd
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE14, 0x66);  // > /sys/class/amdbg/reg             //  0xe    0xe
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE15, 0x66);  // > /sys/class/amdbg/reg             //  0xf    0xf
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE16, 0x66);  // > /sys/class/amdbg/reg             //  0x10   0x10
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE17, 0x66);  // > /sys/class/amdbg/reg             //  0x11   0x11
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE18, 0x66);  // > /sys/class/amdbg/reg             //  0x12   0x12
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE19, 0x66);  // > /sys/class/amdbg/reg             //  0x13   0x13
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE20, 0x66);  // > /sys/class/amdbg/reg             //  0x14   0x14
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x66);  // > /sys/class/amdbg/reg             //  0x15   0x15
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE22, 0x66);  // > /sys/class/amdbg/reg             //  0x16   0x16
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE23, 0x66);  // > /sys/class/amdbg/reg             //  0x17   0x17
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE24, 0x66);  // > /sys/class/amdbg/reg             //  0x18   0x18
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE25, 0x66);  // > /sys/class/amdbg/reg             //  0x19   0x19
-	WRITE_APB_REG(CVD2_VBI_DATA_TYPE_LINE26, 0x66);  // > /sys/class/amdbg/reg             //  0x20   0x20
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE6,  0x66);  // > /sys/class/amdbg/reg             //  0x6    0x6
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE7 , 0x66);  // > /sys/class/amdbg/reg             //  0x7    0x7
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE8 , 0x66);  // > /sys/class/amdbg/reg             //  0x8    0x8
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE9 , 0x66);  // > /sys/class/amdbg/reg             //  0x9    0x9
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE10, 0x66);  // > /sys/class/amdbg/reg             //  0xa    0xa
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE11, 0x66);  // > /sys/class/amdbg/reg             //  0xb    0xb
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE12, 0x66);  // > /sys/class/amdbg/reg             //  0xc    0xc
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE13, 0x66);  // > /sys/class/amdbg/reg             //  0xd    0xd
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE14, 0x66);  // > /sys/class/amdbg/reg             //  0xe    0xe
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE15, 0x66);  // > /sys/class/amdbg/reg             //  0xf    0xf
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE16, 0x66);  // > /sys/class/amdbg/reg             //  0x10   0x10
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE17, 0x66);  // > /sys/class/amdbg/reg             //  0x11   0x11
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE18, 0x66);  // > /sys/class/amdbg/reg             //  0x12   0x12
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE19, 0x66);  // > /sys/class/amdbg/reg             //  0x13   0x13
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE20, 0x66);  // > /sys/class/amdbg/reg             //  0x14   0x14
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE21, 0x66);  // > /sys/class/amdbg/reg             //  0x15   0x15
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE22, 0x66);  // > /sys/class/amdbg/reg             //  0x16   0x16
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE23, 0x66);  // > /sys/class/amdbg/reg             //  0x17   0x17
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE24, 0x66);  // > /sys/class/amdbg/reg             //  0x18   0x18
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE25, 0x66);  // > /sys/class/amdbg/reg             //  0x19   0x19
+	W_APB_REG(CVD2_VBI_DATA_TYPE_LINE26, 0x66);  // > /sys/class/amdbg/reg             //  0x20   0x20
 
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
-	WRITE_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
-	WRITE_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
-	WRITE_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
-	WRITE_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_START, 0x00000000);
+	W_APB_REG(CVD2_VSYNC_VBI_LOCKOUT_END, 0x00000025);
+	W_APB_REG(CVD2_VSYNC_TIME_CONSTANT, 0x0000004a);
+	W_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
+	W_APB_REG(ACD_REG_22, 0x04080000); // vbi reset release, vbi agent enable
 
-	WRITE_APB_REG(CVD2_VBI_TT_FRAME_CODE_CTL,0x27);  //echo wa 0x1841 27 > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_TT_FRAME_CODE_CTL,0x27);  //echo wa 0x1841 27 > /sys/class/amdbg/reg
 
-	WRITE_APB_REG(CVD2_VBI_TT_DTO_MSB,       0x0d);  //echo wa 0x185b 0x0d > /sys/class/amdbg/reg
-	WRITE_APB_REG(CVD2_VBI_TT_DTO_LSB,       0xd6);  //echo wa 0x185c 0xd6 > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_TT_DTO_MSB,       0x0d);  //echo wa 0x185b 0x0d > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_TT_DTO_LSB,       0xd6);  //echo wa 0x185c 0xd6 > /sys/class/amdbg/reg
 
-	WRITE_APB_REG(CVD2_VBI_FRAME_START,      0xaa);  //echo wa 0x1861 0xaa > /sys/class/amdbg/reg
-	WRITE_APB_REG(CVD2_VBI_TT_START,         0x64);  //echo wa 0x18f7 0x64 > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_FRAME_START,      0xaa);  //echo wa 0x1861 0xaa > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_TT_START,         0x64);  //echo wa 0x18f7 0x64 > /sys/class/amdbg/reg
 
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL,   0x14);  //echo wa 0x1840 0x14 > /sys/class/amdbg/reg
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL,   0x15);  //echo wa 0x1840 0x15 > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL,   0x14);  //echo wa 0x1840 0x14 > /sys/class/amdbg/reg
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL,   0x15);  //echo wa 0x1840 0x15 > /sys/class/amdbg/reg
 
 #endif
 	pr_info("[vbi..] %s: vbi hw init.\n", __func__);
@@ -298,28 +299,50 @@ static int vbi_buffer_write(struct vbi_ringbuffer_s *buf,
 static irqreturn_t vbi_isr(int irq, void *dev_id)
 {
 	ulong flags;
+	#ifdef VBI_ON_M6TV
+	volatile unsigned int n,m;//for wait vbi data ready
+	#endif
 	struct vbi_dev_s *devp = (struct vbi_dev_s *)dev_id;
 	spin_lock_irqsave(&devp->vbi_isr_lock, flags);
-	#if 0//no use
 	if (devp->vs_delay > 0) {
-	devp->vs_delay--;
-	devp->current_pac_wptr = READ_APB_REG(ACD_REG_0C);//addr - (devp->mem_start);
-	devp->last_pac_wptr = devp->current_pac_wptr;
-	devp->pac_addr = devp->pac_addr_start + (devp->current_pac_wptr << 3) - devp->mem_start;  //last data package address
-	pr_info("[vbi..]: vsync cnt:%d, wptr: %6d... ... ........\n", devp->vs_delay, devp->current_pac_wptr);
-	devp->vbi_start = true;
-	spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
-	return IRQ_HANDLED;
+		devp->vs_delay--;
+		spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
+		return IRQ_HANDLED;
 	}
-	#else
 	devp->vbi_start = true;
-	#endif
 	if (devp->vbi_start == false) {
 		spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
 		return IRQ_HANDLED;
 	}
 	/* Mark tasklet as pending */
+
+#ifdef VBI_ON_M6TV
+	m = 1024;
+	//if(R_APB_BIT(CVD2_VBI_DATA_STATUS, 0,1)){
+	while(!(R_APB_BIT(CVD2_VBI_DATA_STATUS, 0,1))){
+		if(!(m--)){
+			pr_err("[vbi..] %s: wait vbi data ready timeout. \n", __func__);
+			spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
+			return IRQ_HANDLED; //mark avoid app get null pointer
+		}
+		n = 10240;
+		while(n--);
+	}
+	*(devp->pac_addr) = R_APB_BIT(CVD2_VBI_CC_DATA1,CC_DATA0_BIT,CC_DATA0_WID);
+	devp->pac_addr++;
+	*(devp->pac_addr) = R_APB_BIT(CVD2_VBI_CC_DATA2,CC_DATA1_BIT,CC_DATA1_WID);
+	W_APB_BIT(CVD2_VBI_CC_DATA2,1,2,1);
+	W_APB_BIT(CVD2_VBI_CC_DATA2,0,2,1);
+	if((devp->pac_addr+2)>= devp->pac_addr_end)
+		devp->pac_addr = devp->pac_addr_start;
+	else
+		devp->pac_addr++;
 	tasklet_schedule(&vbi_dev->tsklt_slicer);
+#else
+	/* Mark tasklet as pending */
+	tasklet_schedule(&vbi_dev->tsklt_slicer);
+#endif
+	//tasklet_schedule(&vbi_dev->tsklt_slicer);
 
 	spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
 
@@ -335,33 +358,23 @@ void vbi_timer_handler(unsigned long dev_id)
 	add_timer(&devp->timer);
 
 	spin_lock_irqsave(&devp->vbi_isr_lock, flags);
-	#if 0//for no use
 	if (devp->vs_delay > 0) {
 		devp->vs_delay--;
-		devp->current_pac_wptr = READ_APB_REG(ACD_REG_0C);//addr - (devp->mem_start);
-		devp->last_pac_wptr = devp->current_pac_wptr;
-		if(devp->current_pac_wptr != 0){
-			devp->pac_addr = devp->pac_addr_start + (devp->current_pac_wptr << 3) - devp->mem_start;  //last data package address
-		}
-		pr_info("[vbi..]: vsync cnt:%d, wptr: %6d... ... ........\n", devp->vs_delay, devp->current_pac_wptr);
-		devp->vbi_start = true;
 		spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
 		return ;
 	}
-	#else
 	devp->vbi_start = true;
-	#endif
 	if (devp->vbi_start == false) {
 		spin_unlock_irqrestore(&devp->vbi_isr_lock, flags);
 		return ;
 	}
 	#ifdef VBI_ON_M6TV
-	if(READ_APB_REG_BITS(CVD2_VBI_DATA_STATUS, 0,1)){
-		*(devp->pac_addr) = READ_APB_REG_BITS(CVD2_VBI_CC_DATA1,CC_DATA0_BIT,CC_DATA0_WID);
+	if(R_APB_BIT(CVD2_VBI_DATA_STATUS, 0,1)){
+		*(devp->pac_addr) = R_APB_BIT(CVD2_VBI_CC_DATA1,CC_DATA0_BIT,CC_DATA0_WID);
 		devp->pac_addr++;
-		*(devp->pac_addr) = READ_APB_REG_BITS(CVD2_VBI_CC_DATA2,CC_DATA1_BIT,CC_DATA1_WID);
-		WRITE_APB_REG_BITS(CVD2_VBI_CC_DATA2,1,2,1);
-		WRITE_APB_REG_BITS(CVD2_VBI_CC_DATA2,0,2,1);
+		*(devp->pac_addr) = R_APB_BIT(CVD2_VBI_CC_DATA2,CC_DATA1_BIT,CC_DATA1_WID);
+		W_APB_BIT(CVD2_VBI_CC_DATA2,1,2,1);
+		W_APB_BIT(CVD2_VBI_CC_DATA2,0,2,1);
 		if((devp->pac_addr+2)>= devp->pac_addr_end)
 			devp->pac_addr = devp->pac_addr_start;
 		else
@@ -411,7 +424,7 @@ static void vbi_slicer_task(unsigned long arg)
 	if (devp->vbi_start == false)
 		return;
 	rptr = devp->pac_addr;  //backup package data pointer
-	devp->current_pac_wptr = READ_APB_REG(ACD_REG_0C);
+	devp->current_pac_wptr = R_APB_REG(ACD_REG_0C);
 	if(devp->current_pac_wptr != 0)
 		current_pac_addr = devp->pac_addr_start + (devp->current_pac_wptr<<3) - devp->mem_start;
 	else
@@ -901,10 +914,10 @@ static int vbi_release(struct inode *inode, struct file *file)
 	#else
 	del_timer_sync(&vbi_dev->timer);
 	#endif
-	//WRITE_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
-	WRITE_APB_REG(ACD_REG_22, 0x06080000); // vbi reset release, vbi agent enable
-	//WRITE_APB_REG(CVD2_VBI_CC_START, 0x00000054);
-	WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000014);
+	//W_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
+	W_APB_REG(ACD_REG_22, 0x06080000); // vbi reset release, vbi agent enable
+	//W_APB_REG(CVD2_VBI_CC_START, 0x00000054);
+	W_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000014);
 	pr_info("[vbi..] %s: disable vbi function \n", __func__);
 
 	pr_info("[vbi..]%s: device release OK. \n", __func__);
@@ -958,9 +971,10 @@ static long vbi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			ret = vbi_slicer_start(vbi_dev);
 
 		vbi_dev->vbi_start = false;  //enable data capture function
-		vbi_dev->vs_delay = 4;
+		vbi_dev->vs_delay = 40;
 
 		mutex_unlock(&vbi_slicer->mutex);
+		mdelay(1000);
 		pr_info("[vbi..] %s: start slicer state:%d \n", __func__, vbi_slicer->state);
 		break;
 
@@ -971,7 +985,7 @@ static long vbi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		return -ERESTARTSYS;
 		}
 		ret = vbi_slicer_stop(vbi_slicer);
-		#if 0//avoid double free_irq or del_timer_sync
+		#if 1//avoid double free_irq or del_timer_sync
 		#ifdef 	VBI_IRQ_EN
 		/* free irq */
 		free_irq(vbi_dev->vs_irq, (void *)vbi_dev);
@@ -979,10 +993,10 @@ static long vbi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		del_timer_sync(&vbi_dev->timer);
 		#endif
 		#endif
-		//WRITE_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
-		WRITE_APB_REG(ACD_REG_22, 0x06080000); // vbi reset release, vbi agent enable
-		//WRITE_APB_REG(CVD2_VBI_CC_START, 0x00000054);
-		WRITE_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000014);
+		//W_APB_REG(ACD_REG_22, 0x82080000); // manuel reset vbi
+		W_APB_REG(ACD_REG_22, 0x06080000); // vbi reset release, vbi agent enable
+		//W_APB_REG(CVD2_VBI_CC_START, 0x00000054);
+		W_APB_REG(CVD2_VBI_FRAME_CODE_CTL, 0x00000014);
 		pr_info("[vbi..] %s: disable vbi function \n", __func__);
 
 		mutex_unlock(&vbi_slicer->mutex);
@@ -1182,7 +1196,7 @@ static int vbi_probe(struct platform_device *pdev)
 	tasklet_init(&vbi_dev->tsklt_slicer, vbi_slicer_task, (unsigned long)vbi_dev);
 
 	vbi_dev->vbi_start = false;
-	vbi_dev->vs_delay = 4;
+	vbi_dev->vs_delay = 40;
 
 	vbi_dev->slicer = vmalloc(sizeof(struct vbi_slicer_s));
 	if (!vbi_dev->slicer) {

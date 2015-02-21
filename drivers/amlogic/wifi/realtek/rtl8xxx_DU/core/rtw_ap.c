@@ -2050,7 +2050,7 @@ static void update_bcn_vendor_spec_ie(_adapter *padapter, u8*oui)
 	
 }
 
-void update_beacon(_adapter *padapter, u8 ie_id, u8 *oui, u8 tx)
+void _update_beacon(_adapter *padapter, u8 ie_id, u8 *oui, u8 tx, const char *tag)
 {
 	_irqL irqL;
 	struct mlme_priv *pmlmepriv;
@@ -2128,6 +2128,8 @@ void update_beacon(_adapter *padapter, u8 ie_id, u8 *oui, u8 tx)
 	if(tx)
 	{
 		//send_beacon(padapter);//send_beacon must execute on TSR level
+		if (0)
+			DBG_871X(FUNC_ADPT_FMT" ie_id:%u - %s\n", FUNC_ADPT_ARG(padapter), ie_id, tag);
 		set_tx_beacon_cmd(padapter);
 	}
 #else
@@ -2573,8 +2575,7 @@ u8 ap_free_sta(_adapter *padapter, struct sta_info *psta, bool active, u16 reaso
 	//report_del_sta_event(padapter, psta->hwaddr, reason);
 
 	//clear cam entry / key
-	//clear_cam_entry(padapter, (psta->mac_id + 3));
-	rtw_clearstakey_cmd(padapter, (u8*)psta, (u8)(psta->mac_id + 3), _TRUE);
+	rtw_clearstakey_cmd(padapter, psta, _TRUE);
 
 
 	_enter_critical_bh(&psta->lock, &irqL);
@@ -2766,7 +2767,7 @@ void rtw_ap_restore_network(_adapter *padapter)
 	char chk_alive_list[NUM_STA];
 	int i;
 
-	rtw_setopmode_cmd(padapter, Ndis802_11APMode);
+	rtw_setopmode_cmd(padapter, Ndis802_11APMode, _FALSE);
 
 	set_channel_bwmode(padapter, pmlmeext->cur_channel, pmlmeext->cur_ch_offset, pmlmeext->cur_bwmode);
 
@@ -2776,13 +2777,7 @@ void rtw_ap_restore_network(_adapter *padapter)
 		(padapter->securitypriv.dot11PrivacyAlgrthm == _AES_))
 	{
 		/* restore group key, WEP keys is restored in ips_leave() */
-		rtw_set_key(padapter, psecuritypriv, psecuritypriv->dot118021XGrpKeyid, 0);
-	}
-
-	/* per sta pairwise key and settings */
-	if((padapter->securitypriv.dot11PrivacyAlgrthm != _TKIP_) &&
-		(padapter->securitypriv.dot11PrivacyAlgrthm != _AES_)) {
-		return;
+		rtw_set_key(padapter, psecuritypriv, psecuritypriv->dot118021XGrpKeyid, 0, _FALSE);
 	}
 
 	_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
@@ -2812,7 +2807,11 @@ void rtw_ap_restore_network(_adapter *padapter)
 		} else if (psta->state &_FW_LINKED) {
 			Update_RA_Entry(padapter, psta->mac_id);
 			//pairwise key
-			rtw_setstakey_cmd(padapter, (unsigned char *)psta, _TRUE);
+			/* per sta pairwise key and settings */
+			if((padapter->securitypriv.dot11PrivacyAlgrthm == _TKIP_) ||
+				(padapter->securitypriv.dot11PrivacyAlgrthm == _AES_)) {
+				rtw_setstakey_cmd(padapter, psta, _TRUE, _FALSE);
+			}
 		}
 	}
 

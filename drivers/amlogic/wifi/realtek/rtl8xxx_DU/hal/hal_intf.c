@@ -91,6 +91,8 @@ void rtw_hal_sw_led_deinit(_adapter *padapter)
 
 uint	 rtw_hal_init(_adapter *padapter) 
 {
+	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+	int i;
 	uint	status = _SUCCESS;
 
 	if(padapter->hw_init_completed == _TRUE)
@@ -181,7 +183,8 @@ success:
 
 	rtw_hal_reset_security_engine(padapter);
 
-	rtw_sec_restore_wep_key(padapter);
+	for (i = 0; i<dvobj->iface_nums; i++)
+		rtw_sec_restore_wep_key(dvobj->padapters[i]);
 
 	rtw_led_control(padapter, LED_CTL_POWER_ON);
 

@@ -773,8 +773,8 @@ endif
 ifeq ($(CONFIG_PLATFORM_AML), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
-CROSS_COMPILE := arm-none-linux-gnueabi-
-KSRC := 
+CROSS_COMPILE := arm-linux-gnueabihf-
+KSRC := ../../../../../../common
 endif
 
 ifneq ($(USER_MODULE_NAME),)

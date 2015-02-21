@@ -75,9 +75,7 @@ int	rtl8192du_init_recv_priv(_adapter *padapter)
 	     (void(*)(unsigned long))rtl8192du_recv_tasklet,
 	     (unsigned long)padapter);
 
-#ifdef CONFIG_USE_USB_BUFFER_ALLOC_RX
 	_rtw_init_queue(&precvpriv->recv_buf_pending_queue);
-#endif	// CONFIG_USE_USB_BUFFER_ALLOC_RX
 #endif	// PLATFORM_LINUX
 
 #ifdef PLATFORM_FREEBSD

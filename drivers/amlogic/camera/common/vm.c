@@ -1888,12 +1888,12 @@ int init_vm_device(void)
 	ret=register_chrdev(0,vm_device.name,&vm_fops);
 	if(ret <=0)
 	{
-		amlog_level(LOG_LEVEL_HIGH,"register vm device error\r\n");
+		amlog_level(LOG_LEVEL_HIGH,"register vm device error\n");
 		return  ret ;
 	}
 	vm_device.major=ret;
 	vm_device.dbg_enable=0;
-	amlog_level(LOG_LEVEL_LOW,"vm_dev major:%d\r\n",ret);
+	amlog_level(LOG_LEVEL_LOW,"vm_dev major:%d\n",ret);
 
 	vm_device.cla = init_vm_cls();
 	if(vm_device.cla == NULL)

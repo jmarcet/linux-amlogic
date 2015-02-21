@@ -1135,9 +1135,8 @@ ARCH := arm
 KVER := 
 #KSRC := /media/pc-work/work/sdk/amlogic/jb-amlogic-mid/common/
 
-CROSS_COMPILE := arm-none-linux-gnueabi-
-
-KSRC := ../../../../
+CROSS_COMPILE := arm-linux-gnueabihf-
+KSRC := ../../../../../../common
 endif
 ifeq ($(CONFIG_PLATFORM_ARM_SUN6I), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
@@ -1368,10 +1367,10 @@ export CONFIG_RTL8723BS = m
 
 all: modules
 
-ANDROID_PRODUCT_OUT = ../../../../../../out/target/product/m201
+#ANDROID_PRODUCT_OUT = ../../../../../../out/target/product/m201
 modules:
-#	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
-	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ/ M=$(shell pwd)  modules
+	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KSRC) M=$(shell pwd)  modules
+#	$(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ/ M=$(shell pwd)  modules
 
 strip:
 	$(CROSS_COMPILE)strip $(MODULE_NAME).ko --strip-unneeded

@@ -75,7 +75,7 @@ obj-$(CONFIG_TVIN) += tvin/
 
 obj-$(CONFIG_AML_EXT_HDMIIN) += ext_hdmiin/
 
-obj-y += thermal/
+#obj-y += thermal/
 
 
 #####Sound system is later init in kernel default..######################
@@ -88,7 +88,6 @@ obj-$(CONFIG_AM_DVB) += dvb_tv/
 obj-$(CONFIG_AM_SMARTCARD) += smartcard/
 
 obj-$(CONFIG_AM_WIFI) += wifi/
-
 obj-y += bluetooth/
 obj-$(CONFIG_MESON_NFC) += nfc/
 
@@ -112,3 +111,5 @@ obj-y += crypto/
 #obj-$(CONFIG_MESON_TRUSTZONE) += trustzone/
 obj-$(CONFIG_MESON_TRUSTZONE) += secure_monitor/
 obj-y += spi/
+
+obj-y += defendkey/

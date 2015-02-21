@@ -20,6 +20,10 @@
 //***** temporarily flag *******
 #define CONFIG_SINGLE_IMG
 
+
+//p2p connection fix for android L
+#define CONFIG_RADIO_WORK
+
 //#define CONFIG_DISABLE_ODM
 //for FPGA VERIFICATION config
 #define RTL8188E_FPGA_TRUE_PHY_VERIFICATION 0
@@ -228,7 +232,7 @@
  * CONFIG_USE_USB_BUFFER_ALLOC_XX uses Linux USB Buffer alloc API and is for Linux platform only now!
  */
 //#define CONFIG_USE_USB_BUFFER_ALLOC_TX 	// Trade-off: For TX path, improve stability on some platforms, but may cause performance degrade on other platforms.
-#define CONFIG_USE_USB_BUFFER_ALLOC_RX 	// For RX path
+//#define CONFIG_USE_USB_BUFFER_ALLOC_RX 	// For RX path
 #ifdef CONFIG_USE_USB_BUFFER_ALLOC_RX
 #undef CONFIG_PREALLOC_RECV_SKB
 #endif

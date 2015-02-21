@@ -135,22 +135,6 @@ void sreset_restore_security_station(_adapter *padapter)
 		rtw_hal_set_hwreg(padapter, HW_VAR_SEC_CFG, (u8 *)(&val8));
 	}
 
-	#if 0
-	if (	( padapter->securitypriv.dot11PrivacyAlgrthm == _WEP40_ ) ||
-		( padapter->securitypriv.dot11PrivacyAlgrthm == _WEP104_ ))
-	{
-
-		for(EntryId=0; EntryId<4; EntryId++)
-		{
-			if(EntryId == psecuritypriv->dot11PrivacyKeyIndex)
-				rtw_set_key(padapter,&padapter->securitypriv, EntryId, 1);
-			else
-				rtw_set_key(padapter,&padapter->securitypriv, EntryId, 0);
-		}
-
-	}
-	else
-	#endif
 	if((padapter->securitypriv.dot11PrivacyAlgrthm == _TKIP_) ||
 		(padapter->securitypriv.dot11PrivacyAlgrthm == _AES_))
 	{
@@ -161,9 +145,9 @@ void sreset_restore_security_station(_adapter *padapter)
 		else
 		{
 			//pairwise key
-			rtw_setstakey_cmd(padapter, (unsigned char *)psta, _TRUE);
+			rtw_setstakey_cmd(padapter, psta, _TRUE, _FALSE);
 			//group key
-			rtw_set_key(padapter,&padapter->securitypriv,padapter->securitypriv.dot118021XGrpKeyid, 0);
+			rtw_set_key(padapter,&padapter->securitypriv,padapter->securitypriv.dot118021XGrpKeyid, 0, _FALSE);
 		}
 	}
 }
@@ -193,7 +177,7 @@ void sreset_restore_network_station(_adapter *padapter)
 	}
 	#endif
 	
-	rtw_setopmode_cmd(padapter, Ndis802_11Infrastructure);
+	rtw_setopmode_cmd(padapter, Ndis802_11Infrastructure, _FALSE);
 
 	{
 		u8 threshold;
@@ -277,7 +261,10 @@ void sreset_stop_adapter(_adapter *padapter)
 		rtw_scan_abort(padapter);
 
 	if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING))
+	{
+		rtw_set_to_roam(padapter, 0);
 		_rtw_join_timeout_handler(padapter);
+	}
 
 }
 

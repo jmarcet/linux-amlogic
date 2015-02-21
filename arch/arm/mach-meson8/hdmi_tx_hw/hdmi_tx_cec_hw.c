@@ -34,6 +34,8 @@ void cec_enable_irq(void)
     hdmi_print(INF, CEC "enable:int mask:0x%x\n", aml_read_reg32(P_AO_CEC_INTR_MASKN));
 }
 
+void cec_arbit_bit_time_set(unsigned bit_set, unsigned time_set, unsigned flag);
+
 void cec_hw_reset(void)
 {
     //unsigned long data32;
@@ -124,7 +126,7 @@ static int cec_ll_tx_once(const unsigned char *msg, unsigned char len)
     unsigned int cnt = 30;
     int pos;
 
-    while(aocec_rd_reg(CEC_TX_MSG_STATUS)){
+    while(aocec_rd_reg(CEC_TX_MSG_STATUS) || aocec_rd_reg(CEC_RX_MSG_STATUS)){
         msleep(5);
         if(TX_ERROR == aocec_rd_reg(CEC_TX_MSG_STATUS)){
             //aocec_wr_reg(CEC_TX_MSG_CMD, TX_ABORT);
@@ -168,7 +170,7 @@ int cec_ll_tx_polling(const unsigned char *msg, unsigned char len)
 	unsigned int j = 30;
     int pos;
 
-    while( aocec_rd_reg(CEC_TX_MSG_STATUS)){
+    while( (aocec_rd_reg(CEC_TX_MSG_STATUS) || aocec_rd_reg(CEC_RX_MSG_STATUS)) && j){
         if(TX_ERROR == aocec_rd_reg(CEC_TX_MSG_STATUS)){
             //aocec_wr_reg(CEC_TX_MSG_CMD, TX_ABORT);
             aocec_wr_reg(CEC_TX_MSG_CMD, TX_NO_OP);

@@ -2,24 +2,24 @@
 # Makefile for the Amlogic NAND drivers.
 #
 #obj-$(CONFIG_AML_NEXT_GEN_NAND)		+= phy/
-#KBUILD_CFLAGS += -Werror=declaration-after-statement \
-#		 -Werror=maybe-uninitialized \
-#		 -Werror=parentheses \
-#		 -Werror=return-type \
-#		 -Werror=strict-prototypes \
-#		 -Werror=uninitialized \
-#		 -Werror=unused-function \
-#		 -Werror=unused-value \
-#		 -Werror=array-bounds \
-#		 -Werror=comment \
-#		 -Werror=format \
-#		 -Werror=missing-braces \
-#		 -Werror=declaration-after-statement \
-#		 -Werror=unused-label \
-#		 -Werror=unused-result \
-#		 -Werror=unused-value \
-#		 -Werror=unused-variable \
-#		 -Werror=builtin-macro-redefined
+KBUILD_CFLAGS += -Werror=declaration-after-statement \
+		 -Werror=maybe-uninitialized \
+		 -Werror=parentheses \
+		 -Werror=return-type \
+		 -Werror=strict-prototypes \
+		 -Werror=uninitialized \
+		 -Werror=unused-function \
+		 -Werror=unused-value \
+		 -Werror=array-bounds \
+		 -Werror=comment \
+		 -Werror=format \
+		 -Werror=missing-braces \
+		 -Werror=declaration-after-statement \
+		 -Werror=unused-label \
+		 -Werror=unused-result \
+		 -Werror=unused-value \
+		 -Werror=unused-variable \
+		 -Werror=builtin-macro-redefined
 
 
 

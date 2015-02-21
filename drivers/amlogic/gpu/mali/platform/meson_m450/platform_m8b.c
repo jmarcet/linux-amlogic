@@ -60,7 +60,7 @@ static u32 mali_dvfs_clk_sample[] = {
 };
 
 static mali_dvfs_threshold_table mali_dvfs_table[]={
-		{ 0, 0, 5, 0  , 180}, /* for 255  */
+		{ 0, 0, 5, 30 , 180}, /* for 255  */
 		{ 1, 1, 5, 152, 205}, /* for 364  */
 		{ 2, 2, 5, 180, 212}, /* for 425  */
 		{ 3, 3, 5, 205, 236}, /* for 510  */
@@ -163,6 +163,7 @@ static void set_limit_mali_freq(u32 idx)
 	if (idx > mali_plat_data.turbo_clock || idx < mali_plat_data.scale_info.minclk)
 		return;
 	mali_plat_data.scale_info.maxclk= idx;
+
 	revise_mali_rt();
 }
 
@@ -170,7 +171,7 @@ static u32 get_limit_mali_freq(void)
 {
 	return mali_plat_data.scale_info.maxclk;
 }
-#if 0
+
 static u32 set_limit_pp_num(u32 num)
 {
 	u32 ret = -1;
@@ -185,7 +186,7 @@ static u32 set_limit_pp_num(u32 num)
 quit:
 	return ret;
 }
-#endif
+
 void mali_gpu_utilization_callback(struct mali_gpu_utilization_data *data);
 int mali_meson_init_start(struct platform_device* ptr_plt_dev)
 {
@@ -220,7 +221,7 @@ static int mali_cri_light_suspend(size_t param)
 	struct mali_pmu_core *pmu;
 
 	ret = 0;
-	mali_pm_statue = 0;
+	mali_pm_statue = 1;
 	device = (struct device *)param;
 	pmu = mali_pmu_get_global_pmu_core();
 
@@ -253,7 +254,7 @@ static int mali_cri_light_resume(size_t param)
 		/* Need to notify Mali driver about this event */
 		ret = device->driver->pm->runtime_resume(device);
 	}
-	mali_pm_statue = 1;
+	mali_pm_statue = 0;
 	return ret;
 }
 
@@ -362,8 +363,10 @@ void mali_post_init(void)
 #ifdef CONFIG_GPU_THERMAL
 	int err;
 	struct gpufreq_cooling_device *gcdev = NULL;
+	struct gpucore_cooling_device *gccdev = NULL;
 
 	gcdev = gpufreq_cooling_alloc();
+	register_gpu_freq_info(get_current_frequency);
 	if(IS_ERR(gcdev))
 		printk("malloc gpu cooling buffer error!!\n");
 	else if(!gcdev)
@@ -379,5 +382,18 @@ void mali_post_init(void)
 		printk("gpu cooling register okay with err=%d\n",err);
 	}
 
+	gccdev=gpucore_cooling_alloc();
+	if(IS_ERR(gccdev))
+		printk("malloc gpu core cooling buffer error!!\n");
+	else if(!gccdev)
+		printk("system does not enable thermal driver\n");
+	else {
+		gccdev->max_gpu_core_num=mali_plat_data.cfg_pp;
+		gccdev->set_max_pp_num=set_limit_pp_num;
+		err = (int)gpucore_cooling_register(gccdev);
+		if(err < 0)
+			printk("register GPU  cooling error\n");
+		printk("gpu core cooling register okay with err=%d\n",err);
+	}
 #endif
 }

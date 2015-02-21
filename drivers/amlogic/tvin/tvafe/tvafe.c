@@ -14,7 +14,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/slab.h> 
+#include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/device.h>
@@ -168,7 +168,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 										}
 										};
-		
+
 		for(i=0; i<32; i++)
 		{
 		pr_info("0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x.\n", edid.value[(i<<3)+0],
@@ -326,6 +326,81 @@ static ssize_t cvd_reg8a_store(struct device *dev, struct device_attribute *attr
 	return count;
 }
 static DEVICE_ATTR(cvd_reg8a,0644,NULL,cvd_reg8a_store);
+
+static ssize_t reg_store(struct device *dev, struct device_attribute *attr,const char *buff,size_t count)
+{
+	unsigned int argn=0,addr=0,value=0,end=0;
+	char *p,*para,*buf_work,cmd=0;
+	char *argv[3];
+
+	buf_work = kstrdup(buff, GFP_KERNEL);
+	p = buf_work;
+
+	for(argn = 0; argn < 3; argn++){
+		para = strsep(&p," ");
+		if(para == NULL)
+			break;
+		argv[argn] = para;
+	}
+
+	if(argn < 1 || argn > 3)
+		return count;
+
+	cmd = argv[0][0];
+	switch(cmd){
+		case 'r':
+		case 'R':
+		        if(argn < 2){
+			        pr_err("syntax error.\n");
+		        }else{
+			        addr = simple_strtol(argv[1],NULL,16);
+			        value = R_APB_REG(addr<<2);
+			        pr_info("APB[0x%04x]=0x%08x\n", addr, value);
+		        }
+		        break;
+		case 'w':
+		case 'W':
+		        if(argn < 3){
+			        pr_err("syntax error.\n");
+		        }else{
+			        value = simple_strtol(argv[1],NULL,16);
+			        addr = simple_strtol(argv[2],NULL,16);
+			        W_APB_REG(addr<<2,value);
+			        pr_info("Write APB[0x%04x]=0x%08x\n", addr, R_APB_REG(addr<<2));
+		        }
+		        break;
+		case 'd':
+		case 'D':
+		        if(argn < 3){
+			        pr_err("syntax error.\n");
+		        }else{
+			        addr = simple_strtol(argv[1],NULL,16);
+			        end = simple_strtol(argv[2],NULL,16);
+			        for(; addr <= end; addr++)
+				        pr_info("APB[0x%04x]=0x%08x\n", addr, R_APB_REG(addr<<2));
+		        }
+			break;
+		default:
+			pr_err("not support.\n");
+			break;
+        }
+	return count;
+}
+
+
+static ssize_t reg_show(struct device *dev,struct device_attribute *attr,char *buff)
+{
+	ssize_t len=0;
+
+	len += sprintf(buff+len,"Usage:\n");
+	len += sprintf(buff+len,"\techo [read|write <date>] addr > reg;Access ATV DEMON/TVAFE/HDMIRX logic address.\n");
+	len += sprintf(buff+len,"\techo dump <start> <end> > reg;Dump ATV DEMON/TVAFE/HDMIRX logic address.\n");
+	len += sprintf(buff+len,"Address format:\n");
+	len += sprintf(buff+len,"\taddr    : 0xXXXX, 16 bits register address\n");
+	return len;
+}
+static DEVICE_ATTR(reg,0644,reg_show,reg_store);
+
 /*
  * tvafe 10ms timer handler
  */
@@ -357,32 +432,33 @@ param:void
 		return -1;
 	}
 	pinmux = devp->pinmux;
+#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
 	switch(port)
 	{
 		case TVIN_PORT_VGA0:
 			if (pinmux->pin[VGA0_SOG] >= TVAFE_ADC_PIN_SOG_0){
-			    if(ret==(int)READ_APB_REG_BITS(ADC_REG_34,4,1))
-				     ret=(int)READ_APB_REG_BITS(ADC_REG_34,7,1);
+			    if(ret==(int)R_APB_BIT(ADC_REG_34,4,1))
+				     ret=(int)R_APB_BIT(ADC_REG_34,7,1);
 			    else
 				ret=0;
 			}
-				//ret=(int)READ_APB_REG_BITS(ADC_REG_2B,(pinmux->pin[VGA0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
+				//ret=(int)R_APB_BIT(ADC_REG_2B,(pinmux->pin[VGA0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
 			break;
 		case TVIN_PORT_COMP0:
 			if (pinmux->pin[COMP0_SOG] >= TVAFE_ADC_PIN_SOG_0)
-				ret=(int)READ_APB_REG_BITS(ADC_REG_2B,(pinmux->pin[COMP0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
+				ret=(int)R_APB_BIT(ADC_REG_2B,(pinmux->pin[COMP0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
 			break;
 		case TVIN_PORT_CVBS0:
 			if (pinmux->pin[CVBS0_SOG] >= TVAFE_ADC_PIN_SOG_0)
-				ret=(int)READ_APB_REG_BITS(ADC_REG_2B,(pinmux->pin[CVBS0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
+				ret=(int)R_APB_BIT(ADC_REG_2B,(pinmux->pin[CVBS0_SOG] - TVAFE_ADC_PIN_SOG_0),1);
 			break;
 		case TVIN_PORT_CVBS1:
 			if (pinmux->pin[CVBS1_SOG] >= TVAFE_ADC_PIN_SOG_0)
-				ret=(int)READ_APB_REG_BITS(ADC_REG_2B,(pinmux->pin[CVBS1_SOG] - TVAFE_ADC_PIN_SOG_0),1);
+				ret=(int)R_APB_BIT(ADC_REG_2B,(pinmux->pin[CVBS1_SOG] - TVAFE_ADC_PIN_SOG_0),1);
 			break;
 		case TVIN_PORT_CVBS2:
 			if (pinmux->pin[CVBS2_SOG] >= TVAFE_ADC_PIN_SOG_0)
-				ret=(int)READ_APB_REG_BITS(ADC_REG_2B,(pinmux->pin[CVBS2_SOG] - TVAFE_ADC_PIN_SOG_0),1);
+				ret=(int)R_APB_BIT(ADC_REG_2B,(pinmux->pin[CVBS2_SOG] - TVAFE_ADC_PIN_SOG_0),1);
 			break;
 		case TVIN_PORT_HDMI0:
 			break;
@@ -395,8 +471,9 @@ param:void
 		default:
 			break;
 	}
-	//ret=(bool)READ_APB_REG_BITS(ADC_REG_34,1,1);
+	//ret=(bool)R_APB_BIT(ADC_REG_34,1,1);
 	//printk("[%s]:port==%s,ret=%d\n",__func__,tvin_port_str(port),ret);
+#endif
 	return ret;
 }
 
@@ -409,8 +486,7 @@ int tvafe_dec_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	struct tvafe_dev_s *devp = container_of(fe, struct tvafe_dev_s, frontend);
 
 	/* check afe port and index */
-	if (((port < TVIN_PORT_VGA0) || (port > TVIN_PORT_SVIDEO7)) ||
-			(fe->index != devp->index))
+	if (((port < TVIN_PORT_VGA0) || (port > TVIN_PORT_SVIDEO7))||(fe->index != devp->index))
 		return -1;
 
 	return 0;
@@ -432,6 +508,15 @@ int tvafe_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		mutex_unlock(&devp->afe_mutex);
 		return 1;
 	}
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
+	{
+		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
+				devp->index, tvin_port_str(port));
+		mutex_unlock(&devp->afe_mutex);
+		return 1;
+	}
+	#endif
 	/* init variable */
 	memset(tvafe, 0, sizeof(struct tvafe_info_s));
 	/**enable and reset tvafe clock**/
@@ -476,6 +561,15 @@ void tvafe_dec_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
+	{
+		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
+				devp->index, tvin_port_str(port));
+		mutex_unlock(&devp->afe_mutex);
+		return;
+	}
+#endif
 
 	if (devp->flags & TVAFE_FLAG_DEV_STARTED)
 	{
@@ -510,6 +604,15 @@ void tvafe_dec_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
+	{
+		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
+				devp->index, tvin_port_str(port));
+		mutex_unlock(&devp->afe_mutex);
+		return;
+	}
+	#endif
 
 	/* init variable */
 	memset(&tvafe->adc, 0, sizeof(struct tvafe_adc_s));
@@ -519,9 +622,9 @@ void tvafe_dec_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	memset(&tvafe->parm.info, 0, sizeof(struct tvin_info_s));
 
 	tvafe->parm.port = port;
-
+#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
 	tvafe_adc_digital_reset();
-
+#endif
 	// need to do ...
 	/** write 7740 register for cvbs clamp **/
 	if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7))
@@ -558,13 +661,22 @@ void tvafe_dec_close(struct tvin_frontend_s *fe)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	if ((tvafe->parm.port < TVIN_PORT_CVBS0)|| (tvafe->parm.port > TVIN_PORT_CVBS7))
+	{
+		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
+				devp->index, tvin_port_str(tvafe->parm.port));
+		mutex_unlock(&devp->afe_mutex);
+		return;
+	}
+#endif
 
 	del_timer_sync(&devp->timer);
 
 	/**set cvd2 reset to high**/
 	tvafe_cvd2_hold_rst(&tvafe->cvd2);
 	/**disable av out**/
-	tvafe_enable_avout(false);
+	tvafe_enable_avout(tvafe->parm.port,false);
 #ifdef TVAFE_POWERDOWN_IN_IDLE
 	/**disable tvafe clock**/
 	tvafe_enable_module(false);
@@ -608,14 +720,12 @@ int tvafe_dec_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 	{
 		tvafe_cvd2_check_3d_comb(&tvafe->cvd2);
 	}
-
 #ifdef TVAFE_SET_CVBS_PGA_EN
 	if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7))
 	{
 		tvafe_cvd2_adj_pga(&tvafe->cvd2);
 	}
 #endif
-
 #ifdef TVAFE_SET_CVBS_CDTO_EN
 	if (tvafe->parm.info.fmt == TVIN_SIG_FMT_CVBS_PAL_I)
 	{
@@ -1511,7 +1621,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	ret = device_create_file(tdevp->dev,&dev_attr_debug);
 	ret = device_create_file(tdevp->dev,&dev_attr_cvd_reg8a);
 	ret = device_create_file(tdevp->dev,&dev_attr_dumpmem);
-
+	ret = device_create_file(tdevp->dev,&dev_attr_reg);
 	if(ret < 0) {
 		pr_err("tvafe: fail to create dbg attribute file\n");
 		goto fail_create_dbg_file;
@@ -1549,7 +1659,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 		                ret = -EFAULT;
 		                goto fail_get_resource_mem;
 		        }
-		
+
 		        tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
 		        tdevp->mem.size = size;
 		}
@@ -1572,7 +1682,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 			tdevp->mem.start,
 			tdevp->mem.size);
 #ifdef CONFIG_USE_OF
-	if(of_property_read_u32_array(pdev->dev.of_node, "tvafe_pin_mux", 
+	if(of_property_read_u32_array(pdev->dev.of_node, "tvafe_pin_mux",
 				(u32*)tvafe_pinmux.pin, TVAFE_SRC_SIG_MAX_NUM)){
 		pr_err("Can't get pinmux data.\n");
 	}
@@ -1647,7 +1757,9 @@ static int tvafe_drv_remove(struct platform_device *pdev)
 static int tvafe_drv_suspend(struct platform_device *pdev,pm_message_t state)
 {
 	struct tvafe_dev_s *tdevp;
+	struct tvafe_info_s *tvafe;
 	tdevp = platform_get_drvdata(pdev);
+	tvafe = &tdevp->tvafe;
 
 	/* close afe port first */
     if (tdevp->flags & TVAFE_FLAG_DEV_OPENED)
@@ -1659,7 +1771,7 @@ static int tvafe_drv_suspend(struct platform_device *pdev,pm_message_t state)
         /**set cvd2 reset to high**/
         tvafe_cvd2_hold_rst(&tdevp->tvafe.cvd2);
         /**disable av out**/
-        tvafe_enable_avout(false);
+        tvafe_enable_avout(tvafe->parm.port,false);
     }
 
     /*disable and reset tvafe clock*/

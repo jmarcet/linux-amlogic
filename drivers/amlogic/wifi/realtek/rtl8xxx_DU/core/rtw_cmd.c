@@ -1414,7 +1414,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_setopmode_cmd(_adapter  *padapter, NDIS_802_11_NETWORK_INFRASTRUCTURE networktype)
+u8 rtw_setopmode_cmd(_adapter  *padapter, NDIS_802_11_NETWORK_INFRASTRUCTURE networktype, bool enqueue)
 {
 	struct	cmd_obj*	ph2c;
 	struct	setopmode_parm* psetop;
@@ -1424,23 +1424,28 @@ u8 rtw_setopmode_cmd(_adapter  *padapter, NDIS_802_11_NETWORK_INFRASTRUCTURE net
 
 _func_enter_;
 
-	ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));			
-	if(ph2c==NULL){
-		res= _FALSE;
-		goto exit;
-	}
 	psetop = (struct setopmode_parm*)rtw_zmalloc(sizeof(struct setopmode_parm)); 
-
 	if(psetop==NULL){
-		rtw_mfree((u8 *) ph2c, sizeof(struct	cmd_obj));
-		res=_FALSE;
+		res=_FAIL;
 		goto exit;
 	}
-
-	init_h2fwcmd_w_parm_no_rsp(ph2c, psetop, _SetOpMode_CMD_);
 	psetop->mode = (u8)networktype;
 
-	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
+	if (enqueue) {
+		ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));			
+		if(ph2c==NULL){
+			rtw_mfree((u8 *)psetop, sizeof(*psetop));
+			res= _FAIL;
+			goto exit;
+		}
+
+		init_h2fwcmd_w_parm_no_rsp(ph2c, psetop, _SetOpMode_CMD_);
+		res = rtw_enqueue_cmd(pcmdpriv, ph2c);
+	}
+	else{
+		setopmode_hdl(padapter, (u8 *)psetop);
+		rtw_mfree((u8 *)psetop, sizeof(*psetop));
+	}
 
 exit:
 
@@ -1449,7 +1454,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_setstakey_cmd(_adapter *padapter, u8 *psta, u8 unicast_key)
+u8 rtw_setstakey_cmd(_adapter *padapter, struct sta_info *sta, u8 unicast_key, bool enqueue)
 {
 	struct cmd_obj*			ph2c;
 	struct set_stakey_parm	*psetstakey_para;
@@ -1458,64 +1463,70 @@ u8 rtw_setstakey_cmd(_adapter *padapter, u8 *psta, u8 unicast_key)
 	
 	struct mlme_priv			*pmlmepriv = &padapter->mlmepriv;
 	struct security_priv 		*psecuritypriv = &padapter->securitypriv;
-	struct sta_info* 			sta = (struct sta_info* )psta;
 	u8	res=_SUCCESS;
 
 _func_enter_;
 
-	ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
-	if ( ph2c == NULL){
-		res= _FAIL;
-		goto exit;
-	}
-
 	psetstakey_para = (struct set_stakey_parm*)rtw_zmalloc(sizeof(struct set_stakey_parm));
 	if(psetstakey_para==NULL){
-		rtw_mfree((u8 *) ph2c, sizeof(struct	cmd_obj));
 		res=_FAIL;
 		goto exit;
 	}
-
-	psetstakey_rsp = (struct set_stakey_rsp*)rtw_zmalloc(sizeof(struct set_stakey_rsp)); 
-	if(psetstakey_rsp == NULL){
-		rtw_mfree((u8 *) ph2c, sizeof(struct	cmd_obj));
-		rtw_mfree((u8 *) psetstakey_para, sizeof(struct set_stakey_parm));
-		res=_FAIL;
-		goto exit;
-	}
-
-	init_h2fwcmd_w_parm_no_rsp(ph2c, psetstakey_para, _SetStaKey_CMD_);
-	ph2c->rsp = (u8 *) psetstakey_rsp;
-	ph2c->rspsz = sizeof(struct set_stakey_rsp);
 
 	_rtw_memcpy(psetstakey_para->addr, sta->hwaddr,ETH_ALEN);
-	
+
 	if(check_fwstate(pmlmepriv, WIFI_STATION_STATE)){
-#ifdef CONFIG_TDLS		
+		#ifdef CONFIG_TDLS		
 		if(sta->tdls_sta_state&TDLS_LINKED_STATE)
 			psetstakey_para->algorithm=(u8)sta->dot118021XPrivacy;
 		else
-#endif //CONFIG_TDLS
-		psetstakey_para->algorithm =(unsigned char) psecuritypriv->dot11PrivacyAlgrthm;
+		#endif //CONFIG_TDLS
+			psetstakey_para->algorithm =(unsigned char) psecuritypriv->dot11PrivacyAlgrthm;
 	}else{
 		GET_ENCRY_ALGO(psecuritypriv, sta, psetstakey_para->algorithm, _FALSE);
 	}
 
 	if (unicast_key == _TRUE) {
-#ifdef CONFIG_TDLS
+		#ifdef CONFIG_TDLS
 		if(sta->tdls_sta_state&TDLS_LINKED_STATE)
 			_rtw_memcpy(&psetstakey_para->key, sta->tpk.tk, 16);
 		else
-#endif //CONFIG_TDLS
+		#endif //CONFIG_TDLS
 			_rtw_memcpy(&psetstakey_para->key, &sta->dot118021x_UncstKey, 16);
-        } else {
+	}
+	else {
 		_rtw_memcpy(&psetstakey_para->key, &psecuritypriv->dot118021XGrpKey[psecuritypriv->dot118021XGrpKeyid].skey, 16);
-        }
+	}
 
 	//jeff: set this becasue at least sw key is ready
 	padapter->securitypriv.busetkipkey=_TRUE;
 
-	res = rtw_enqueue_cmd(pcmdpriv, ph2c);	
+	if (enqueue)
+	{
+		ph2c = (struct cmd_obj*)rtw_zmalloc(sizeof(struct cmd_obj));
+		if ( ph2c == NULL){
+			rtw_mfree((u8 *) psetstakey_para, sizeof(struct set_stakey_parm));
+			res= _FAIL;
+			goto exit;
+		}
+
+		psetstakey_rsp = (struct set_stakey_rsp*)rtw_zmalloc(sizeof(struct set_stakey_rsp)); 
+		if(psetstakey_rsp == NULL){
+			rtw_mfree((u8 *) ph2c, sizeof(struct cmd_obj));
+			rtw_mfree((u8 *) psetstakey_para, sizeof(struct set_stakey_parm));
+			res=_FAIL;
+			goto exit;
+		}
+
+		init_h2fwcmd_w_parm_no_rsp(ph2c, psetstakey_para, _SetStaKey_CMD_);
+		ph2c->rsp = (u8 *) psetstakey_rsp;
+		ph2c->rspsz = sizeof(struct set_stakey_rsp);
+		res = rtw_enqueue_cmd(pcmdpriv, ph2c);	
+	}
+	else {
+		set_stakey_hdl(padapter, (u8 *)psetstakey_para);
+		rtw_mfree((u8 *) psetstakey_para, sizeof(struct set_stakey_parm));
+	}
 
 exit:
 
@@ -1524,7 +1535,7 @@ _func_exit_;
 	return res;
 }
 
-u8 rtw_clearstakey_cmd(_adapter *padapter, u8 *psta, u8 entry, u8 enqueue)
+u8 rtw_clearstakey_cmd(_adapter *padapter, struct sta_info *sta, u8 enqueue)
 {
 	struct cmd_obj*			ph2c;
 	struct set_stakey_parm	*psetstakey_para;
@@ -1532,14 +1543,18 @@ u8 rtw_clearstakey_cmd(_adapter *padapter, u8 *psta, u8 entry, u8 enqueue)
 	struct set_stakey_rsp		*psetstakey_rsp = NULL;	
 	struct mlme_priv			*pmlmepriv = &padapter->mlmepriv;
 	struct security_priv 		*psecuritypriv = &padapter->securitypriv;
-	struct sta_info* 			sta = (struct sta_info* )psta;
+	s16 cam_id = 0;
 	u8	res=_SUCCESS;
 
 _func_enter_;
 
 	if(!enqueue)
 	{
-		clear_cam_entry(padapter, entry);
+		while((cam_id = rtw_camid_search(padapter, sta->hwaddr, -1)) >= 0) {
+			DBG_871X_LEVEL(_drv_always_, "clear key for addr:"MAC_FMT", camid:%d\n", MAC_ARG(sta->hwaddr), cam_id);
+			clear_cam_entry(padapter, cam_id);
+			rtw_camid_free(padapter, cam_id);
+		}
 	}
 	else
 	{
@@ -1571,8 +1586,6 @@ _func_enter_;
 		_rtw_memcpy(psetstakey_para->addr, sta->hwaddr, ETH_ALEN);
 
 		psetstakey_para->algorithm = _NO_PRIVACY_;
-
-		psetstakey_para->id = entry;
 	
 		res = rtw_enqueue_cmd(pcmdpriv, ph2c);	
 		
@@ -2539,36 +2552,43 @@ _func_exit_;
 
 static void rtw_chk_hi_queue_hdl(_adapter *padapter)
 {
-	int cnt=0;
 	struct sta_info *psta_bmc;
 	struct sta_priv *pstapriv = &padapter->stapriv;
+	u32 start = rtw_get_current_time();
+	u8 empty = _FALSE;
 
 	psta_bmc = rtw_get_bcmc_stainfo(padapter);
 	if(!psta_bmc)
 		return;
 
+	rtw_hal_get_hwreg(padapter, HW_VAR_CHK_HI_QUEUE_EMPTY, &empty);
+
+	while(_FALSE == empty && rtw_get_passing_time_ms(start) < rtw_get_wait_hiq_empty_ms())
+	{
+		rtw_msleep_os(100);
+		rtw_hal_get_hwreg(padapter, HW_VAR_CHK_HI_QUEUE_EMPTY, &empty);
+	}
 
 	if(psta_bmc->sleepq_len==0)
 	{
-		while((rtw_read32(padapter, 0x414)&0x00ffff00)!=0)
+		if(empty == _SUCCESS)
 		{
-			rtw_msleep_os(100);
+			bool update_tim = _FALSE;
 
-			cnt++;
-			
-			if(cnt>10)
-				break;	
-		}
+			if (pstapriv->tim_bitmap & BIT(0))
+				update_tim = _TRUE;
 
-		if(cnt<=10)
-		{
 			pstapriv->tim_bitmap &= ~BIT(0);
 			pstapriv->sta_dz_bitmap &= ~BIT(0);
-			
-			update_beacon(padapter, _TIM_IE_, NULL, _TRUE);
-		}	
-	}	
-	
+
+			if (update_tim == _TRUE)
+				_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "bmc sleepq and HIQ empty");
+		}
+		else //re check again
+		{
+			rtw_chk_hi_queue_cmd(padapter);
+		}
+	}
 }
 
 u8 rtw_chk_hi_queue_cmd(_adapter*padapter)

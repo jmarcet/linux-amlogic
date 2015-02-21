@@ -1240,8 +1240,9 @@ endif
 ifeq ($(CONFIG_PLATFORM_AML), y)
 EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
 ARCH := arm
-CROSS_COMPILE := arm-none-linux-gnueabi-
-KSRC := 3.10
+CROSS_COMPILE := arm-linux-gnueabihf-
+KSRC := ../../../../../../common
+KVER := 3.10
 endif
 
 ifeq ($(CONFIG_MULTIDRV), y)	

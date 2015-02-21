@@ -47,6 +47,8 @@
 
 #endif
 
+#include <platform_ops.h>
+
 #ifdef CONFIG_80211N_HT
 extern int rtw_ht_enable;
 extern int rtw_cbw40_enable;
@@ -908,7 +910,9 @@ static int rtw_suspend(struct usb_interface *pusb_intf, pm_message_t message)
 		//set H2C command
 		poidparam.subcode=WOWLAN_ENABLE;
 		rtw_hal_set_hwreg(padapter,HW_VAR_WOWLAN,(u8 *)&poidparam);
+		#ifndef DYNAMIC_CAMID_ALLOC
 		rtw_hal_set_hwreg(padapter, HW_VAR_ENC_BMC_ENABLE, 0);
+		#endif
 		//rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_PWRMODE, &ps_mode);
 		//rtw_set_rpwm(padapter, PS_STATE_S2);
 	}
@@ -1023,7 +1027,9 @@ int rtw_resume_process(_adapter *padapter)
 		//set H2C command
 		poidparam.subcode=WOWLAN_DISABLE;
 		rtw_hal_set_hwreg(padapter,HW_VAR_WOWLAN,(u8 *)&poidparam);
+		#ifndef DYNAMIC_CAMID_ALLOC
 		rtw_hal_set_hwreg(padapter, HW_VAR_ENC_BMC_DISABLE, 0);
+		#endif
 	}
 #endif //CONFIG_WOWLAN
 	DBG_871X("bkeepfwalive(%x)\n",pwrpriv->bkeepfwalive);
@@ -1555,43 +1561,13 @@ static int __init rtw_drv_entry(void)
 	DBG_871X_LEVEL(_drv_always_, "module init start\n");
 	dump_drv_version(RTW_DBGDUMP);
 
-#ifdef CONFIG_PLATFORM_RTK_DMP
+	ret = platform_wifi_power_on();
+	if(ret != 0)
 	{
-		u32 tmp;
-		tmp=readl((volatile unsigned int*)0xb801a608);
-		tmp &= 0xffffff00;
-		tmp |= 0x55;
-		writel(tmp,(volatile unsigned int*)0xb801a608);//write dummy register for 1055
+		DBG_871X("%s: power on failed!!(%d)\n", __FUNCTION__, ret);
+		ret = -1;
+		goto exit;
 	}
-#endif
-
-#ifdef CONFIG_PLATFORM_ARM_SUNxI
-	/* ----------get usb_wifi_usbc_num------------- */
-	ret = script_parser_fetch("usb_wifi_para", "usb_wifi_usbc_num", (int *)&usb_wifi_host, 64);
-	if(ret != 0){
-		printk("ERR: script_parser_fetch usb_wifi_usbc_num failed\n");
-		ret = -ENOMEM;
-		return ret;
-	}
-	printk("sw_usb_enable_hcd: usbc_num = %d\n", usb_wifi_host);
-	sw_usb_enable_hcd(usb_wifi_host);
-#endif //CONFIG_PLATFORM_ARM_SUNxI
-
-#ifdef CONFIG_PLATFORM_ARM_SUN6I
-	script_item_value_type_e type;
-
-	type = script_get_item("wifi_para", "wifi_usbc_id", &item);
-	if(SCIRPT_ITEM_VALUE_TYPE_INT != type){
-		printk("ERR: script_get_item wifi_usbc_id failed\n");
-		return -ENOMEM;
-	}
-
-	printk("sw_usb_enable_hcd: usbc_num = %d\n", item.val);
-	wifi_pm_power(1);
-	mdelay(10);
-	sw_usb_enable_hcd(item.val);
-#endif //CONFIG_PLATFORM_ARM_SUN6I
-
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24))
 	//console_suspend_enabled=0;
 #endif
@@ -1623,16 +1599,7 @@ static void __exit rtw_drv_halt(void)
 	usb_drv->drv_registered = _FALSE;
 	usb_deregister(&usb_drv->usbdrv);
 
-#ifdef CONFIG_PLATFORM_ARM_SUNxI
-#ifndef CONFIG_RTL8723A
-	printk("sw_usb_disable_hcd: usbc_num = %d\n", usb_wifi_host);
-	sw_usb_disable_hcd(usb_wifi_host);
-#endif //ifndef CONFIG_RTL8723A
-#endif	//CONFIG_PLATFORM_ARM_SUNxI
-#ifdef CONFIG_PLATFORM_ARM_SUN6I
-	sw_usb_disable_hcd(item.val);
-	wifi_pm_power(0);
-#endif
+	platform_wifi_power_off();
 
 	rtw_suspend_lock_uninit();
 	rtw_drv_proc_deinit();

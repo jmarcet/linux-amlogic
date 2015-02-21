@@ -507,6 +507,12 @@ static int controller_hw_init(struct hw_controller *controller)
 	return ret;
 }
 
+void controller_enter_standby(struct hw_controller *controller)
+{
+	//just enter standby status.
+	NFC_SEND_CMD_STANDBY(5);	//delay for 5 cycle.
+}
+
 static int controller_adjust_timing(struct hw_controller *controller)
 {
 	struct amlnand_chip *aml_chip = controller->aml_chip;
@@ -827,6 +833,8 @@ static void controller_set_user_byte(struct hw_controller *controller, unsigned 
 		controller->get_usr_byte = controller_get_user_byte;		
 	if (!controller->set_usr_byte)
 		controller->set_usr_byte = controller_set_user_byte;	
+	if (!controller->enter_standby)
+		controller->enter_standby = controller_enter_standby;	
 
 	for (i=0; i<MAX_CHIP_NUM; i++) {
 		controller->ce_enable[i] = (((CE_PAD_DEFAULT >> i*4) & 0xf) << 10);

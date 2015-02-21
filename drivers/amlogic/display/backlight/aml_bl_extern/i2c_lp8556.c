@@ -128,7 +128,10 @@ static int bl_extern_power_on(void)
     int ret=0;
 
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 1);
+    	if(bl_ext_config->gpio_on == 2)
+    			bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    	else		
+        	bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_on);
     }
 
     while (ending_flag == 0) {
@@ -158,7 +161,10 @@ static int bl_extern_power_off(void)
 {
     bl_status = 0;
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 0);
+    	if(bl_ext_config->gpio_off == 2)
+    		bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    	else
+        bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_off);
     }
 
     printk("%s\n", __FUNCTION__);

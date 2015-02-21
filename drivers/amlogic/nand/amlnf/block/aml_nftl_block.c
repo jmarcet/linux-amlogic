@@ -77,7 +77,7 @@ extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status
 //static struct mutex aml_nftl_lock;
 static int nftl_num;
 static int dev_num;
-//extern int test_flag;
+extern int test_flag;
 
 int aml_ntd_nftl_flush(struct ntd_info *ntd);
 
@@ -197,10 +197,10 @@ static int aml_nftl_calculate_sg(struct aml_nftl_blk *nftl_blk, size_t buflen, u
 uint32 write_sync_flag(struct aml_nftl_blk *aml_nftl_blk)
 { 
 	struct aml_nftl_dev *nftl_dev = aml_nftl_blk->nftl_dev;
-//    if(test_flag)
-//    {
-//        return 0;
-//    }
+    if(test_flag)
+    {
+        return 0;
+    }
 #if NFTL_CACHE_FLUSH_SYNC   	
 #ifdef CONFIG_SUPPORT_USB_BURNING
         return 0;
@@ -609,7 +609,7 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
     nftl_dev->reboot_flag = 0;
     ntd->nftl_priv = (void*)nftl_dev;
 
-    nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%sd", "aml_nftl");
+    nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%s_%s", "aml_nftl", ntd->name);
     if (IS_ERR(nftl_dev->nftl_thread))
         return;
 

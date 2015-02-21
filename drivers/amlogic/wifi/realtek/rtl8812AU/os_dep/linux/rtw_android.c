@@ -848,7 +848,7 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
 	}
 #ifdef CONFIG_GTK_OL
 	case ANDROID_WIFI_CMD_GTK_REKEY_OFFLOAD:
-		rtw_gtk_offload(net, (u8 *)&priv_cmd.buf);
+		rtw_gtk_offload(net, (u8*)command);
 		break;
 #endif //CONFIG_GTK_OL		
 	case ANDROID_WIFI_CMD_P2P_DISABLE:

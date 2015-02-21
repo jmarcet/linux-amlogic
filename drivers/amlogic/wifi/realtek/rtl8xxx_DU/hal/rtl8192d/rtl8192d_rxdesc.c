@@ -661,6 +661,7 @@ void rtl8192d_translate_rx_signal_stuff(union recv_frame *precvframe, struct phy
 			if(psta)
 			{
 				precvframe->u.hdr.psta = psta;
+				psta->rssi = pattrib->RecvSignalPower;
 				process_phy_info(padapter, precvframe);
 			}
 		}

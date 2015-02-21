@@ -256,7 +256,11 @@ void tvin_smr(struct vdin_dev_s *devp)
 
                                 {
                                         sm_p->back_stable_counter = 0;
-                                        if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if(((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))&&devp->unstable_flag)
+					#else
+					if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
+					#endif
                                                 unstable_in_cnt = sm_p->atv_unstable_in_cnt;//UNSTABLE_ATV_MAX_CNT;
                                         else
                                                 unstable_in_cnt = other_unstable_in_cnt;
@@ -275,7 +279,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 else
                                 {
                                         ++sm_p->back_stable_counter;
-                                        if(port == TVIN_PORT_CVBS0)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
+					#else
+					if(port == TVIN_PORT_CVBS0)
+					#endif
                                                 unstable_in_cnt = sm_p->atv_unstable_out_cnt;//UNSTABLE_ATV_MAX_CNT;
                                         else if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7 ))
                                                 unstable_in_cnt = sm_p->hdmi_unstable_out_cnt;
@@ -292,7 +300,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                                                 sm_ops->get_sig_propery(devp->frontend, &devp->prop);
                                                                 devp->parm.info.trans_fmt = devp->prop.trans_fmt;
                                                                 devp->parm.info.reserved = devp->prop.dvi_info;
-								devp->pre_prop.color_format = devp->prop.color_format;
+								//devp->pre_prop.color_format = devp->prop.color_format;
                                                         }
                                                 }
                                                 else
@@ -429,7 +437,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 if (nosig || fmt_changed /* || !pll_lock */)
                                 {
                                         ++sm_p->state_counter;
-                                        if (port == TVIN_PORT_CVBS0)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if ((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
+					#else
+					if (port == TVIN_PORT_CVBS0)
+					#endif
                                                 stable_out_cnt = sm_p->atv_stable_out_cnt;
                                         else
                                                 stable_out_cnt = other_stable_out_cnt;
@@ -552,7 +564,11 @@ void tvin_smr(struct vdin_dev_s *devp)
 
                                 {
                                         sm_p->back_stable_counter = 0;
-                                        if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if(((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))&&devp->unstable_flag)
+					#else
+					if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
+					#endif
                                                 unstable_in_cnt = sm_p->atv_unstable_in_cnt;//UNSTABLE_ATV_MAX_CNT;
                                         else
                                                 unstable_in_cnt = other_unstable_in_cnt;
@@ -571,7 +587,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 else
                                 {
                                         ++sm_p->back_stable_counter;
-                                        if(port == TVIN_PORT_CVBS0)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
+					#else
+					if(port == TVIN_PORT_CVBS0)
+					#endif
                                                 unstable_in_cnt = sm_p->atv_unstable_out_cnt;//UNSTABLE_ATV_MAX_CNT;
                                         else if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7 ))
                                                 unstable_in_cnt = sm_p->hdmi_unstable_out_cnt;
@@ -588,7 +608,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                                                 sm_ops->get_sig_propery(devp->frontend, &devp->prop);
                                                                 devp->parm.info.trans_fmt = devp->prop.trans_fmt;
                                                                 devp->parm.info.reserved = devp->prop.dvi_info;
-								devp->pre_prop.color_format = devp->prop.color_format;
+								//devp->pre_prop.color_format = devp->prop.color_format;
                                                         }
                                                 }
                                                 else
@@ -730,7 +750,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 if (nosig || fmt_changed /* || !pll_lock */)
                                 {
                                         ++sm_p->state_counter;
-                                        if (port == TVIN_PORT_CVBS0)
+					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                                        if ((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
+					#else
+					if (port == TVIN_PORT_CVBS0)
+					#endif
                                                 stable_out_cnt = sm_p->atv_stable_out_cnt;
                                         else
                                                 stable_out_cnt = other_stable_out_cnt;

@@ -698,11 +698,11 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
 	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == _TRUE) ||
 		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == _TRUE)) {
 		_rtw_memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
-		_rtw_memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
+		_rtw_memcpy(pattrib->ta, myid(&padapter->eeprompriv), ETH_ALEN);
 	}
 	else if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {
 		_rtw_memcpy(pattrib->ra, get_bssid(pmlmepriv), ETH_ALEN);
-		_rtw_memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
+		_rtw_memcpy(pattrib->ta, myid(&padapter->eeprompriv), ETH_ALEN);
 	}
 	else if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
 		_rtw_memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
@@ -911,7 +911,7 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
 		RT_TRACE(_module_rtl871x_xmit_c_,_drv_info_,("update_attrib: bswenc=_FALSE\n"));
 	}
 
-#ifdef CONFIG_CONCURRENT_MODE
+#if defined(CONFIG_CONCURRENT_MODE) && !defined(DYNAMIC_CAMID_ALLOC)
 	if((pattrib->encrypt && bmcast) || (pattrib->encrypt ==_WEP40_) || (pattrib->encrypt ==_WEP104_))
 	{
 		pattrib->bswenc = _TRUE;//force using sw enc.
@@ -1160,7 +1160,6 @@ _func_enter_;
 	if (pattrib->subtype & WIFI_DATA_TYPE)
 	{
 		if ((check_fwstate(pmlmepriv,  WIFI_STATION_STATE) == _TRUE)) {
-			//to_ds = 1, fr_ds = 0;
 #ifdef CONFIG_TDLS
 			if((ptdlsinfo->setup_state == TDLS_LINKED_STATE)){
 				ptdls_sta = rtw_get_stainfo(pstapriv, pattrib->dst);
@@ -1181,10 +1180,11 @@ _func_enter_;
 			}else
 #endif //CONFIG_TDLS
 			{
+				//to_ds = 1, fr_ds = 0;
 				//Data transfer to AP
 				SetToDs(fctrl);							
 				_rtw_memcpy(pwlanhdr->addr1, get_bssid(pmlmepriv), ETH_ALEN);
-				_rtw_memcpy(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
+				_rtw_memcpy(pwlanhdr->addr2, pattrib->ta, ETH_ALEN);
 				_rtw_memcpy(pwlanhdr->addr3, pattrib->dst, ETH_ALEN);
 			} 
 
@@ -1205,7 +1205,7 @@ _func_enter_;
 		else if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == _TRUE) ||
 		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == _TRUE)) {
 			_rtw_memcpy(pwlanhdr->addr1, pattrib->dst, ETH_ALEN);
-			_rtw_memcpy(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
+			_rtw_memcpy(pwlanhdr->addr2, pattrib->ta, ETH_ALEN);
 			_rtw_memcpy(pwlanhdr->addr3, get_bssid(pmlmepriv), ETH_ALEN);
 
 			if(psta->qos_option)			
@@ -3461,6 +3461,47 @@ sint xmitframe_enqueue_for_tdls_sleeping_sta(_adapter *padapter, struct xmit_fra
 }
 #endif //CONFIG_TDLS
 
+#define RTW_HIQ_FILTER_ALLOW_ALL 0
+#define RTW_HIQ_FILTER_ALLOW_SPECIAL 1
+#define RTW_HIQ_FILTER_DENY_ALL 2
+
+inline bool xmitframe_hiq_filter(struct xmit_frame *xmitframe)
+{
+	bool allow = _FALSE;
+	_adapter *adapter = xmitframe->padapter;
+	struct registry_priv *registry = &adapter->registrypriv;
+
+if (adapter->interface_type != RTW_PCIE) {
+
+	if (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_SPECIAL) {
+	
+		struct pkt_attrib *attrib = &xmitframe->attrib;
+
+		if (attrib->ether_type == 0x0806
+			|| attrib->ether_type == 0x888e
+			#ifdef CONFIG_WAPI_SUPPORT
+			|| attrib->ether_type == 0x88B4
+			#endif
+			|| attrib->dhcp_pkt
+		) {
+			if (0)
+			DBG_871X(FUNC_ADPT_FMT" ether_type:0x%04x%s\n", FUNC_ADPT_ARG(xmitframe->padapter)
+				, attrib->ether_type, attrib->dhcp_pkt?" DHCP":"");
+			allow = _TRUE;
+		}
+	}
+	else if (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_ALL) {
+		allow = _TRUE;
+	}
+	else if (registry->hiq_filter == RTW_HIQ_FILTER_DENY_ALL) {
+	}
+	else {
+		rtw_warn_on(1);
+	}
+}
+	return allow;
+}
+
 #if defined(CONFIG_AP_MODE) || defined(CONFIG_TDLS)
 
 sint xmitframe_enqueue_for_sleeping_sta(_adapter *padapter, struct xmit_frame *pxmitframe)
@@ -3472,6 +3513,7 @@ sint xmitframe_enqueue_for_sleeping_sta(_adapter *padapter, struct xmit_frame *p
 	struct pkt_attrib *pattrib = &pxmitframe->attrib;
 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	sint bmcst = IS_MCAST(pattrib->ra);
+	bool update_tim = _FALSE;
 #ifdef CONFIG_TDLS
 	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
 
@@ -3512,10 +3554,8 @@ sint xmitframe_enqueue_for_sleeping_sta(_adapter *padapter, struct xmit_frame *p
 		//DBG_871X("directly xmit pspoll_triggered packet\n");
 
 		//pattrib->triggered=0;
-
-		if(bmcst)
+		if (bmcst && xmitframe_hiq_filter(pxmitframe) == _TRUE)
 			pattrib->qsel = 0x11;//HIQ
-		
 
 		return ret;
 	}
@@ -3537,13 +3577,23 @@ sint xmitframe_enqueue_for_sleeping_sta(_adapter *padapter, struct xmit_frame *p
 			
 			psta->sleepq_len++;
 
+			if (!(pstapriv->tim_bitmap & BIT(0)))
+				update_tim = _TRUE;
+
 			pstapriv->tim_bitmap |= BIT(0);//
 			pstapriv->sta_dz_bitmap |= BIT(0);
-			
+
 			//DBG_871X("enqueue, sq_len=%d, tim=%x\n", psta->sleepq_len, pstapriv->tim_bitmap);
 
-			update_beacon(padapter, _TIM_IE_, NULL, _TRUE);//tx bc/mc packets after upate bcn
-			
+			if (update_tim == _TRUE) {
+				if (is_broadcast_mac_addr(pattrib->ra))
+					_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "buffer BC");
+				else
+					_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "buffer MC");
+			} else {
+				chk_bmc_sleepq_cmd(padapter);
+			}
+
 			//_exit_critical_bh(&psta->sleep_q.lock, &irqL);				
 			
 			ret = _TRUE;			
@@ -3599,15 +3649,18 @@ sint xmitframe_enqueue_for_sleeping_sta(_adapter *padapter, struct xmit_frame *p
 
 			if(((psta->has_legacy_ac) && (!wmmps_ac)) ||((!psta->has_legacy_ac)&&(wmmps_ac)))
 			{
+				if (!(pstapriv->tim_bitmap & BIT(psta->aid)))
+					update_tim = _TRUE;
+
 				pstapriv->tim_bitmap |= BIT(psta->aid);
 
 				//DBG_871X("enqueue, sq_len=%d, tim=%x\n", psta->sleepq_len, pstapriv->tim_bitmap);
 
-				if(psta->sleepq_len==1)
+				if(update_tim == _TRUE)
 				{
 					//DBG_871X("sleepq_len==1, update BCNTIM\n");
 					//upate BCN for TIM IE
-					update_beacon(padapter, _TIM_IE_, NULL, _TRUE);
+					_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "buffer UC");
 				}
 			}
 
@@ -3817,7 +3870,40 @@ void wakeup_sta_to_xmit(_adapter *padapter, struct sta_info *psta)
 
 		
 	}	
-	
+
+	if(psta->sleepq_len==0)
+	{
+#ifdef CONFIG_TDLS
+		if( psta->tdls_sta_state & TDLS_LINKED_STATE )
+		{
+			if(psta->state&WIFI_SLEEP_STATE)
+				psta->state ^= WIFI_SLEEP_STATE;
+
+			goto _exit;
+		}
+#endif //CONFIG_TDLS
+
+		if (pstapriv->tim_bitmap & BIT(psta->aid)) {
+			//DBG_871X("wakeup to xmit, qlen==0, update_BCNTIM, tim=%x\n", pstapriv->tim_bitmap);
+			//upate BCN for TIM IE
+			//update_BCNTIM(padapter);
+			update_mask = BIT(0);
+		}
+
+		pstapriv->tim_bitmap &= ~BIT(psta->aid);
+
+		if(psta->state&WIFI_SLEEP_STATE)
+			psta->state ^= WIFI_SLEEP_STATE;
+
+		if(psta->state & WIFI_STA_ALIVE_CHK_STATE)
+		{
+			psta->expire_to = pstapriv->expire_to;
+			psta->state ^= WIFI_STA_ALIVE_CHK_STATE;
+		}
+
+		pstapriv->sta_dz_bitmap &= ~BIT(psta->aid);
+	}
+
 	//for BC/MC Frames
 	if(!psta_bmc)
 		goto _exit;
@@ -3858,46 +3944,18 @@ void wakeup_sta_to_xmit(_adapter *padapter, struct sta_info *psta)
 	
 		if(psta_bmc->sleepq_len==0)
 		{
+			if (pstapriv->tim_bitmap & BIT(0)) {
+				//DBG_871X("wakeup to xmit, qlen==0, update_BCNTIM, tim=%x\n", pstapriv->tim_bitmap);
+				//upate BCN for TIM IE
+				//update_BCNTIM(padapter);
+				update_mask |= BIT(1);
+			}
+
 			pstapriv->tim_bitmap &= ~BIT(0);
 			pstapriv->sta_dz_bitmap &= ~BIT(0);
-
-			//DBG_871X("wakeup to xmit, qlen==0, update_BCNTIM, tim=%x\n", pstapriv->tim_bitmap);
-			//upate BCN for TIM IE
-			//update_BCNTIM(padapter);
-			update_mask |= BIT(1);
 		}		
 	
 	}	
-
-	if(psta->sleepq_len==0)
-	{
-#ifdef CONFIG_TDLS
-		if( psta->tdls_sta_state & TDLS_LINKED_STATE )
-		{
-			if(psta->state&WIFI_SLEEP_STATE)
-				psta->state ^= WIFI_SLEEP_STATE;
-
-			goto _exit;
-		}	
-#endif //CONFIG_TDLS
-		pstapriv->tim_bitmap &= ~BIT(psta->aid);
-
-		//DBG_871X("wakeup to xmit, qlen==0, update_BCNTIM, tim=%x\n", pstapriv->tim_bitmap);
-		//upate BCN for TIM IE
-		//update_BCNTIM(padapter);
-		update_mask = BIT(0);
-
-		if(psta->state&WIFI_SLEEP_STATE)
-			psta->state ^= WIFI_SLEEP_STATE;
-
-		if(psta->state & WIFI_STA_ALIVE_CHK_STATE)
-		{
-			psta->expire_to = pstapriv->expire_to;
-			psta->state ^= WIFI_STA_ALIVE_CHK_STATE;
-		}
-
-		pstapriv->sta_dz_bitmap &= ~BIT(psta->aid);
-	}
 
 _exit:
 
@@ -3907,8 +3965,12 @@ _exit:
 	if(update_mask)
 	{
 		//update_BCNTIM(padapter);
-		//printk("%s => call update_beacon\n",__FUNCTION__);
-		update_beacon(padapter, _TIM_IE_, NULL, _TRUE);
+		if ((update_mask & (BIT(0)|BIT(1))) == (BIT(0)|BIT(1)))
+			_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "clear UC&BMC");
+		else if ((update_mask & BIT(1)) == BIT(1))
+			_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "clear BMC");
+		else
+			_update_beacon(padapter, _TIM_IE_, NULL, _TRUE, "clear UC");
 	}	
 	
 }

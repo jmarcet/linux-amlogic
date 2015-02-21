@@ -130,6 +130,16 @@ do {\
 	pcmd->rspsz = 0;\
 } while(0)
 
+#define init_h2fwcmd_w_parm_no_parm_rsp(pcmd, code) \
+do {\
+	_rtw_init_listhead(&pcmd->list);\
+	pcmd->cmdcode = code;\
+	pcmd->parmbuf = NULL;\
+	pcmd->cmdsz = 0;\
+	pcmd->rsp = NULL;\
+	pcmd->rspsz = 0;\
+} while(0)
+
 struct c2h_evt_hdr {
 	u8 id:4;
 	u8 plen:4;
@@ -346,7 +356,7 @@ when shared key ==> algorithm/keyid
 struct set_stakey_parm {
 	u8	addr[ETH_ALEN];
 	u8	algorithm;
-	u8 	id;// currently for erasing cam entry if algorithm == _NO_PRIVACY_ 
+	u8	keyid;
 	u8	key[16];
 };
 
@@ -940,11 +950,14 @@ u8 rtw_sitesurvey_cmd(_adapter  *padapter, NDIS_802_11_SSID *ssid, int ssid_num,
 extern u8 rtw_createbss_cmd(_adapter  *padapter);
 extern u8 rtw_createbss_cmd_ex(_adapter  *padapter, unsigned char *pbss, unsigned int sz);
 extern u8 rtw_setphy_cmd(_adapter  *padapter, u8 modem, u8 ch);
-extern u8 rtw_setstakey_cmd(_adapter  *padapter, u8 *psta, u8 unicast_key);
-extern u8 rtw_clearstakey_cmd(_adapter *padapter, u8 *psta, u8 entry, u8 enqueue);
+
+struct sta_info;
+u8 rtw_setstakey_cmd(_adapter *padapter, struct sta_info *sta, u8 unicast_key, bool enqueue);
+u8 rtw_clearstakey_cmd(_adapter *padapter, struct sta_info *sta, u8 enqueue);
+
 extern u8 rtw_joinbss_cmd(_adapter  *padapter, struct wlan_network* pnetwork);
 u8 rtw_disassoc_cmd(_adapter *padapter, u32 deauth_timeout_ms, bool enqueue);
-extern u8 rtw_setopmode_cmd(_adapter  *padapter, NDIS_802_11_NETWORK_INFRASTRUCTURE networktype);
+extern u8 rtw_setopmode_cmd(_adapter  *padapter, NDIS_802_11_NETWORK_INFRASTRUCTURE networktype, bool enqueue);
 extern u8 rtw_setdatarate_cmd(_adapter  *padapter, u8 *rateset);
 extern u8 rtw_setbasicrate_cmd(_adapter  *padapter, u8 *rateset);
 extern u8 rtw_setbbreg_cmd(_adapter * padapter, u8 offset, u8 val);
@@ -1078,6 +1091,7 @@ enum rtw_h2c_cmd
 
 	GEN_CMD_CODE(_SetChannelSwitch), /*61*/
 	GEN_CMD_CODE(_TDLS), /*62*/
+	GEN_CMD_CODE(_ChkBMCSleepq), /*63*/
 	
 	MAX_H2CCMD
 };
@@ -1160,6 +1174,7 @@ struct _cmd_callback 	rtw_cmd_callback[] =
 	
 	{GEN_CMD_CODE(_SetChannelSwitch), NULL},/*61*/
 	{GEN_CMD_CODE(_TDLS), NULL},/*62*/
+	{GEN_CMD_CODE(_ChkBMCSleepq), NULL}, /*63*/
 };
 #endif
 

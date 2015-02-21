@@ -2913,7 +2913,7 @@ PHY_SwitchWirelessBand(
 		// Set RRSR rate table.
 		update_tx_basic_rate(Adapter, WIRELESS_11A_5N);
 
-		PHY_SetBBReg1Byte(Adapter, rFPGA0_RFMOD, bCCKEn|bOFDMEn, 0x2);
+		PHY_SetBBReg1Byte(Adapter, rFPGA0_RFMOD, bCCKEn|bOFDMEn, 0x3);
 	}
 
 #ifdef CONFIG_DUALMAC_CONCURRENT
@@ -3439,7 +3439,7 @@ static  VOID
 			PHY_SetRFReg(Adapter, (RF_RADIO_PATH_E)eRFPath, RF_REG_FOR_5G_SWCHNL_NORMAL[i], RFMask,RF_IMR_Param_Normal[0][group][i]);
 		}				
 		PHY_SetBBReg(Adapter, rFPGA0_AnalogParameter4, 0x00f00000,0);
-		PHY_SetBBReg1Byte(Adapter, rFPGA0_RFMOD, bOFDMEn|bCCKEn, 2);
+		PHY_SetBBReg1Byte(Adapter, rFPGA0_RFMOD, bOFDMEn|bCCKEn, 3);
 	}
 	else{ //G band.
 		//RT_TRACE(COMP_SCAN,DBG_LOUD,("Load RF IMR parameters for G band. IMR already setting %d \n",pMgntInfo->bLoadIMRandIQKSettingFor2G));

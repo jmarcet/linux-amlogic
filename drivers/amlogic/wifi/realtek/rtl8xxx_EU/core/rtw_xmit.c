@@ -4121,17 +4121,19 @@ static void dequeue_xmitframes_to_sleeping_queue(_adapter *padapter, struct sta_
 	plist = get_next(phead);
 	
 	while (rtw_end_of_queue_search(phead, plist) == _FALSE)
-	{			
+	{
 		pxmitframe = LIST_CONTAINOR(plist, struct xmit_frame, list);
 
-		plist = get_next(plist);	
-		
+		plist = get_next(plist);
+
+		pattrib = &pxmitframe->attrib;
+
+		pattrib->triggered = 0;
+
 		ret = xmitframe_enqueue_for_sleeping_sta(padapter, pxmitframe);	
 
 		if(_TRUE == ret)
 		{
-			pattrib = &pxmitframe->attrib;
-
 			ptxservq = rtw_get_sta_pending(padapter, psta, pattrib->priority, (u8 *)(&ac_index));
 
 			ptxservq->qcnt--;

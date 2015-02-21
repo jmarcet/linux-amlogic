@@ -43,23 +43,18 @@
 #define ALSA_TRACE()
 #endif
 
-
 unsigned int aml_i2s_playback_start_addr = 0;
-unsigned int aml_i2s_capture_start_addr  = 0;
-unsigned int aml_i2s_playback_end_addr = 0;
-unsigned int aml_i2s_capture_end_addr = 0;
-
 unsigned int aml_i2s_playback_phy_start_addr = 0;
+unsigned int aml_i2s_capture_start_addr  = 0;
 unsigned int aml_i2s_capture_phy_start_addr  = 0;
-unsigned int aml_i2s_playback_phy_end_addr = 0;
-unsigned int aml_i2s_capture_phy_end_addr = 0;
 
 unsigned int aml_i2s_capture_buf_size = 0;
 unsigned int aml_i2s_playback_enable = 1;
 unsigned int aml_i2s_alsa_write_addr = 0;
 
-//static int audio_type_info = -1;
-//static int audio_sr_info = -1;
+extern int android_left_gain;
+extern int android_right_gain;
+extern int set_android_gain_enable;
 extern unsigned audioin_mode;
 
 static DEFINE_MUTEX(gate_mutex);
@@ -72,6 +67,13 @@ EXPORT_SYMBOL(aml_i2s_playback_enable);
 EXPORT_SYMBOL(aml_i2s_playback_phy_start_addr);
 EXPORT_SYMBOL(aml_i2s_capture_phy_start_addr);
 EXPORT_SYMBOL(aml_i2s_alsa_write_addr);
+
+static int trigger_underrun = 0;
+void aml_audio_hw_trigger(void)
+{
+    trigger_underrun = 1;
+}
+EXPORT_SYMBOL(aml_audio_hw_trigger);
 
 
 /*--------------------------------------------------------------------------*\
@@ -269,7 +271,16 @@ static int aml_i2s_hw_free(struct snd_pcm_substream *substream)
 
 static int aml_i2s_prepare(struct snd_pcm_substream *substream)
 {
+
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct aml_runtime_data *prtd = runtime->private_data;
+	audio_stream_t *s = &prtd->s;
+
 	ALSA_TRACE();
+	if(s && s->device_type == AML_AUDIO_I2SOUT && trigger_underrun){
+	     printk("clear i2s out trigger underrun \n");
+	     trigger_underrun = 0;
+	}
 	return 0;
 }
 
@@ -488,25 +499,18 @@ static int aml_i2s_open(struct snd_pcm_substream *substream)
 	struct snd_dma_buffer *buf = &substream->dma_buffer;
 	audio_stream_t *s= &prtd->s;
 	int ret = 0;
-	unsigned int size = 0;
 	ALSA_TRACE();
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
 		snd_soc_set_runtime_hwparams(substream, &aml_i2s_hardware);
 		if(s->device_type == AML_AUDIO_I2SOUT){
-			size = aml_i2s_hardware.buffer_bytes_max;
 			aml_i2s_playback_start_addr = (unsigned int)buf->area;
-			aml_i2s_playback_end_addr = (unsigned int)buf->area + size;
 			aml_i2s_playback_phy_start_addr = buf->addr;
-			aml_i2s_playback_phy_end_addr = buf->addr+size;
 		}
 	}else{
 		snd_soc_set_runtime_hwparams(substream, &aml_i2s_capture);
 		if(s->device_type == AML_AUDIO_I2SIN){
-			size = aml_i2s_capture.buffer_bytes_max;
 			aml_i2s_capture_start_addr = (unsigned int)buf->area;
-			aml_i2s_capture_end_addr = (unsigned int)buf->area + size;
 			aml_i2s_capture_phy_start_addr = buf->addr;
-			aml_i2s_capture_phy_end_addr = buf->addr+size;
 		}
 	}
 
@@ -550,12 +554,12 @@ static int aml_i2s_open(struct snd_pcm_substream *substream)
 
 	spin_lock_init(&prtd->s.lock);
 	s->xrun_num = 0;
-	WRITE_MPEG_REG_BITS(MPLL_I2S_CNTL, 1,14, 1);
+	//WRITE_MPEG_REG_BITS(MPLL_I2S_CNTL, 1,14, 1);
 	mutex_lock(&gate_mutex);
 	if(!num_clk_gate){
         num_clk_gate = 1;
     	if(audio_gate_status == 0){
-    		audio_aiu_pg_enable(1);
+    	//	audio_aiu_pg_enable(1);
     		ALSA_DEBUG("aml_pcm_open  device type %x \n", s->device_type);
 
     	}
@@ -593,6 +597,11 @@ static int aml_i2s_close(struct snd_pcm_substream *substream)
 	return 0;
 }
 
+extern unsigned int IEC958_mode_codec;
+extern void audio_out_i2s_enable(unsigned flag);
+extern void aml_hw_iec958_init(struct snd_pcm_substream *substream);
+extern void audio_hw_958_enable(unsigned flag);
+extern int kernel_android_50;
 
 static int aml_i2s_copy_playback(struct snd_pcm_runtime *runtime, int channel,
 		    snd_pcm_uframes_t pos,
@@ -608,6 +617,21 @@ static int aml_i2s_copy_playback(struct snd_pcm_runtime *runtime, int channel,
     struct aml_audio_buffer *tmp_buf = buffer->private_data;
     void *ubuf = tmp_buf->buffer_start;
     audio_stream_t *s = &prtd->s;
+    int force_reinit_958=0;
+	force_reinit_958= (IEC958_mode_codec==0 && (READ_MPEG_REG(AIU_MEM_IEC958_START_PTR)!=READ_MPEG_REG(AIU_MEM_I2S_START_PTR)));
+	if (s && s->device_type == AML_AUDIO_I2SOUT && (trigger_underrun) && kernel_android_50==1 ){
+	    printk("i2s out trigger underrun force_reinit_958/%d trigger_underrun/%d IEC958_mode_codec/%d IEC958_START_PTR/0x%x I2S_START_PTR/0x%x\n",
+			force_reinit_958,trigger_underrun,IEC958_mode_codec,READ_MPEG_REG(AIU_MEM_IEC958_START_PTR),READ_MPEG_REG(AIU_MEM_I2S_START_PTR));
+	    //trigger_underrun = 0;
+	    return -EFAULT;
+	}
+	if (s && s->device_type == AML_AUDIO_I2SOUT && force_reinit_958 && kernel_android_50==1){
+		printk("i2s out trigger underrun force_reinit_958/%d",force_reinit_958);
+		audio_hw_958_enable(0);
+		aml_hw_iec958_init(substream);
+		audio_hw_958_enable(1);
+	}
+
     if(s->device_type == AML_AUDIO_I2SOUT){
         aml_i2s_alsa_write_addr = frames_to_bytes(runtime, pos);
     }
@@ -619,6 +643,7 @@ static int aml_i2s_copy_playback(struct snd_pcm_runtime *runtime, int channel,
     if(access_ok(VERIFY_READ, buf, frames_to_bytes(runtime, count)))
     {
       if(runtime->format == SNDRV_PCM_FORMAT_S16_LE ){
+	  	
         int16_t * tfrom, *to, *left, *right;
         tfrom = (int16_t*)ubuf;
         to = (int16_t*)hwbuf;
@@ -628,14 +653,25 @@ static int aml_i2s_copy_playback(struct snd_pcm_runtime *runtime, int channel,
 		if (pos % align) {
 		    printk("audio data unligned: pos=%d, n=%d, align=%d\n", (int)pos, n, align);
 		}
-		for (j = 0; j < n; j += 64) {
-		    for (i = 0; i < 16; i++) {
-	          *left++ = (*tfrom++) ;
-	          *right++ = (*tfrom++);
-		    }
-		    left += 16;
-		    right += 16;
-		 }
+		if(set_android_gain_enable == 0){
+			for (j = 0; j < n; j += 64) {
+		    	for (i = 0; i < 16; i++) {
+	          		*left++ = (*tfrom++) ;
+	          		*right++ = (*tfrom++);
+		    	}
+		    	left += 16;
+		    	right += 16;
+		 	}
+	  	}else{
+			for (j = 0; j < n; j += 64) {
+		    	for (i = 0; i < 16; i++) {
+	          		*left++ = (int16_t)(((*tfrom++)*android_left_gain)>>8);
+	          		*right++ = (int16_t)(((*tfrom++)*android_right_gain)>>8);
+		    	}
+		    	left += 16;
+		    	right += 16;
+		 	}
+	  	}
       }else if(runtime->format == SNDRV_PCM_FORMAT_S24_LE && I2S_MODE == AIU_I2S_MODE_PCM24){
         int32_t *tfrom, *to, *left, *right;
         tfrom = (int32_t*)ubuf;

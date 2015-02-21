@@ -28,5 +28,7 @@ source "drivers/amlogic/wifi/realtek/rtl8xxx_DU/Kconfig"
 source "drivers/amlogic/wifi/realtek/rtl8xxx_EU/Kconfig"
 source "drivers/amlogic/wifi/realtek/rtl8xxx_EU_MP/Kconfig"
 source "drivers/amlogic/wifi/broadcom/broadcm_40181/Kconfig"
+source "drivers/amlogic/wifi/broadcom/bcmdhd_1_141_xx/Kconfig"
+source "drivers/amlogic/wifi/broadcom/broadcm_4354/Kconfig"
 
 endif # AM_WIFI

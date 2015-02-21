@@ -172,8 +172,12 @@ void   nand_get_chip(void *chip)
  void  nand_release_chip(void *chip)
 {
 	 struct amlnand_chip *aml_chip = (struct amlnand_chip *)chip;
-	 int ret;
+	 struct hw_controller *controller = &(aml_chip->controller);
+	 
+	int ret;
   	if(nand_idleflag){
+		//enter standby state.
+		controller->enter_standby(controller );
 		ret = pinctrl_select_state(aml_chip->nand_pinctrl , aml_chip->nand_idlestate);
 		if(ret<0)
 			printk("select idle state error\n");

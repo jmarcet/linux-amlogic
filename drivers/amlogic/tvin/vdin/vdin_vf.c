@@ -694,7 +694,7 @@ struct vframe_s *vdin_vf_get (void* op_arg)
 void vdin_vf_put(struct vframe_s *vf, void* op_arg)
 {
 	struct vf_pool *p;
-	if (!op_arg)
+	if (!op_arg || !vf)
 		return;
 	p = (struct vf_pool*)op_arg;
 	receiver_vf_put(vf, p);

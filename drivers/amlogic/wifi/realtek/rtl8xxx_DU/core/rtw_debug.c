@@ -132,6 +132,13 @@ void rf_reg_dump(void *sel, _adapter *adapter)
 	}
 }
 
+static u32 g_wait_hiq_empty_ms = 0;
+
+u32 rtw_get_wait_hiq_empty_ms()
+{
+	return g_wait_hiq_empty_ms;
+}
+
 #ifdef CONFIG_PROC_DEBUG
 ssize_t proc_set_write_reg(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
 {
@@ -254,11 +261,30 @@ int proc_get_sec_info(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);	
-	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct security_priv *sec = &padapter->securitypriv;
 
 	DBG_871X_SEL_NL(m, "auth_alg=0x%x, enc_alg=0x%x, auth_type=0x%x, enc_type=0x%x\n", 
-						psecuritypriv->dot11AuthAlgrthm, psecuritypriv->dot11PrivacyAlgrthm,
-						psecuritypriv->ndisauthtype, psecuritypriv->ndisencryptstatus);
+						sec->dot11AuthAlgrthm, sec->dot11PrivacyAlgrthm,
+						sec->ndisauthtype, sec->ndisencryptstatus);
+
+	DBG_871X_SEL_NL(m, "hw_decrypted=%d\n", sec->hw_decrypted);
+
+#ifdef DBG_SW_SEC_CNT
+	DBG_871X_SEL_NL(m, "wep_sw_enc_cnt=%llu, %llu, %llu\n"
+		, sec->wep_sw_enc_cnt_bc , sec->wep_sw_enc_cnt_mc, sec->wep_sw_enc_cnt_uc);
+	DBG_871X_SEL_NL(m, "wep_sw_dec_cnt=%llu, %llu, %llu\n"
+		, sec->wep_sw_dec_cnt_bc , sec->wep_sw_dec_cnt_mc, sec->wep_sw_dec_cnt_uc);
+
+	DBG_871X_SEL_NL(m, "tkip_sw_enc_cnt=%llu, %llu, %llu\n"
+		, sec->tkip_sw_enc_cnt_bc , sec->tkip_sw_enc_cnt_mc, sec->tkip_sw_enc_cnt_uc);	
+	DBG_871X_SEL_NL(m, "tkip_sw_dec_cnt=%llu, %llu, %llu\n"
+		, sec->tkip_sw_dec_cnt_bc , sec->tkip_sw_dec_cnt_mc, sec->tkip_sw_dec_cnt_uc);
+
+	DBG_871X_SEL_NL(m, "aes_sw_enc_cnt=%llu, %llu, %llu\n"
+		, sec->aes_sw_enc_cnt_bc , sec->aes_sw_enc_cnt_mc, sec->aes_sw_enc_cnt_uc);
+	DBG_871X_SEL_NL(m, "aes_sw_dec_cnt=%llu, %llu, %llu\n"
+		, sec->aes_sw_dec_cnt_bc , sec->aes_sw_dec_cnt_mc, sec->aes_sw_dec_cnt_uc);
+#endif /* DBG_SW_SEC_CNT */
 
 	return 0;
 }
@@ -538,6 +564,8 @@ int proc_get_trx_info(struct seq_file *m, void *v)
 	struct dvobj_priv	*pdvobj = adapter_to_dvobj(padapter);
 	struct hw_xmit *phwxmit;
 
+	dump_os_queue(m, padapter);
+
 	DBG_871X_SEL_NL(m, "free_xmitbuf_cnt=%d, free_xmitframe_cnt=%d\n"
 		, pxmitpriv->free_xmitbuf_cnt, pxmitpriv->free_xmitframe_cnt);
 	DBG_871X_SEL_NL(m, "free_ext_xmitbuf_cnt=%d, free_xframe_ext_cnt=%d\n"
@@ -572,9 +600,12 @@ int proc_get_rate_ctl(struct seq_file *m, void *v)
 	struct net_device *dev = m->private;
 	int i;
 	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
-
+	u8 data_rate = 0,sgi=0;
+		
 	if (adapter->fix_rate != 0xff) {
-		DBG_871X_SEL_NL(m, "FIX\n");
+		data_rate = adapter->fix_rate & 0x7F;
+		sgi = adapter->fix_rate >>7;
+		DBG_871X_SEL_NL(m, "FIXED %s%s\n", HDATA_RATE(data_rate),sgi?" SGI":" LGI");
 		DBG_871X_SEL_NL(m, "0x%02x\n", adapter->fix_rate);
 	} else {
 		DBG_871X_SEL_NL(m, "RA\n");
@@ -599,6 +630,22 @@ ssize_t proc_set_rate_ctl(struct file *file, const char __user *buffer, size_t c
 
 		if (num >= 1)
 			adapter->fix_rate = fix_rate;
+	}
+
+	return count;
+}
+
+ssize_t proc_set_wait_hiq_empty(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	char tmp[32];
+
+	if (count < 1)
+		return -EFAULT;
+
+	if (buffer && !copy_from_user(tmp, buffer, sizeof(tmp))) {
+		int num = sscanf(tmp, "%u", &g_wait_hiq_empty_ms);
 	}
 
 	return count;
@@ -1000,7 +1047,7 @@ int proc_get_best_channel(struct seq_file *m, void *v)
 			index_5G = i;
 	}	
 	
-	for (i=0; pmlmeext->channel_set[i].ChannelNum !=0; i++) {
+	for (i=0; (pmlmeext->channel_set[i].ChannelNum !=0) && (i < MAX_CHANNEL_NUM) ; i++) {
 		// 2.4G
 		if ( pmlmeext->channel_set[i].ChannelNum == 6 ) {
 			if ( pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_24G].rx_count ) {

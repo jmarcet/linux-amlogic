@@ -28,6 +28,7 @@
 #include <trace/events/gpu.h>
 #endif
 
+#include <mali_platform.h>
 
 static void mali_group_bottom_half_mmu(void *data);
 static void mali_group_bottom_half_gp(void *data);
@@ -1955,6 +1956,8 @@ static void mali_group_timeout(void *data)
 
 	group->core_timed_out = MALI_TRUE;
 
+	if (mali_core_timeout < 65533)
+		mali_core_timeout++;
 	if (NULL != group->gp_core) {
 		MALI_DEBUG_PRINT(2, ("Mali group: TIMEOUT on %s\n", mali_gp_get_hw_core_desc(group->gp_core)));
 		_mali_osk_wq_schedule_work(group->bottom_half_work_gp);

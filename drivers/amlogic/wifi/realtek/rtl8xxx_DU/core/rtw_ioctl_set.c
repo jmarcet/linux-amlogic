@@ -863,7 +863,7 @@ _func_enter_;
 		psecuritypriv->dot11DefKey[keyid].skey[9],psecuritypriv->dot11DefKey[keyid].skey[10],psecuritypriv->dot11DefKey[keyid].skey[11],
 		psecuritypriv->dot11DefKey[keyid].skey[12]));
 
-	res=rtw_set_key(padapter,psecuritypriv, keyid, 1);
+	res=rtw_set_key(padapter,psecuritypriv, keyid, 1, _TRUE);
 	
 	if(res==_FAIL)
 		ret= _FALSE;
@@ -895,7 +895,7 @@ _func_enter_;
 			
 			_rtw_memset(&psecuritypriv->dot11DefKey[keyindex], 0, 16);
 			
-			res=rtw_set_key(padapter,psecuritypriv,keyindex, 0);
+			res=rtw_set_key(padapter,psecuritypriv,keyindex, 0, _TRUE);
 			
 			psecuritypriv->dot11DefKeylen[keyindex]=0;
 			
@@ -1211,7 +1211,7 @@ _func_enter_;
 		
 		RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_err_,("reset group key"));
 		
-		res=rtw_set_key(padapter,&padapter->securitypriv, key->KeyIndex, 1);
+		res=rtw_set_key(padapter,&padapter->securitypriv, key->KeyIndex, 1, _TRUE);
 
 		if(res==_FAIL)
 			ret= _FAIL;
@@ -1261,11 +1261,11 @@ _func_enter_;
 			//Set key to CAM through H2C command
 			if(bgrouptkey)//never go to here
 			{
-				res=rtw_setstakey_cmd(padapter, (unsigned char *)stainfo, _FALSE);
+				res=rtw_setstakey_cmd(padapter, stainfo, _FALSE, _TRUE);
 				RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_err_,("\n rtw_set_802_11_add_key:rtw_setstakey_cmd(group)\n"));
 			}
 			else{
-				res=rtw_setstakey_cmd(padapter, (unsigned char *)stainfo, _TRUE);
+				res=rtw_setstakey_cmd(padapter, stainfo, _TRUE, _TRUE);
 				RT_TRACE(_module_rtl871x_ioctl_set_c_,_drv_err_,("\n rtw_set_802_11_add_key:rtw_setstakey_cmd(unicast)\n"));
 			}
 			

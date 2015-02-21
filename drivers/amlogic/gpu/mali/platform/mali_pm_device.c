@@ -12,6 +12,7 @@
 #include <common/mali_kernel_common.h>
 #include <common/mali_osk_profiling.h>
 #include <common/mali_pmu.h>
+#include <linux/mali/mali_utgard.h>
 
 static int mali_os_suspend(struct device *device)
 {
@@ -28,6 +29,7 @@ static int mali_os_resume(struct device *device)
 	int ret = 0;
 
 	MALI_DEBUG_PRINT(4, ("mali_os_resume() called\n"));
+
 	ret = mali_deep_resume(device);
 
 	return ret;
@@ -55,6 +57,10 @@ static int mali_os_thaw(struct device *device)
 	int ret = 0;
 
 	MALI_DEBUG_PRINT(4, ("mali_os_thaw() called\n"));
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+	enable_clock();
+	mali_pmu_powerup();
+#endif
 
 	if (NULL != device->driver &&
 	    NULL != device->driver->pm &&
@@ -65,6 +71,15 @@ static int mali_os_thaw(struct device *device)
 	}
 
 	return ret;
+}
+
+static int mali_os_restore(struct device *device)
+{
+	MALI_DEBUG_PRINT(4, ("mali_os_thaw() called\n"));
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+	mali_dev_restore();
+#endif
+	return mali_os_resume(device);
 }
 
 #ifdef CONFIG_PM_RUNTIME
@@ -116,6 +131,7 @@ static struct dev_pm_ops mali_gpu_device_type_pm_ops =
 	.resume = mali_os_resume,
 	.freeze = mali_os_freeze,
 	.thaw = mali_os_thaw,
+	.restore = mali_os_restore,
 #ifdef CONFIG_PM_RUNTIME
 	.runtime_suspend = mali_runtime_suspend,
 	.runtime_resume = mali_runtime_resume,

@@ -239,7 +239,6 @@ static struct dec_sysinfo vh264_amstream_dec_info;
 extern u32 trickmode_i;
 static dma_addr_t mc_dma_handle;
 static void *mc_cpu_addr;
-
 static u32 first_offset;
 static u32 first_pts;
 static u64 first_pts64;
@@ -268,6 +267,7 @@ extern u32 get_blackout_policy(void);
 
 #ifdef CONFIG_GE2D_KEEP_FRAME
 static ge2d_context_t *ge2d_videoh264_context = NULL;
+static bool pts_discontinue = false;
 
 static int ge2d_videoh264task_init(void)
 {
@@ -1118,12 +1118,13 @@ static void vh264_isr(void)
                                          close_to(frame_dur, RATE_25_FPS, RATE_CORRECTION_THRESHOLD))
                                          || (close_to(pts_duration, RATE_25_FPS, RATE_CORRECTION_THRESHOLD) &&
                                              close_to(frame_dur, RATE_24_FPS, RATE_CORRECTION_THRESHOLD))) {
-                                        printk("H.264: Correct frame duration from %d to duration based on PTS %d\n",
+                                        printk("----H.264: Correct frame duration from %d to duration based on PTS %d ---\n",
                                                 frame_dur, pts_duration);
                                         frame_dur = pts_duration;
                                         duration_from_pts_done = 1;
                                         //printk("used calculate frame rate,on frame_dur problem=%d\n",frame_dur);
-                                    } else if (((frame_dur<96000/240) && (pts_duration>96000/240)) || !duration_on_correcting){//>if frameRate>240fps,I think have error,use calculate rate.
+                                    } else if (((frame_dur<96000/240) && (pts_duration>96000/240)) || 
+                                        (!duration_on_correcting && (!close_to(frame_dur, RATE_25_FPS, RATE_CORRECTION_THRESHOLD)) && (!close_to(frame_dur, RATE_24_FPS, RATE_CORRECTION_THRESHOLD)))){//fft: if the frame rate is not regular, use the calculate rate insteadof.
                                         printk("H.264: Correct frame duration from %d to duration based on PTS %d\n",
                                                 frame_dur, pts_duration);
                                         frame_dur = pts_duration;
@@ -1162,12 +1163,17 @@ static void vh264_isr(void)
                 }
             }
 
-            // if use_idr_framerate or fixed frame rate, only use PTS for IDR frames
+            if (pts_valid && !pts_discontinue){
+                pts_discontinue = (abs(last_pts-pts) >= tsync_vpts_discontinuity_margin());
+            }
+
+            // if use_idr_framerate or fixed frame rate, only use PTS for IDR frames except for pts discontinue
             if (timing_info_present_flag &&
                 frame_dur && 
                 (use_idr_framerate || (fixed_frame_rate_flag != 0)) &&
                 pts_valid &&
-                h264_first_valid_pts_ready) {
+                h264_first_valid_pts_ready && 
+                (!pts_discontinue)) {
                 pts_valid = (idr_flag) ? 1 : 0;
             }
 
@@ -1180,15 +1186,15 @@ static void vh264_isr(void)
             // calculate PTS of next frame and smooth PTS for fixed rate source
             if (pts_valid) {
                 if ((fixed_frame_rate_flag) &&
+                    (!pts_discontinue) &&
                     (abs(pts_inc_by_duration(NULL, NULL) - pts)  < DUR2PTS(frame_dur))) {
-                    pts = pts_inc_by_duration(&last_pts, &last_pts_remainder);
+                    pts = pts_inc_by_duration(&pts, &last_pts_remainder);
                 } else {
-                    last_pts = pts;
                     last_pts_remainder = 0;
                 }
 
             } else {
-                pts = pts_inc_by_duration(&last_pts, &last_pts_remainder);
+                pts = pts_inc_by_duration(&pts, &last_pts_remainder);
                 pts_valid = 1;
             }
 
@@ -1209,17 +1215,16 @@ static void vh264_isr(void)
              * force no VPTS discontinue reporting if we saw errors earlier but only once.
              */
             if ((pts_valid) && (check_pts_discontinue) && (!error)) {
-                if ((pts - last_pts) < 90000) {
+                if(pts_discontinue){
+                    vf->flag = 0;
+                    check_pts_discontinue = false;
+                }else if((pts - last_pts) < 90000) {
                     vf->flag = VFRAME_FLAG_NO_DISCONTINUE;
                     check_pts_discontinue = false;
                 }
             }
 
-            if (pts_valid) {
-                last_pts = pts;
-            } else {
-                last_pts += DUR2PTS(vf->duration);
-            }
+            last_pts = pts;
 
             if (pic_struct_present) {
                 if ((pic_struct == PIC_TOP_BOT) || (pic_struct == PIC_BOT_TOP)) {
@@ -1238,6 +1243,8 @@ static void vh264_isr(void)
                     }
                 }
 
+                last_pts = last_pts + DUR2PTS(vf->duration - frame_dur);
+
                 vf->index = buffer_index;
 #ifdef NV21
                 vf->type = VIDTYPE_PROGRESSIVE | VIDTYPE_VIU_FIELD | VIDTYPE_VIU_NV21;
@@ -1255,7 +1262,7 @@ static void vh264_isr(void)
                     kfifo_put(&recycle_q, (const vframe_t **)&vf);
                 } else {
                     p_last_vf = vf;
-
+                    pts_discontinue=false;
                     kfifo_put(&display_q, (const vframe_t **)&vf);
 
                     vf_notify_receiver(PROVIDER_NAME,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
@@ -1287,6 +1294,7 @@ static void vh264_isr(void)
                     kfifo_put(&recycle_q, (const vframe_t **)&vf);
                     continue;
                 } else {
+                    pts_discontinue=false;
                     kfifo_put(&display_q, (const vframe_t **)&vf);
                 }
 
@@ -1690,7 +1698,7 @@ static void vh264_local_init(void)
     pts_missed = 0;
     pts_hit = 0;
 #endif
-
+    pts_discontinue = false;
     return;
 }
 
@@ -1987,9 +1995,15 @@ static void stream_switching_do(struct work_struct *work)
 
         get_video_keep_buffer(videoKeepBuf, videoKeepBufPhys);
 #ifdef NV21
+#ifdef CONFIG_GE2D_KEEP_FRAME
+        if (!videoKeepBufPhys[0] || !videoKeepBufPhys[1]) {
+            do_copy = false;
+        }
+#else
         if (!videoKeepBuf[0] || !videoKeepBuf[1]) {
             do_copy = false;
         }
+#endif    
 #else
         if (!videoKeepBuf[0] || !videoKeepBuf[1] || !videoKeepBuf[2]) {
             do_copy = false;
@@ -2086,26 +2100,31 @@ static void stream_switching_do(struct work_struct *work)
 
 static int amvdec_h264_probe(struct platform_device *pdev)
 {
-    struct resource *mem;
-    mutex_lock(&vh264_mutex);
-    //printk("amvdec_h264 probe start.\n");
+    struct vdec_dev_reg_s *pdata = (struct vdec_dev_reg_s *)pdev->dev.platform_data;
 
-    if (!(mem = platform_get_resource(pdev, IORESOURCE_MEM, 0))) {
+    mutex_lock(&vh264_mutex);
+
+    if (pdata == NULL) {
         printk("\namvdec_h264 memory resource undefined.\n");
         mutex_unlock(&vh264_mutex);
         return -EFAULT;
     }
-    ucode_map_start=mem->start;
-    buf_size = mem->end - mem->start + 1;
+
+    ucode_map_start = pdata->mem_start;
+    buf_size = pdata->mem_end - pdata->mem_start + 1;
     if (buf_size < DEFAULT_MEM_SIZE) {
         printk("\namvdec_h264 memory size not enough.\n");
         return -ENOMEM;
     }
 
-    buf_offset = mem->start - DEF_BUF_START_ADDR;
-    buf_start = V_BUF_ADDR_OFFSET + mem->start;
-    printk("mem-addr=%x,buff_offset=%x,buf_start=%x\n",mem->start,buf_offset,buf_start);
-    memcpy(&vh264_amstream_dec_info, (void *)mem[1].start, sizeof(vh264_amstream_dec_info));
+    buf_offset = pdata->mem_start - DEF_BUF_START_ADDR;
+    buf_start = V_BUF_ADDR_OFFSET + pdata->mem_start;
+
+    if (pdata->sys_info) {
+        vh264_amstream_dec_info = *pdata->sys_info;
+    }
+
+    printk("amvdec_h264 mem-addr=%lx,buff_offset=%x,buf_start=%x\n",pdata->mem_start,buf_offset,buf_start);
 
     if (vh264_init() < 0) {
         printk("\namvdec_h264 init failed.\n");
@@ -2118,8 +2137,8 @@ static int amvdec_h264_probe(struct platform_device *pdev)
 
     atomic_set(&vh264_active, 1);
 
-    //printk("amvdec_h264 probe end.\n");
     mutex_unlock(&vh264_mutex);
+
     return 0;
 }
 

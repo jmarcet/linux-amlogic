@@ -228,7 +228,7 @@ void get_adc_version(char **ver,char **last_ver)
  */
 inline bool tvafe_adc_get_pll_status(void)
 {
-	return (bool)READ_APB_REG_BITS(ADC_REG_35, PLLLOCKED_BIT, PLLLOCKED_WID);
+	return (bool)R_APB_BIT(ADC_REG_35, PLLLOCKED_BIT, PLLLOCKED_WID);
 }
 
 /*
@@ -278,13 +278,13 @@ static void tvafe_adc_set_clamp_para(enum tvin_sig_fmt_e fmt)
         return;
     }
 
-	clamp_range = fmt_info->hs_bp - READ_APB_REG(ADC_REG_03) - 18;
+	clamp_range = fmt_info->hs_bp - R_APB_REG(ADC_REG_03) - 18;
 	clamp_calculate = fmt_info->pixel_clk / 200;
 	if (clamp_calculate >= 0xff)
 		clamp_calculate = 0xff;
 	else if (clamp_calculate > clamp_range)
 		clamp_calculate = clamp_range;
-	WRITE_APB_REG(ADC_REG_04, clamp_calculate);
+	W_APB_REG(ADC_REG_04, clamp_calculate);
 }
 
 /*
@@ -292,7 +292,7 @@ static void tvafe_adc_set_clamp_para(enum tvin_sig_fmt_e fmt)
  */
 inline bool tvafe_adc_no_sig(void)
 {
-	return (READ_APB_REG_BITS(TVFE_DVSS_INDICATOR1, NOSIG_BIT, NOSIG_WID) ? true : false);
+	return (R_APB_BIT(TVFE_DVSS_INDICATOR1, NOSIG_BIT, NOSIG_WID) ? true : false);
 }
 #if 0
 /*
@@ -300,7 +300,7 @@ inline bool tvafe_adc_no_sig(void)
  */
 static void tvafe_comp_set_sync_path(int sog_flag)
 {
-	WRITE_APB_REG_BITS(TVFE_SYNCTOP_SFG_MUXCTRL2, (sog_flag? 2:4),
+	W_APB_BIT(TVFE_SYNCTOP_SFG_MUXCTRL2, (sog_flag? 2:4),
 			SMUX_SM_HS_SRC_SEL_BIT, SMUX_SM_HS_SRC_SEL_WID);
 }
 
@@ -309,7 +309,7 @@ static void tvafe_comp_set_sync_path(int sog_flag)
  */
 static int tvafe_comp_get_sync_path(void)
 {
-	return ((READ_APB_REG_BITS(TVFE_SYNCTOP_SFG_MUXCTRL2,
+	return ((R_APB_BIT(TVFE_SYNCTOP_SFG_MUXCTRL2,
 					SMUX_SM_HS_SRC_SEL_BIT, SMUX_SM_HS_SRC_SEL_WID)==2)? 1:0);
 }
 #endif
@@ -331,7 +331,7 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 	bool           h_pol_chg = false, v_pol_chg = false;
 	bool           h_flag = false, v_flag = false;
 
-	flag = READ_APB_REG_BITS(TVFE_DVSS_INDICATOR1, NOSIG_BIT, NOSIG_WID);
+	flag = R_APB_BIT(TVFE_DVSS_INDICATOR1, NOSIG_BIT, NOSIG_WID);
 	if (flag)
 	{
 		if (adc_dbg_en)
@@ -353,7 +353,7 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 	if ((port >= TVIN_PORT_VGA0) && (port <= TVIN_PORT_VGA7))
 	{
 		vs_cnt_wobble = TVIN_FMT_CHG_VGA_VS_CNT_WOBBLE;
-		flag = READ_APB_REG(TVFE_SYNCTOP_INDICATOR3);
+		flag = R_APB_REG(TVFE_SYNCTOP_INDICATOR3);
 
 		//h_pol
 		h_flag = (flag & (1 << SPOL_H_POL_BIT))? true : false;
@@ -388,30 +388,30 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 		}
 
 		// hs_cnt
-		tmp0 = (unsigned short)READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR1_HCNT,
+		tmp0 = (unsigned short)R_APB_BIT(TVFE_SYNCTOP_INDICATOR1_HCNT,
 				SPOL_HCNT_NEG_BIT, SPOL_HCNT_NEG_WID);
-		tmp1 = (unsigned short)READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR1_HCNT,
+		tmp1 = (unsigned short)R_APB_BIT(TVFE_SYNCTOP_INDICATOR1_HCNT,
 				SPOL_HCNT_POS_BIT, SPOL_HCNT_POS_WID);
 		tmp0 = min(tmp0, tmp1);
 		hs_cnt_offset = abs((signed int)hw_info->hs_cnt - (signed int)tmp0);
 		hw_info->hs_cnt = tmp0;
 
 		// vs_cnt
-		tmp0 = (unsigned short)READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR2_VCNT,
+		tmp0 = (unsigned short)R_APB_BIT(TVFE_SYNCTOP_INDICATOR2_VCNT,
 				SPOL_VCNT_NEG_BIT, SPOL_VCNT_NEG_WID);
-		tmp1 = (unsigned short)READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR2_VCNT,
+		tmp1 = (unsigned short)R_APB_BIT(TVFE_SYNCTOP_INDICATOR2_VCNT,
 				SPOL_VCNT_POS_BIT, SPOL_VCNT_POS_WID);
 		tmp0 = min(tmp0, tmp1);
 		vs_cnt_offset = abs((signed int)hw_info->vs_width - (signed int)tmp0);
 		hw_info->vs_width = tmp0;
 		// h_cnt
-		tmp0 = READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR4,
+		tmp0 = R_APB_BIT(TVFE_SYNCTOP_INDICATOR4,
 				SAM_HCNT_BIT, SAM_HCNT_WID);
 		h_cnt_offset = abs((signed int)hw_info->h_cnt - (signed int)tmp0);
 		//h_cnt_offset = abs((signed int)tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].h_cnt - (signed int)tmp0);
 		hw_info->h_cnt = tmp0;
 		// v_cnt
-		tmp0 = READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR4,
+		tmp0 = R_APB_BIT(TVFE_SYNCTOP_INDICATOR4,
 				SAM_VCNT_BIT, SAM_VCNT_WID);
 		v_cnt_offset = abs((signed int)hw_info->v_total - (signed int)tmp0);
 		//v_cnt_offset = abs((signed int)tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].v_total- (signed int)tmp0);
@@ -427,7 +427,7 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 		if(adc->hs_sog_sw_cnt > TVIN_FMT_CHK_HS_SOG_DLY_CNT)
 		{
 			// h_cnt
-			tmp0 = READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR4,
+			tmp0 = R_APB_BIT(TVFE_SYNCTOP_INDICATOR4,
 					SAM_HCNT_BIT, SAM_HCNT_WID);
 
 			if ((status == TVIN_SIG_STATUS_STABLE)&&(fmt_info_p))
@@ -435,9 +435,9 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 			h_cnt_offset = abs((signed int)hw_info->h_cnt - (signed int)tmp0);
 
 			adc->hs_sog_sw_cnt = 0;
-			tmp1 = READ_APB_REG_BITS(TVFE_SOG_MON_INDICATOR1,
+			tmp1 = R_APB_BIT(TVFE_SOG_MON_INDICATOR1,
 					SOG_CNT_POS_BIT, SOG_CNT_POS_WID);
-			tmp1 += READ_APB_REG_BITS(TVFE_SOG_MON_INDICATOR1,
+			tmp1 += R_APB_BIT(TVFE_SOG_MON_INDICATOR1,
 					SOG_CNT_NEG_BIT, SOG_CNT_NEG_WID);
 			//the difference between h_cnt  from sog and h_cnt from hs_out2
 			h_cnt_offset1 = abs((signed int)hw_info->h_cnt - (signed int)tmp1);
@@ -472,13 +472,13 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
 			}
 
 			// v_cnt
-			tmp0 = READ_APB_REG_BITS(TVFE_SYNCTOP_INDICATOR4,SAM_VCNT_BIT, SAM_VCNT_WID);
+			tmp0 = R_APB_BIT(TVFE_SYNCTOP_INDICATOR4,SAM_VCNT_BIT, SAM_VCNT_WID);
 			v_cnt_offset = abs((signed int)hw_info->v_total - (signed int)tmp0);
                         hw_info->v_total = tmp0;
 
 			if ((status == TVIN_SIG_STATUS_STABLE)&&(fmt_info_p)){
 				hw_info->v_total = fmt_info_p->v_total;
-				tmp1 = READ_APB_REG_BITS(TVFE_SOG_MON_INDICATOR2,SOG_VTOTAL_BIT, SOG_VTOTAL_WID);
+				tmp1 = R_APB_BIT(TVFE_SOG_MON_INDICATOR2,SOG_VTOTAL_BIT, SOG_VTOTAL_WID);
                                 /*during vsync sog cnt is double of vsync width*/
                                 tmp1 -= hw_info->vs_width;
 				v_cnt_offset1= abs((signed int)hw_info->v_total - (signed int)tmp1);
@@ -538,9 +538,9 @@ inline bool tvafe_adc_fmt_chg(struct tvin_parm_s *parm, struct tvafe_adc_s *adc)
  */
 void tvafe_adc_digital_reset()
 {
-	WRITE_APB_REG(ADC_REG_21, 1);
-	WRITE_APB_REG(ADC_REG_21, 5);
-	WRITE_APB_REG(ADC_REG_21, 7);
+	W_APB_REG(ADC_REG_21, 1);
+	W_APB_REG(ADC_REG_21, 5);
+	W_APB_REG(ADC_REG_21, 7);
 
 	//tvafe_adc_set_frame_skip_number(3);
 }
@@ -624,15 +624,15 @@ static void tvafe_adc_set_bd_window(enum tvin_sig_fmt_e fmt)
 	unsigned int tmp = 0;
 
 	tmp = tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].hs_width + tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].hs_bp - ADC_WINDOW_H_OFFSET;
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL1, tmp, BD_HSTART_BIT, BD_HSTART_WID);
+	W_APB_BIT(TVFE_BD_MUXCTRL1, tmp, BD_HSTART_BIT, BD_HSTART_WID);
 	//tmp += tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].h_active + ADC_WINDOW_H_OFFSET + ADC_WINDOW_H_OFFSET;
 	tmp = tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].h_total - 1;
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL1, tmp, BD_HEND_BIT, BD_HEND_WID);
+	W_APB_BIT(TVFE_BD_MUXCTRL1, tmp, BD_HEND_BIT, BD_HEND_WID);
 	tmp = tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].vs_width + tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].vs_bp - ADC_WINDOW_V_OFFSET;
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL2, tmp, BD_VSTART_BIT, BD_VSTART_WID);
+	W_APB_BIT(TVFE_BD_MUXCTRL2, tmp, BD_VSTART_BIT, BD_VSTART_WID);
 	//tmp += tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].v_active + ADC_WINDOW_V_OFFSET + ADC_WINDOW_V_OFFSET;
 	tmp = tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].v_total - 1;
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL2, tmp, BD_VEND_BIT, BD_VEND_WID);
+	W_APB_BIT(TVFE_BD_MUXCTRL2, tmp, BD_VEND_BIT, BD_VEND_WID);
 }
 
 /*
@@ -651,10 +651,10 @@ static void tvafe_adc_set_ap_window(enum tvin_sig_fmt_e fmt, unsigned char idx)
 		(((idx/3) << 1) + 1)*vv;
 	unsigned int ve = vs + vv - 1;
 
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, hs, AP_HSTART_BIT, AP_HSTART_WID);
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, he, AP_HEND_BIT,   AP_HEND_WID  );
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL2, vs, AP_VSTART_BIT, AP_VSTART_WID);
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL2, ve, AP_VEND_BIT,   AP_VEND_WID  );
+	W_APB_BIT(TVFE_AP_MUXCTRL1, hs, AP_HSTART_BIT, AP_HSTART_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL1, he, AP_HEND_BIT,   AP_HEND_WID  );
+	W_APB_BIT(TVFE_AP_MUXCTRL2, vs, AP_VSTART_BIT, AP_VSTART_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL2, ve, AP_VEND_BIT,   AP_VEND_WID  );
 }
 
 /*
@@ -665,9 +665,9 @@ static void tvafe_vga_set_clock(unsigned int clock)
 	unsigned int tmp;
 
 	tmp = (clock >> 4) & 0x000000FF;
-	WRITE_APB_REG_BITS(ADC_REG_01, tmp, PLLDIVRATIO_MSB_BIT, PLLDIVRATIO_MSB_WID);
+	W_APB_BIT(ADC_REG_01, tmp, PLLDIVRATIO_MSB_BIT, PLLDIVRATIO_MSB_WID);
 	tmp = clock & 0x0000000F;
-	WRITE_APB_REG_BITS(ADC_REG_02, tmp, PLLDIVRATIO_LSB_BIT, PLLDIVRATIO_LSB_WID);
+	W_APB_BIT(ADC_REG_02, tmp, PLLDIVRATIO_LSB_BIT, PLLDIVRATIO_LSB_WID);
 
 	//tvafe_adc_set_frame_skip_number(2);
 
@@ -684,9 +684,9 @@ static unsigned int tvafe_vga_get_clock(void)
 {
 	unsigned int data;
 
-	data = READ_APB_REG_BITS(ADC_REG_01,
+	data = R_APB_BIT(ADC_REG_01,
 			PLLDIVRATIO_MSB_BIT, PLLDIVRATIO_MSB_WID) << 4;
-	data |= READ_APB_REG_BITS(ADC_REG_02,
+	data |= R_APB_BIT(ADC_REG_02,
 			PLLDIVRATIO_LSB_BIT, PLLDIVRATIO_LSB_WID);
 
 	return data;
@@ -697,7 +697,7 @@ static unsigned int tvafe_vga_get_clock(void)
  */
 static void tvafe_vga_set_phase(unsigned int phase)
 {
-	WRITE_APB_REG_BITS(ADC_REG_56, phase, CLKPHASEADJ_BIT, CLKPHASEADJ_WID);
+	W_APB_BIT(ADC_REG_56, phase, CLKPHASEADJ_BIT, CLKPHASEADJ_WID);
 
 	//tvafe_adc_set_frame_skip_number(1);
 
@@ -711,7 +711,7 @@ static void tvafe_vga_set_phase(unsigned int phase)
  */
 static unsigned int tvafe_vga_get_phase(void)
 {
-	return READ_APB_REG_BITS(ADC_REG_56, CLKPHASEADJ_BIT, CLKPHASEADJ_WID);
+	return R_APB_BIT(ADC_REG_56, CLKPHASEADJ_BIT, CLKPHASEADJ_WID);
 }
 
 /*
@@ -719,8 +719,8 @@ static unsigned int tvafe_vga_get_phase(void)
  */
 void tvafe_vga_set_h_pos(unsigned int hs, unsigned int he)
 {
-	WRITE_APB_REG_BITS(TVFE_DEG_H,   hs, DEG_HSTART_BIT, DEG_HSTART_WID);
-	WRITE_APB_REG_BITS(TVFE_DEG_H,   he, DEG_HEND_BIT,   DEG_HEND_WID  );
+	W_APB_BIT(TVFE_DEG_H,   hs, DEG_HSTART_BIT, DEG_HSTART_WID);
+	W_APB_BIT(TVFE_DEG_H,   he, DEG_HEND_BIT,   DEG_HEND_WID  );
 
 	return;
 }
@@ -730,7 +730,7 @@ void tvafe_vga_set_h_pos(unsigned int hs, unsigned int he)
  */
 static unsigned int tvafe_vga_get_h_pos(void)
 {
-	return READ_APB_REG_BITS(TVFE_DEG_H, DEG_HSTART_BIT, DEG_HSTART_WID);
+	return R_APB_BIT(TVFE_DEG_H, DEG_HSTART_BIT, DEG_HSTART_WID);
 }
 
 /*
@@ -739,10 +739,10 @@ static unsigned int tvafe_vga_get_h_pos(void)
 void tvafe_vga_set_v_pos(unsigned int vs, unsigned int ve, enum tvin_scan_mode_e scan_mode)
 {
 	unsigned int offset = (scan_mode == TVIN_SCAN_MODE_PROGRESSIVE) ? 0 : 1;
-	WRITE_APB_REG_BITS(TVFE_DEG_VODD,  vs,          DEG_VSTART_ODD_BIT,  DEG_VSTART_ODD_WID );
-	WRITE_APB_REG_BITS(TVFE_DEG_VODD ,  ve,          DEG_VEND_ODD_BIT,    DEG_VEND_ODD_WID   );
-	WRITE_APB_REG_BITS(TVFE_DEG_VEVEN, vs + offset, DEG_VSTART_EVEN_BIT, DEG_VSTART_EVEN_WID);
-	WRITE_APB_REG_BITS(TVFE_DEG_VEVEN, ve + offset, DEG_VEND_EVEN_BIT,   DEG_VEND_EVEN_WID  );
+	W_APB_BIT(TVFE_DEG_VODD,  vs,          DEG_VSTART_ODD_BIT,  DEG_VSTART_ODD_WID );
+	W_APB_BIT(TVFE_DEG_VODD ,  ve,          DEG_VEND_ODD_BIT,    DEG_VEND_ODD_WID   );
+	W_APB_BIT(TVFE_DEG_VEVEN, vs + offset, DEG_VSTART_EVEN_BIT, DEG_VSTART_EVEN_WID);
+	W_APB_BIT(TVFE_DEG_VEVEN, ve + offset, DEG_VEND_EVEN_BIT,   DEG_VEND_EVEN_WID  );
 }
 
 /*
@@ -750,7 +750,7 @@ void tvafe_vga_set_v_pos(unsigned int vs, unsigned int ve, enum tvin_scan_mode_e
  */
 static unsigned int tvafe_vga_get_v_pos(void)
 {
-	return READ_APB_REG_BITS(TVFE_DEG_VODD, DEG_VSTART_ODD_BIT, DEG_VSTART_ODD_WID);
+	return R_APB_BIT(TVFE_DEG_VODD, DEG_VSTART_ODD_BIT, DEG_VSTART_ODD_WID);
 }
 
 /*
@@ -758,7 +758,7 @@ static unsigned int tvafe_vga_get_v_pos(void)
  */
 static void tvafe_vga_border_detect_enable(void)
 {
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 1, BD_DET_EN_BIT, BD_DET_EN_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 1, BD_DET_EN_BIT, BD_DET_EN_WID);
 }
 
 /*
@@ -766,7 +766,7 @@ static void tvafe_vga_border_detect_enable(void)
  */
 static void tvafe_vga_border_detect_disable(void)
 {
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 0, BD_DET_EN_BIT, BD_DET_EN_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 0, BD_DET_EN_BIT, BD_DET_EN_WID);
 }
 
 /*
@@ -774,7 +774,7 @@ static void tvafe_vga_border_detect_disable(void)
  */
 static void tvafe_vga_auto_phase_enable(void)
 {
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 1, AUTOPHASE_EN_BIT, AUTOPHASE_EN_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 1, AUTOPHASE_EN_BIT, AUTOPHASE_EN_WID);
 }
 
 /*
@@ -782,7 +782,7 @@ static void tvafe_vga_auto_phase_enable(void)
  */
 static void tvafe_vga_auto_phase_disable(void)
 {
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 0, AUTOPHASE_EN_BIT, AUTOPHASE_EN_WID);
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 0, AUTOPHASE_EN_BIT, AUTOPHASE_EN_WID);
 }
 
 /*
@@ -793,25 +793,25 @@ static void tvafe_vga_border_detect_init(enum tvin_sig_fmt_e fmt)
 	//diable border detect
 	tvafe_vga_border_detect_disable();
 	// pix_thr = 4 (pix-val > pix_thr => valid pixel)
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL3, rgb_thr/*0x10*/,
+	W_APB_BIT(TVFE_AP_MUXCTRL3, rgb_thr/*0x10*/,
 			BD_R_TH_BIT, BD_R_TH_WID);
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL5, rgb_thr/*0x10*/,
+	W_APB_BIT(TVFE_AP_MUXCTRL5, rgb_thr/*0x10*/,
 			BD_G_TH_BIT, BD_G_TH_WID);
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL5, rgb_thr/*0x10*/,
+	W_APB_BIT(TVFE_AP_MUXCTRL5, rgb_thr/*0x10*/,
 			BD_B_TH_BIT, BD_B_TH_WID);
 	// pix_val > pix_thr => valid pixel
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 1,
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 1,
 			BD_DET_METHOD_BIT, BD_DET_METHOD_WID);
 	// line_thr = 1/16 of h_active (valid pixels > line_thr => valid line)
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL3, (tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].h_active)>>5/*(tvin_fmt_tbl[fmt].h_active)>>4*/,
+	W_APB_BIT(TVFE_BD_MUXCTRL3, (tvin_vga_fmt_tbl[fmt-TVIN_SIG_FMT_VGA_512X384P_60HZ_D147].h_active)>>5/*(tvin_fmt_tbl[fmt].h_active)>>4*/,
 			BD_VLD_LN_TH_BIT, BD_VLD_LN_TH_WID);
 	// line_thr enable
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL3, 1,
+	W_APB_BIT(TVFE_BD_MUXCTRL3, 1,
 			BD_VALID_LN_EN_BIT, BD_VALID_LN_EN_WID);
 	// continuous border detection mode
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL4, 1,
+	W_APB_BIT(TVFE_BD_MUXCTRL4, 1,
 			BD_LIMITED_FLD_RECORD_BIT, BD_LIMITED_FLD_RECORD_WID);
-	WRITE_APB_REG_BITS(TVFE_BD_MUXCTRL4, 2,
+	W_APB_BIT(TVFE_BD_MUXCTRL4, 2,
 			BD_FLD_CD_NUM_BIT, BD_FLD_CD_NUM_WID);
 	// set a large window
 	tvafe_adc_set_bd_window( fmt);
@@ -827,13 +827,13 @@ static void tvafe_vga_auto_phase_init( enum tvin_sig_fmt_e fmt, unsigned char id
 	//disable auto phase
 	tvafe_vga_auto_phase_disable();
 	// use diff value
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 1,
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 1,
 			AP_DIFF_SEL_BIT, AP_DIFF_SEL_WID);
 	// use window
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL1, 0,
+	W_APB_BIT(TVFE_AP_MUXCTRL1, 0,
 			AP_SPECIFIC_POINT_OUT_BIT, AP_SPECIFIC_POINT_OUT_WID);
 	// coring_thr = 4 (diff > coring_thr => valid diff)
-	WRITE_APB_REG_BITS(TVFE_AP_MUXCTRL3, 0x10,
+	W_APB_BIT(TVFE_AP_MUXCTRL3, 0x10,
 			AP_CORING_TH_BIT, AP_CORING_TH_WID);
 	// set auto phase window
 	tvafe_adc_set_ap_window(fmt, idx);
@@ -847,9 +847,9 @@ static void tvafe_vga_auto_phase_init( enum tvin_sig_fmt_e fmt, unsigned char id
 static unsigned int tvafe_vga_get_ap_diff(void)
 {
 
-	unsigned int sum_r = READ_APB_REG(TVFE_AP_INDICATOR1);
-	unsigned int sum_g = READ_APB_REG(TVFE_AP_INDICATOR2);
-	unsigned int sum_b = READ_APB_REG(TVFE_AP_INDICATOR3);
+	unsigned int sum_r = R_APB_REG(TVFE_AP_INDICATOR1);
+	unsigned int sum_g = R_APB_REG(TVFE_AP_INDICATOR2);
+	unsigned int sum_b = R_APB_REG(TVFE_AP_INDICATOR3);
 
 	if (sum_r < sum_g)
 		return max(sum_g,sum_b);
@@ -868,17 +868,17 @@ static void tvafe_vga_get_h_border(struct tvafe_vga_auto_s *vga_auto)
 
 	struct tvafe_vga_border_s *bd = &vga_auto->border;
 
-	r_right_hcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR14 ,
+	r_right_hcnt = R_APB_BIT(TVFE_AP_INDICATOR14 ,
 			BD_R_RIGHT_HCNT_BIT, BD_R_RIGHT_HCNT_WID);
-	r_left_hcnt  = READ_APB_REG_BITS(TVFE_AP_INDICATOR14,
+	r_left_hcnt  = R_APB_BIT(TVFE_AP_INDICATOR14,
 			BD_R_LEFT_HCNT_BIT,  BD_R_LEFT_HCNT_WID );
-	g_right_hcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR16,
+	g_right_hcnt = R_APB_BIT(TVFE_AP_INDICATOR16,
 			BD_G_RIGHT_HCNT_BIT, BD_G_RIGHT_HCNT_WID);
-	g_left_hcnt  = READ_APB_REG_BITS(TVFE_AP_INDICATOR16,
+	g_left_hcnt  = R_APB_BIT(TVFE_AP_INDICATOR16,
 			BD_G_LEFT_HCNT_BIT,  BD_G_LEFT_HCNT_WID );
-	b_right_hcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR18,
+	b_right_hcnt = R_APB_BIT(TVFE_AP_INDICATOR18,
 			BD_B_RIGHT_HCNT_BIT, BD_B_RIGHT_HCNT_WID);
-	b_left_hcnt  = READ_APB_REG_BITS(TVFE_AP_INDICATOR18,
+	b_left_hcnt  = R_APB_BIT(TVFE_AP_INDICATOR18,
 			BD_B_LEFT_HCNT_BIT,  BD_B_LEFT_HCNT_WID );
 	if(adc_dbg_en)
 		pr_info("[tvafe..]%s r_left %u.g_left %u.b_left %u.r_right %u.g_right %u.b_right %u.\n",__func__,r_left_hcnt,
@@ -902,12 +902,12 @@ static void tvafe_vga_get_v_border(struct tvafe_vga_auto_s *vga_auto)
 	unsigned int b_top_vcnt = 0, b_bot_vcnt = 0;
 	struct tvafe_vga_border_s *bd = &vga_auto->border;
 
-	r_top_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR13, BD_R_TOP_VCNT_BIT, BD_R_TOP_VCNT_WID);
-	r_bot_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR13, BD_R_BOT_VCNT_BIT, BD_R_BOT_VCNT_WID);
-	g_top_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR15, BD_G_TOP_VCNT_BIT, BD_G_TOP_VCNT_WID);
-	g_bot_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR15, BD_G_BOT_VCNT_BIT, BD_G_BOT_VCNT_WID);
-	b_top_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR17, BD_B_TOP_VCNT_BIT, BD_B_TOP_VCNT_WID);
-	b_bot_vcnt = READ_APB_REG_BITS(TVFE_AP_INDICATOR17, BD_B_BOT_VCNT_BIT, BD_B_BOT_VCNT_WID);
+	r_top_vcnt = R_APB_BIT(TVFE_AP_INDICATOR13, BD_R_TOP_VCNT_BIT, BD_R_TOP_VCNT_WID);
+	r_bot_vcnt = R_APB_BIT(TVFE_AP_INDICATOR13, BD_R_BOT_VCNT_BIT, BD_R_BOT_VCNT_WID);
+	g_top_vcnt = R_APB_BIT(TVFE_AP_INDICATOR15, BD_G_TOP_VCNT_BIT, BD_G_TOP_VCNT_WID);
+	g_bot_vcnt = R_APB_BIT(TVFE_AP_INDICATOR15, BD_G_BOT_VCNT_BIT, BD_G_BOT_VCNT_WID);
+	b_top_vcnt = R_APB_BIT(TVFE_AP_INDICATOR17, BD_B_TOP_VCNT_BIT, BD_B_TOP_VCNT_WID);
+	b_bot_vcnt = R_APB_BIT(TVFE_AP_INDICATOR17, BD_B_BOT_VCNT_BIT, BD_B_BOT_VCNT_WID);
 	if(adc_dbg_en)
 		pr_info("[tvafe..]%s r_start %u.g_start %u.b_start%u.r_end %u.g_end %u.b_end%u.\n",__func__,r_top_vcnt,
 				g_top_vcnt, b_top_vcnt,r_bot_vcnt,g_bot_vcnt,b_bot_vcnt);
@@ -1627,11 +1627,11 @@ static void tvafe_adc_clear(unsigned int val, unsigned int clear)
 	{
 		if (clear)
 		{
-			WRITE_APB_REG((ADC_BASE_ADD+i)<<2, ((i == 0x21) ? val : 0));
+			W_APB_REG((ADC_BASE_ADD+i)<<2, ((i == 0x21) ? val : 0));
 		}
 		else
 		{
-			WRITE_APB_REG(ADC_REG_21, val);
+			W_APB_REG(ADC_REG_21, val);
 		}
 	}
 }
@@ -1670,12 +1670,12 @@ void tvafe_adc_configure(enum tvin_sig_fmt_e fmt)
 
 	for (i=0; i<ADC_REG_NUM; i++)
 	{
-		WRITE_APB_REG(((ADC_BASE_ADD+i)<<2), (unsigned int)(buff_t[i]));
+		W_APB_REG(((ADC_BASE_ADD+i)<<2), (unsigned int)(buff_t[i]));
 	}
 	//set componet different phase base on board design
 	if(fmt > TVIN_SIG_FMT_VGA_MAX && fmt < TVIN_SIG_FMT_COMP_MAX && enable_dphase)
 	{
-		WRITE_APB_REG_BITS(ADC_REG_56, comp_phase[fmt-TVIN_SIG_FMT_VGA_THRESHOLD -1],CLKPHASEADJ_BIT,CLKPHASEADJ_WID);
+		W_APB_BIT(ADC_REG_56, comp_phase[fmt-TVIN_SIG_FMT_VGA_THRESHOLD -1],CLKPHASEADJ_BIT,CLKPHASEADJ_WID);
 	}
 	//for adc calibration clamping duration setting
 	if (fmt < TVIN_SIG_FMT_COMP_MAX)

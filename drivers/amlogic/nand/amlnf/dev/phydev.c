@@ -12,8 +12,8 @@
 **            
 *****************************************************************/
 #include "../include/phynand.h"
-//int test_flag = 0;
-//EXPORT_SYMBOL(test_flag);
+int test_flag = 0;
+EXPORT_SYMBOL(test_flag);
 #ifdef AML_NAND_UBOOT
 	//extern struct amlnf_partition amlnand_config;
 	extern struct amlnf_partition * amlnand_config;
@@ -1010,8 +1010,8 @@ ssize_t change_test_sync_flag(struct class *class, struct class_attribute *attr,
 {
     int num;
 	sscanf(buf, "%x", &num);
-//    printk("---------------------------------------------test_flag=%d\n",num);
-//    test_flag = num;
+    printk("---------------------------------------------test_flag=%d\n",num);
+    test_flag = num;
 	return count;
 }
 
@@ -1063,7 +1063,6 @@ extern struct list_head nphy_dev_list;
 int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 {
 	struct amlnand_phydev *phydev = NULL, *phydev_pre = NULL;	
-    struct phydev_ops *devops = &(phydev->ops);
 	struct nand_flash *flash = &(aml_chip->flash);
 	struct hw_controller *controller = &(aml_chip->controller);
 	struct chip_operation *operation = &(aml_chip->operation);	
@@ -1072,8 +1071,8 @@ int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 	struct dev_para *dev_para = NULL;
 	struct amlnf_partition *partition = NULL;
 	
-	uint64_t  offset = 0,relative_offset = 0, dev_size = 0, chip_size =0, phydev_pre_size =0;
-	unsigned start_blk, total_blk, tmp_write_shift, tmp_erase_shift, tmp_offset=0, tmp_blk = 0, pages_per_blk,bad_blk_cnt =0;
+	uint64_t  offset = 0, dev_size = 0, chip_size =0, phydev_pre_size =0;
+	unsigned start_blk, total_blk, tmp_write_shift, tmp_erase_shift, tmp_offset=0, tmp_blk = 0, pages_per_blk;
 	unsigned char boot_flag = 0, plane_num = 1;
 	int i, j, k, ret = 0;	
     uint64_t *bad_blk = NULL;
@@ -1386,8 +1385,8 @@ int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 
 	show_phydev_info();
 
-#if 1
-    phydev = NULL;
+#if 0
+   	phydev = NULL;
 	list_for_each_entry(phydev,&nphy_dev_list,list){
 		if(phydev!=NULL){
             aml_nand_dbg("----------------------------------------------------------------------------------------------------\n");

@@ -81,7 +81,13 @@
 u32 amstream_port_num;
 u32 amstream_buf_num;
 
+#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV
+#define NO_VDEC2_INIT 1
+#elif MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TVD
+#define NO_VDEC2_INIT IS_MESON_M8M2_CPU
+#endif
 extern void set_real_audio_info(void *arg);
+
 //#define DATA_DEBUG
 static int use_bufferlevelx10000=10000;
 static int reset_canuse_buferlevel(int level);
@@ -701,7 +707,7 @@ static  int amstream_port_init(stream_port_t *port)
     }
 
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TVD
-    if (!IS_MESON_M8M2_CPU) {
+    if (!NO_VDEC2_INIT) {
         if ((port->type & PORT_TYPE_VIDEO) && (port->vformat == VFORMAT_H264_4K2K)) {
             stbuf_vdec2_init(pvbuf);
         }
@@ -709,6 +715,7 @@ static  int amstream_port_init(stream_port_t *port)
 #endif
 
     tsync_audio_break(0); // clear audio break
+	set_vsync_pts_inc_mode(0); // clear video inc
 
     port->flag |= PORT_FLAG_INITED;
     return 0;
@@ -877,7 +884,14 @@ static ssize_t amstream_mpts_write(struct file *file, const char *buf,
 #ifdef DATA_DEBUG
     debug_file_write(buf, count);
 #endif
-    return tsdemux_write(file, pvbuf, pabuf, buf, count);
+	if (port->flag & PORT_FLAG_DRM){
+		r = drm_tswrite(file, pvbuf, pabuf, buf, count);
+	}
+	else{
+		r = tsdemux_write(file, pvbuf, pabuf, buf, count);
+	}
+
+    return r;
 }
 
 static ssize_t amstream_mpps_write(struct file *file, const char *buf,
@@ -2163,9 +2177,15 @@ static int  amstream_probe(struct platform_device *pdev)
         bufs[BUF_TYPE_AUDIO].buf_size = DEFAULT_AUDIO_BUFFER_SIZE;
         bufs[BUF_TYPE_AUDIO].flag |= BUF_FLAG_IOMEM;
 
+#if 0
         bufs[BUF_TYPE_SUBTITLE].buf_start = res->start + resource_size(res) - DEFAULT_SUBTITLE_BUFFER_SIZE;
         bufs[BUF_TYPE_SUBTITLE].buf_size = DEFAULT_SUBTITLE_BUFFER_SIZE;
         bufs[BUF_TYPE_SUBTITLE].flag = BUF_FLAG_IOMEM;
+#endif
+        if (stbuf_change_size(&bufs[BUF_TYPE_SUBTITLE], DEFAULT_SUBTITLE_BUFFER_SIZE) != 0) {
+            r = (-ENOMEM);
+            goto error4;
+        }
     }
 
     if (HAS_HEVC_VDEC) {
