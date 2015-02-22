@@ -5,6 +5,7 @@ obj-$(CONFIG_RTL8189ES) += realtek/rtl8189ES/
 obj-$(CONFIG_RTL8192EU) += realtek/rtl8192EU/
 obj-$(CONFIG_RTL8723AU) += realtek/rtl8723AU/
 obj-$(CONFIG_RTL8723BS) += realtek/rtl8723BS/
+obj-$(CONFIG_RTL8723BU) += realtek/rtl8723BU/
 obj-$(CONFIG_RTL8811AU) += realtek/rtl8811AU/
 obj-$(CONFIG_RTL8812AU) += realtek/rtl8812AU/
 obj-$(CONFIG_RTL8188CU) += realtek/rtl8xxx_CU/
