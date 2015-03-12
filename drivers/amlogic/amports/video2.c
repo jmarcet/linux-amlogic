@@ -31,7 +31,6 @@
 #include <linux/string.h>
 #include <linux/io.h>
 #include <linux/mm.h>
-#include <linux/major.h>
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
@@ -49,6 +48,7 @@
 #include <linux/poll.h>
 #include <linux/clk.h>
 #include <linux/amlogic/logo/logo.h>
+#include <linux/amlogic/major.h>
 #include <linux/amlogic/tvin/tvin_v4l2.h>
 
 #ifdef CONFIG_PM
