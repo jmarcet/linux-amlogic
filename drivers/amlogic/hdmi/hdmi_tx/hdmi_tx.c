@@ -1738,7 +1738,7 @@ static int amhdmitx_suspend(struct platform_device *pdev,pm_message_t state)
 #ifndef CONFIG_HAS_EARLYSUSPEND
     const vinfo_t *info = hdmi_get_current_vinfo();
     if (info && (strncmp(info->name, "panel", 5) == 0 || strncmp(info->name, "null", 4) == 0))
-        return;
+        return 1;
     hdmitx_device.hpd_lock = 1;
     hdmitx_device.HWOp.Cntl(&hdmitx_device, HDMITX_EARLY_SUSPEND_RESUME_CNTL, HDMITX_EARLY_SUSPEND);
     hdmitx_device.cur_VIC = HDMI_Unkown;
@@ -1758,7 +1758,7 @@ static int amhdmitx_resume(struct platform_device *pdev)
     const vinfo_t *info = hdmi_get_current_vinfo();
     if (info && (strncmp(info->name, "panel", 5) == 0 || strncmp(info->name, "null", 4) == 0)) {
         hdmitx_device.HWOp.CntlConfig(&hdmitx_device, CONF_VIDEO_BLANK_OP, VIDEO_UNBLANK);
-       return ;
+       return 1;
     } else {
         hdmitx_device.HWOp.CntlConfig(&hdmitx_device, CONF_VIDEO_BLANK_OP, VIDEO_BLANK);
     }
