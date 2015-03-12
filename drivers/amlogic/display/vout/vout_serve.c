@@ -134,8 +134,9 @@ static int  meson_vout_suspend(struct platform_device *pdev, pm_message_t state)
 static int  meson_vout_resume(struct platform_device *pdev);
 #endif
 
-#ifdef CONFIG_AML_VOUT_FRAMERATE_AUTOMATION
 vmode_t mode_by_user = VMODE_INIT_NULL;
+
+#ifdef CONFIG_AML_VOUT_FRAMERATE_AUTOMATION
 
 void update_vmode_status(char* name)
 {
