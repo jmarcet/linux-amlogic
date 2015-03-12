@@ -20,7 +20,11 @@
 
 #ifdef DEBUG
 extern int ump_debug_level;
+#ifdef CONFIG_MALI_QUIET
+#define UMP_DEBUG_PRINT(args)
+#else
 #define UMP_DEBUG_PRINT(args) _mali_osk_dbgmsg args
+#endif
 #define UMP_DEBUG_CODE(args) args
 #define DBG_MSG(level,args)  do { /* args should be in brackets */ \
 		((level) <=  ump_debug_level)?\
@@ -52,6 +56,10 @@ extern int ump_debug_level;
 #define DEBUG_ASSERT_POINTER(pointer) do  {} while(0)
 #endif /* DEBUG */
 
+#ifdef CONFIG_MALI_QUIET
+#define MSG_ERR(args)
+#define MSG(args)
+#else
 #define MSG_ERR(args) do{ /* args should be in brackets */ \
 		_mali_osk_dbgmsg("UMP: ERR: %s\n" ,__FILE__); \
 		_mali_osk_dbgmsg( "           %s()%4d\n", __FUNCTION__, __LINE__) ; \
@@ -63,6 +71,7 @@ extern int ump_debug_level;
 		_mali_osk_dbgmsg("UMP: "); \
 		_mali_osk_dbgmsg args; \
 	} while (0)
+#endif
 
 
 
