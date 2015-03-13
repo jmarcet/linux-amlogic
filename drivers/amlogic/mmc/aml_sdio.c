@@ -557,8 +557,8 @@ timeout_handle:
     host->mrq->cmd->error = -ETIMEDOUT;
     spin_unlock_irqrestore(&host->mrq_lock, flags);
     
-    sdio_err("time_start_cnt:%ld\n", time_start_cnt);
-    aml_sdio_print_err(host, "Timeout error");
+    // sdio_err("time_start_cnt:%ld\n", time_start_cnt);
+    // aml_sdio_print_err(host, "Timeout error");
     // if (pdata->port == MESON_SDIO_PORT_A) {
         // sdio_err("power_on_pin=%d\n",
                 // amlogic_get_value(185, "sdio_wifi")); // G24-113, G33-185
@@ -1385,7 +1385,7 @@ static int aml_sdio_probe(struct platform_device *pdev)
         }
     }
 
-    print_tmp("%s() success!\n", __FUNCTION__);
+    //print_tmp("%s() success!\n", __FUNCTION__);
     platform_set_drvdata(pdev, host);
     return 0;
 

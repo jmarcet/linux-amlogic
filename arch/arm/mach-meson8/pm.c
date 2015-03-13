@@ -259,11 +259,13 @@ static void meson_pm_suspend(void)
 	aml_clr_reg32_mask(P_HHI_SYS_CPU_CLK_CNTL, 1 << 7);
 	aml_clr_reg32_mask(P_HHI_SYS_PLL_CNTL, 1 << 30);//disable sys pll
 
+#if 0
 	if(det_pwr_key())//get pwr key and wakeup im
 	{
 		clr_pwr_key();
 		WRITE_AOBUS_REG(AO_RTI_STATUS_REG2, FLAG_WAKEUP_PWRKEY);
 	}else{
+
 #ifdef CONFIG_MESON_SUSPEND
 #ifdef CONFIG_MESON_TRUSTZONE
 		meson_suspend_firmware();
@@ -281,8 +283,10 @@ static void meson_pm_suspend(void)
 #endif
 #endif
 	}
+
 	aml_set_reg32_mask(P_HHI_SYS_PLL_CNTL, (1 << 30)); //enable sys pll
 	printk(KERN_INFO "... wake up\n");
+#endif
 #if 1
 	if (aml_read_reg32(P_AO_RTC_ADDR1) & (1<<12)) {
 	// Woke from alarm, not power button. Set flag to inform key_input driver.
@@ -368,7 +372,7 @@ static struct meson_pm_config aml_pm_pdata = {
 
 static int __init meson_pm_probe(struct platform_device *pdev)
 {
-	printk(KERN_INFO "enter meson_pm_probe!\n");
+	//printk(KERN_INFO "enter meson_pm_probe!\n");
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
 	early_suspend.suspend = meson_system_early_suspend;
@@ -385,7 +389,7 @@ static int __init meson_pm_probe(struct platform_device *pdev)
 	
 	clk81 = clk_get_sys("clk81", NULL);
 	clkxtal = clk_get_sys("xtal", NULL);
-	printk(KERN_INFO "meson_pm_probe done !\n");
+	//printk(KERN_INFO "meson_pm_probe done !\n");
 	return 0;
 }
 
@@ -416,7 +420,7 @@ static struct platform_driver meson_pm_driver = {
 
 static int __init meson_pm_init(void)
 {
-	printk("enter %s\n",__func__);
+	//printk("enter %s\n",__func__);
 	return platform_driver_probe(&meson_pm_driver, meson_pm_probe);
 }
 late_initcall(meson_pm_init);

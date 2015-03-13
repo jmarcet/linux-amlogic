@@ -140,15 +140,17 @@ static void aml_i2c_dbg(struct aml_i2c *i2c)
 	if(i2c->i2c_debug == 0)
 		return ;
 
+/*
       printk("addr [%x]  \t token tag : ",
                 i2c->master_regs->i2c_slave_addr>>1);
       	for(i=0; i<AML_I2C_MAX_TOKENS; i++)
 		printk("%d,", i2c->token_tag[i]);
+*/
 
 	sys_clk = clk_get_sys("clk81", NULL);
 	sys_clk_rate = clk_get_rate(sys_clk);
 	ctrl = ((struct aml_i2c_reg_ctrl*)&(i2c->master_regs->i2c_ctrl));
-      printk("clk_delay %x,  clk is %dK \n", ctrl->clk_delay,
+/*      printk("clk_delay %x,  clk is %dK \n", ctrl->clk_delay,
             sys_clk_rate/4/ctrl->clk_delay/1000);
       printk("w0 %x, w1 %x, r0 %x, r1 %x, cur_token %d, rd cnt %d, status %d,"
             "error %d, ack_ignore %d,start %d\n",
@@ -161,6 +163,7 @@ static void aml_i2c_dbg(struct aml_i2c *i2c)
 
       if(ctrl->manual_en)
             printk("[aml_i2c_dbg] manual_en, why?\n");
+*/
 }
 
 static void aml_i2c_clear_token_list(struct aml_i2c *i2c)
@@ -673,6 +676,7 @@ static ssize_t show_i2c_info(struct class *class,
     struct aml_i2c_reg_ctrl* ctrl;
     struct aml_i2c_reg_master __iomem* regs = i2c->master_regs;
 
+/*
     printk( "i2c master_no(%d) current slave addr is 0x%x\n",
         i2c->master_no, i2c->cur_slave_addr);
     printk( "wait ack timeout is 0x%x\n",
@@ -708,6 +712,7 @@ static ssize_t show_i2c_info(struct class *class,
         printk( "clrmask:  0x%08x\n", i2c->master_pinmux.pinmux->clrmask);
         printk( "setmask:  0x%08x\n", i2c->master_pinmux.pinmux->setmask);
     }
+*/
     return 0;
 }
 
@@ -719,15 +724,15 @@ static ssize_t store_register(struct class *class,
     if(buf[0] == 'w'){
         ret = sscanf(buf, "w %x %x", &reg, &val);
         //printk("sscanf w reg = %x, val = %x\n",reg, val);
-        printk("write cbus reg 0x%x value %x\n", reg, val);
+        //printk("write cbus reg 0x%x value %x\n", reg, val);
         aml_write_reg32(CBUS_REG_ADDR(reg), val);
     }else{
         ret =  sscanf(buf, "%x %d", &reg,&n);
-        printk("read %d cbus register from reg: %x \n",n,reg);
+        //printk("read %d cbus register from reg: %x \n",n,reg);
         for(i=0;i<n;i++)
         {
             val = aml_read_reg32(CBUS_REG_ADDR(reg+i));
-            printk("reg 0x%x : 0x%x\n", reg+i, val);
+            //printk("reg 0x%x : 0x%x\n", reg+i, val);
         }
     }
 
@@ -742,9 +747,9 @@ static unsigned int clock81_reading(void)
 	int val;
 
 	val = aml_read_reg32(P_HHI_OTHER_PLL_CNTL);
-	printk( "1070=%x\n", val);
+	//printk( "1070=%x\n", val);
 	val = aml_read_reg32(P_HHI_MPEG_CLK_CNTL);
-	printk( "105d=%x\n", val);
+	//printk( "105d=%x\n", val);
 	return 148;
 }
 
@@ -1082,7 +1087,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
 	plat = (struct aml_i2c_platform*)aml_i2c_property;
 
 	ret=of_property_read_string(pdev->dev.of_node,"pinctrl-names",&plat->master_state_name);
-	printk(KERN_DEBUG "plat->state_name:%s\n",plat->master_state_name);
+	//printk(KERN_DEBUG "plat->state_name:%s\n",plat->master_state_name);
 	
   i2c->ops = &aml_i2c_m1_ops;
   i2c->dev=&pdev->dev;
@@ -1094,7 +1099,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
   BUG_ON(!i2c->master_regs);
   BUG_ON(!plat);
 	aml_i2c_set_platform_data(i2c, plat);
-	printk(KERN_DEBUG "master_no = %d, master_regs=%p\n", i2c->master_no, i2c->master_regs);
+	//printk(KERN_DEBUG "master_no = %d, master_regs=%p\n", i2c->master_no, i2c->master_regs);
 	
 	i2c->p=devm_pinctrl_get_select(i2c->dev,i2c->master_state_name);
 	if(IS_ERR(i2c->p)){
@@ -1140,16 +1145,16 @@ static int aml_i2c_probe(struct platform_device *pdev)
           kzfree(i2c);
           return -1;
   }
-  dev_info(&pdev->dev, "add adapter %s(%p)\n", i2c->adap.name, &i2c->adap);
+  //dev_info(&pdev->dev, "add adapter %s(%p)\n", i2c->adap.name, &i2c->adap);
   of_i2c_register_devices(&i2c->adap);
-  dev_info(&pdev->dev, "aml i2c bus driver.\n");
+  //dev_info(&pdev->dev, "aml i2c bus driver.\n");
 
   	i2c->state = I2C_STATE_IDLE;
     init_completion(&i2c->aml_i2c_completion);
     if (i2c->mode == I2C_TIMER_POLLING_MODE) {
       hrtimer_init(&i2c->aml_i2c_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
       i2c->aml_i2c_hrtimer.function = aml_i2c_hrtimer_notify;
-       printk(KERN_DEBUG "master %d work in timer polling mode\n", device_id);
+       //printk(KERN_DEBUG "master %d work in timer polling mode\n", device_id);
     }
     else if (i2c->mode == I2C_INTERRUPT_MODE) {
       ret = request_irq(i2c->irq, aml_i2c_complete_isr, IRQF_DISABLED, "aml_i2c", i2c);
@@ -1158,7 +1163,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
         i2c->mode = I2C_DELAY_MODE;
       }
       else {
-        printk(KERN_DEBUG "master %d work in interrupt mode(irq=%d)\n", device_id, i2c->irq);
+        //printk(KERN_DEBUG "master %d work in interrupt mode(irq=%d)\n", device_id, i2c->irq);
       }
     }
     /*setup class*/
@@ -1269,7 +1274,7 @@ static struct platform_driver aml_i2c_driver = {
 static int __init aml_i2c_init(void)
 {
     int ret;
-    printk(KERN_INFO "aml_i2c version: 20140813\n");
+    //printk(KERN_INFO "aml_i2c version: 20140813\n");
     ret = platform_driver_register(&aml_i2c_driver);
     return ret;
 }

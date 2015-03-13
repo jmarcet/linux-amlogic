@@ -103,7 +103,7 @@ EXPORT_SYMBOL(resample_delta);
 extern unsigned int timestamp_enable_resample_flag;
 extern unsigned int timestamp_resample_type_flag;
 //--------------------------------------------
-#define DEBUG_DUMP 1
+#define DEBUG_DUMP 0
 
 static unsigned short* dump_buf = 0;
 static unsigned int dump_size = 512*1024;

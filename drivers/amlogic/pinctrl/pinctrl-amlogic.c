@@ -24,14 +24,14 @@
 #include <linux/amlogic/aml_gpio_consumer.h>
 #include <linux/vmalloc.h>
 
-//#define AML_PIN_DEBUG_GUP
+#undef AML_PIN_DEBUG_GUP
 const char *pctdev_name;
-//#define debug
-#ifdef debug
-#define dbg_print(...) {printk("===%s===%d===\n",__FUNCTION__,__LINE__);printk(__VA_ARGS__);}
-#else
-#define dbg_print(...)
-#endif
+#undef debug
+//#ifdef debug
+//#define dbg_print(...) {printk("===%s===%d===\n",__FUNCTION__,__LINE__);printk(__VA_ARGS__);}
+//#else
+#define dbg_print(...) {}
+//#endif
 extern unsigned int p_pin_mux_reg_addr[];
 extern unsigned p_pull_up_addr[];
 extern unsigned p_gpio_oen_addr[];
@@ -706,7 +706,7 @@ int  amlogic_pmx_probe(struct platform_device *pdev,struct amlogic_pinctrl_soc_d
 {
 	struct amlogic_pmx *apmx;
 	int ret,val;
-	printk("Init pinux probe!\n");
+	//printk("Init pinux probe!\n");
 	/* Create state holders etc for this driver */
 	apmx = devm_kzalloc(&pdev->dev, sizeof(*apmx), GFP_KERNEL);
 	if (!apmx) {
@@ -746,7 +746,7 @@ int  amlogic_pmx_probe(struct platform_device *pdev,struct amlogic_pinctrl_soc_d
 	pinctrl_add_gpio_range(apmx->pctl, &amlogic_gpio_ranges);
 	pctdev_name=dev_name(&pdev->dev);
 	pinctrl_provide_dummies();
-	dev_info(&pdev->dev, "Probed amlogic pinctrl driver\n");
+	//dev_info(&pdev->dev, "Probed amlogic pinctrl driver\n");
 	pctl=apmx->pctl;
 
 	return 0;

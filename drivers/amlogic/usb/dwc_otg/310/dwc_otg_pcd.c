@@ -1227,11 +1227,13 @@ dwc_otg_pcd_t *dwc_otg_pcd_init(dwc_otg_core_if_t * core_if)
 	dev_if = core_if->dev_if;
 	dev_if->isoc_ep = NULL;
 
-	if (core_if->hwcfg4.b.ded_fifo_en) {
-		DWC_PRINTF("Dedicated Tx FIFOs mode\n");
-	} else {
-		DWC_PRINTF("Shared Tx FIFO mode\n");
-	}
+	/*
+	 * if (core_if->hwcfg4.b.ded_fifo_en) {
+	 * 	DWC_PRINTF("Dedicated Tx FIFOs mode\n");
+	 * } else {
+	 * 	DWC_PRINTF("Shared Tx FIFO mode\n");
+	 * }
+	 */
 
 	/*
 	 * Initialized the Core for Device mode here if there is nod ADP support. 

@@ -2855,7 +2855,7 @@ dhd_stop(struct net_device *net)
 	int ifidx = 0;
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(net);
 	DHD_OS_WAKE_LOCK(&dhd->pub);
-	printk("%s: Enter %p\n", __FUNCTION__, net);
+	//printk("%s: Enter %p\n", __FUNCTION__, net);
 
 	if (dhd->pub.up == 0) {
 		goto exit;
@@ -2918,7 +2918,7 @@ dhd_open(struct net_device *net)
 	int ifidx;
 	int32 ret = 0;
 
-	printk("%s: Enter %p\n", __FUNCTION__, net);
+	//printk("%s: Enter %p\n", __FUNCTION__, net);
 
 #if defined(MULTIPLE_SUPPLICANT)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)) && 1 && 1
@@ -3039,7 +3039,7 @@ exit:
 #endif
 #endif /* MULTIPLE_SUPPLICANT */
 
-	printk("%s: Exit ret=%d\n", __FUNCTION__, ret);
+	//printk("%s: Exit ret=%d\n", __FUNCTION__, ret);
 	return ret;
 }
 
@@ -3939,10 +3939,10 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif 
 	}
 
-	DHD_ERROR(("Firmware up: op_mode=0x%04x, "
-		"Broadcom Dongle Host Driver mac="MACDBG"\n",
-		dhd->op_mode,
-		MAC2STRDBG(dhd->mac.octet)));
+	//DHD_ERROR(("Firmware up: op_mode=0x%04x, "
+	//	"Broadcom Dongle Host Driver mac="MACDBG"\n",
+	//	dhd->op_mode,
+	//	MAC2STRDBG(dhd->mac.octet)));
 	/* Set Country code  */
 	if (dhd->dhd_cspec.ccode[0] != 0) {
 		printf("Set country %s, revision %d\n", dhd->dhd_cspec.ccode, dhd->dhd_cspec.rev);
@@ -4880,7 +4880,7 @@ static void __exit
 dhd_module_cleanup(void)
 {
 
-	printk("%s: Enter\n", __FUNCTION__);
+	//printk("%s: Enter\n", __FUNCTION__);
 
 	dhd_bus_unregister();
 
@@ -4910,7 +4910,7 @@ dhd_module_init(void)
 	int chip_up = 0;
 #endif 
 
-	printk("%s: Enter\n", __FUNCTION__);
+	//printk("%s: Enter\n", __FUNCTION__);
 	if (wifi_setup_dt()) {
 		printk("wifi_dt : fail to setup dt\n");
 		goto fail_0;
@@ -4994,9 +4994,7 @@ dhd_module_init(void)
 
 	error = dhd_bus_register();
 
-	if (!error)
-		printf("\n%s\n", dhd_version);
-	else {
+	if (error) {
 		DHD_ERROR(("%s: sdio_register_driver failed\n", __FUNCTION__));
 		goto fail_1;
 	}
@@ -5019,7 +5017,7 @@ dhd_module_init(void)
 //	wl_android_post_init();     // terence 20120530: fix for preinit function missed called after resume
 //#endif /* defined(WL_CFG80211) */
 
-	printk("%s: Exit error=%d\n", __FUNCTION__, error);
+	//printk("%s: Exit error=%d\n", __FUNCTION__, error);
 	return error;
 
 #if 1 && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && defined(BCMLXSDMMC)
@@ -5041,7 +5039,7 @@ fail_0:
 
 	wl_android_exit();
 
-	printk("%s: Exit error=%d\n", __FUNCTION__, error);
+	//printk("%s: Exit error=%d\n", __FUNCTION__, error);
 	return error;
 }
 

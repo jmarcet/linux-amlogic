@@ -69,11 +69,12 @@ extern int gpio_irq;
 extern int gpio_flag;
 #define NONE 0xffffffff
 //#define debug
-#ifdef debug
-	#define gpio_print(...) printk(__VA_ARGS__)
-#else 
+#undef debug
+//#ifdef debug
+//	#define gpio_print(...) printk(__VA_ARGS__)
+//#else 
 	#define gpio_print(...)
-#endif
+//#endif
 //gpio subsystem set pictrl subsystem gpio owner
 enum gpio_reg_type
 {
@@ -449,16 +450,16 @@ int gpio_amlogic_to_irq(struct gpio_chip *chip,unsigned offset)
 	if(offset>GPIO_MAX)
 		return -1;
 	aml_clrset_reg32_bits(P_GPIO_INTR_EDGE_POL,0x10001<<irq_bank,type[irq_type]<<irq_bank);
-	printk(" reg:%x,clearmask=%x,setmask=%x\n",(P_GPIO_INTR_EDGE_POL&0xffff)>>2,0x10001<<irq_bank,(aml_read_reg32(P_GPIO_INTR_EDGE_POL)>>irq_bank)&0x10001);
+	//printk(" reg:%x,clearmask=%x,setmask=%x\n",(P_GPIO_INTR_EDGE_POL&0xffff)>>2,0x10001<<irq_bank,(aml_read_reg32(P_GPIO_INTR_EDGE_POL)>>irq_bank)&0x10001);
 	/*select pin*/
 	reg=irq_bank<4?P_GPIO_INTR_GPIO_SEL0:P_GPIO_INTR_GPIO_SEL1;
 	start_bit=(irq_bank&3)*8;
 	aml_clrset_reg32_bits(reg,0xff<<start_bit,amlogic_pins[offset].num<<start_bit);
-	printk("reg:%x,clearmask=%x,set pin=%d\n",(reg&0xffff)>>2,0xff<<start_bit,(aml_read_reg32(reg)>>start_bit)&0xff);
+	//printk("reg:%x,clearmask=%x,set pin=%d\n",(reg&0xffff)>>2,0xff<<start_bit,(aml_read_reg32(reg)>>start_bit)&0xff);
 	/*set filter*/
 	start_bit=(irq_bank)*4;
 	aml_clrset_reg32_bits(P_GPIO_INTR_FILTER_SEL0,0x7<<start_bit,filter<<start_bit);
-	printk("reg:%x,clearmask=%x,setmask=%x\n",(P_GPIO_INTR_FILTER_SEL0&0xffff)>>2,0x7<<start_bit,(aml_read_reg32(P_GPIO_INTR_FILTER_SEL0)>>start_bit)&0x7);
+	//printk("reg:%x,clearmask=%x,setmask=%x\n",(P_GPIO_INTR_FILTER_SEL0&0xffff)>>2,0x7<<start_bit,(aml_read_reg32(P_GPIO_INTR_FILTER_SEL0)>>start_bit)&0x7);
 	return 0;
 }
 
@@ -671,8 +672,8 @@ static int amlogic_gpio_probe(struct platform_device *pdev)
 		memcpy(gpio_to_pin[GPIODV_25],gpio_to_pin_m8m2[GPIODV_25],5*sizeof(unsigned int));
 		memcpy(gpio_to_pin[GPIOY_3],gpio_to_pin_m8m2[GPIOY_3],5*sizeof(unsigned int));
 	}
-	dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
 #if 0
+	dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
 	int i,j;
 	for(i=0;i<=GPIO_TEST_N;i++){
 		for (j=0;j<5;j++)
@@ -680,7 +681,7 @@ static int amlogic_gpio_probe(struct platform_device *pdev)
 	printk("\n");
 	}
 #endif
-#ifdef gpio_dump
+#if 0
 	int i;
 	for(i=0;i<GPIO_TEST_N;i++)
 		printk("%s,amlogic_pins[%d]=%d,%d,out en reg=%x,bit=%d,out val reg=%x,bit=%d,input reg=%x,bit=%d\n",
@@ -710,12 +711,12 @@ static int amlogic_gpio_probe(struct platform_device *pdev)
 	int reg,bit,enbit,i;
 	for(i=0;i<GPIO_TEST_N;i++){
 		m8_pin_to_pullup(i,&reg,&bit,&enbit);
-		printk("%s \t,pull up en reg:%x \t,enbit:%d \t,==,pull up reg:%x \t,bit:%d \t\n",
-			amlogic_pins[i].name,
-			(p_pull_upen_addr[reg]&0xffff)>>2,
-			enbit,
-			(p_pull_up_addr[reg]&0xffff)>>2,
-			bit);
+		//printk("%s \t,pull up en reg:%x \t,enbit:%d \t,==,pull up reg:%x \t,bit:%d \t\n",
+		//	amlogic_pins[i].name,
+		//	(p_pull_upen_addr[reg]&0xffff)>>2,
+		//	enbit,
+		//	(p_pull_up_addr[reg]&0xffff)>>2,
+		//	bit);
 	}
 #endif
 #ifdef dire_dump
@@ -723,10 +724,10 @@ extern int m8_pin_map_to_direction(unsigned int pin,unsigned int *reg,unsigned i
 	int reg,bit,i;
 	for(i=0;i<GPIO_TEST_N;i++){
 		m8_pin_map_to_direction(i,&reg,&bit);
-		printk("%s \t,output en reg:%x \t,enbit:%d \t\n",
-			amlogic_pins[i].name,
-			(p_gpio_oen_addr[reg]&0xffff)>>2,
-			bit);
+		//printk("%s \t,output en reg:%x \t,enbit:%d \t\n",
+		//	amlogic_pins[i].name,
+		//	(p_gpio_oen_addr[reg]&0xffff)>>2,
+		//	bit);
 	}
 #endif
 	return 0;

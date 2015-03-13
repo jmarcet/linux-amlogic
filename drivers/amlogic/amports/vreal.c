@@ -918,7 +918,7 @@ static struct codec_profile_t amvdec_real_profile = {
 
 static int __init amvdec_real_driver_init_module(void)
 {
-    printk("amvdec_real module init\n");
+    //printk("amvdec_real module init\n");
 
     if (platform_driver_register(&amvdec_real_driver)) {
         printk("failed to register amvdec_real driver\n");

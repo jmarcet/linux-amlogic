@@ -341,7 +341,7 @@ static ssize_t nand_part_table_get(struct class *class, struct class_attribute *
 
 static ssize_t store_device_flag_get(struct class *class, struct class_attribute *attr, char *buf)
 {
-	sprintf(buf,"%d",boot_device_flag);
+	//sprintf(buf,"%d",boot_device_flag);
 	
 	return 0;
 }
@@ -590,7 +590,7 @@ int check_storage_device(void)
 		}else {
 		boot_device_flag = -1;
 	}
-	aml_nand_msg("boot_device_flag : %d",boot_device_flag);
+	//aml_nand_msg("boot_device_flag : %d",boot_device_flag);
 
 	if((boot_device_flag == 0) || (boot_device_flag == 1)){
 		return 0;
@@ -607,8 +607,8 @@ static int  __init get_storage_device(char *str)
 {
 	int value = -1;
 	value = simple_strtoul(str, NULL, 16);
-	aml_nand_msg("get storage device: storage %s",str);
-	aml_nand_msg("value=%d",value);
+	//aml_nand_msg("get storage device: storage %s",str);
+	//aml_nand_msg("value=%d",value);
 	
 	boot_device_flag = value;
 	
@@ -629,7 +629,7 @@ static int amlnf_init(struct platform_device *pdev)
 	unsigned flag = 0;
 	ret = check_storage_device();
 	if(ret < 0){
-		aml_nand_msg("do not init nand");
+		//aml_nand_msg("do not init nand");
 		return 0;
 	}
 

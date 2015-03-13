@@ -1523,7 +1523,7 @@ static struct codec_profile_t amvdec_h264_4k2k_profile = {
 
 static int __init amvdec_h264_4k2k_driver_init_module(void)
 {
-    printk("amvdec_h264_4k2k module init\n");
+    //printk("amvdec_h264_4k2k module init\n");
 
     if (platform_driver_register(&amvdec_h264_4k2k_driver)) {
         printk("failed to register amvdec_h264_4k2k driver\n");

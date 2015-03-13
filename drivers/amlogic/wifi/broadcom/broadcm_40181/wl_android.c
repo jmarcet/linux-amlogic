@@ -826,9 +826,9 @@ int wl_android_wifi_on(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	printk("%s in 1\n", __FUNCTION__);
+	//printk("%s in 1\n", __FUNCTION__);
 	dhd_net_if_lock(dev);
-	printk("%s in 2: g_wifi_on=%d\n", __FUNCTION__, g_wifi_on);
+	//printk("%s in 2: g_wifi_on=%d\n", __FUNCTION__, g_wifi_on);
 	if (!g_wifi_on) {
 #ifdef POWER_OFF_IN_SUSPEND
 		g_netdev = dev;
@@ -860,7 +860,7 @@ int wl_android_wifi_on(struct net_device *dev)
 	}
 
 exit:
-	printk("%s: Success\n", __FUNCTION__);
+	//printk("%s: Success\n", __FUNCTION__);
 	dhd_net_if_unlock(dev);
 	return ret;
 

@@ -948,7 +948,7 @@ static struct codec_profile_t amvdec_mpeg12_profile = {
 
 static int __init amvdec_mpeg12_driver_init_module(void)
 {
-    amlog_level(LOG_LEVEL_INFO, "amvdec_mpeg12 module init\n");
+    //amlog_level(LOG_LEVEL_INFO, "amvdec_mpeg12 module init\n");
 
     if (platform_driver_register(&amvdec_mpeg12_driver)) {
         amlog_level(LOG_LEVEL_ERROR, "failed to register amvdec_mpeg12 driver\n");

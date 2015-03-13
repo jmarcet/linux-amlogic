@@ -1164,9 +1164,7 @@ int spi_register_master(struct spi_master *master)
 			dynamic ? " (dynamic)" : "");
 
 	/* If we're using a queued driver, start the queue */
-	if (master->transfer)
-		dev_info(dev, "master is unqueued, this is deprecated\n");
-	else {
+	if (!master->transfer) {
 		status = spi_master_initialize_queue(master);
 		if (status) {
 			device_unregister(&master->dev);

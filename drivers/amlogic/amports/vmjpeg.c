@@ -818,7 +818,7 @@ static struct codec_profile_t amvdec_mjpeg_profile = {
 };
 static int __init amvdec_mjpeg_driver_init_module(void)
 {
-    amlog_level(LOG_LEVEL_INFO, "amvdec_mjpeg module init\n");
+    //amlog_level(LOG_LEVEL_INFO, "amvdec_mjpeg module init\n");
 
     if (platform_driver_register(&amvdec_mjpeg_driver)) {
         amlog_level(LOG_LEVEL_ERROR, "failed to register amvdec_mjpeg driver\n");

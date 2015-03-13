@@ -58,7 +58,7 @@ MODULE_DEVICE_TABLE(i2c, aml_pmu_id_table);
 #ifdef CONFIG_OF
 #define DEBUG_TREE      0
 #define DEBUG_PARSE     0
-#define DBG(format, args...) printk("[AML_PMU]%s, "format, __func__, ##args)
+#define DBG(format, args...)
 
 /*
  * must make sure value is 32 bit when use this macro

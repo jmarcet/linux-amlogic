@@ -88,7 +88,7 @@ int32_t aml_keybox_provider_register(aml_keybox_provider_t * provider)
         if (providers[i])
             continue;
         providers[i] = provider;
-        printk("i=%d,register --- %s\n", i,provider->name);
+        //printk("i=%d,register --- %s\n", i,provider->name);
 		break;
     }
     return 0;
@@ -1749,7 +1749,7 @@ static struct notifier_block aml_keys_notify =
 static struct device * key_device= NULL;
 void trigger_key_init(void)
 {
-    printk("amlkeys=%d\n", keys_version);
+    //printk("amlkeys=%d\n", keys_version);
     if (key_device == NULL)
         return;
     aml_keys_set_version(key_device, version_check(), -1);
@@ -1895,7 +1895,7 @@ static int aml_keys_probe(struct platform_device *pdev)
     int ret;
     int32_t version;
     struct device *devp;
-    printk(KERN_INFO "keys===========================================\n");
+    //printk(KERN_INFO "keys===========================================\n");
     ret = alloc_chrdev_region(&keys_devno, 0, 1, KEYS_DEVICE_NAME);
     if (ret < 0)
     {
@@ -1903,7 +1903,7 @@ static int aml_keys_probe(struct platform_device *pdev)
         ret = -ENODEV;
         goto out;
     }
-    printk("keys_devno=%x\n", keys_devno);
+    //printk("keys_devno=%x\n", keys_devno);
 
     ret = class_register(&keys_class);
     if (ret)
@@ -1935,7 +1935,7 @@ static int aml_keys_probe(struct platform_device *pdev)
         ret = PTR_ERR(devp);
         goto error4;
     }
-    printk(KERN_INFO "securitykey: device %s created\n", KEYS_DEVICE_NAME);
+    //printk(KERN_INFO "securitykey: device %s created\n", KEYS_DEVICE_NAME);
     #ifdef CONFIG_OF
     devp->platform_data = get_keys_drv_data(pdev);
     #else
@@ -2223,7 +2223,7 @@ static int __init aml_keys_init(void)
         printk(KERN_ERR "failed to register aml_keys driver, error %d\n", ret);
         return -ENODEV;
     }
-    printk(KERN_INFO "platform_driver_register--aml_keys_driver--------------------\n");
+    //printk(KERN_INFO "platform_driver_register--aml_keys_driver--------------------\n");
 
     return ret;
 }

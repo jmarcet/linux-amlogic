@@ -263,10 +263,12 @@ dwc_otg_core_if_t *dwc_otg_cil_init(const uint32_t * reg_base_addr, int host_onl
 
 	core_if->snpsid = DWC_READ_REG32(&core_if->core_global_regs->gsnpsid);
 
-	DWC_PRINTF("Core Release: %x.%x%x%x\n",
-		   (core_if->snpsid >> 12 & 0xF),
-		   (core_if->snpsid >> 8 & 0xF),
-		   (core_if->snpsid >> 4 & 0xF), (core_if->snpsid & 0xF));
+	/*
+	 *DWC_PRINTF("Core Release: %x.%x%x%x\n",
+	 *	   (core_if->snpsid >> 12 & 0xF),
+	 *	   (core_if->snpsid >> 8 & 0xF),
+	 *	   (core_if->snpsid >> 4 & 0xF), (core_if->snpsid & 0xF));
+	 */
 
 	core_if->wkp_timer = DWC_TIMER_ALLOC("Wake Up Timer",
 					     w_wakeup_detected, core_if);
@@ -1414,11 +1416,13 @@ void dwc_otg_core_init(dwc_otg_core_if_t * core_if)
 
 	}
 	if (core_if->dma_enable) {
+		/*
 		if (core_if->dma_desc_enable) {
 			DWC_PRINTF("Using Descriptor DMA mode\n");
 		} else {
 			DWC_PRINTF("Using Buffer DMA mode\n");
 		}
+		*/
 	} else {
 		DWC_PRINTF("Using Slave mode\n");
 		core_if->dma_desc_enable = 0;
@@ -1520,8 +1524,8 @@ void dwc_otg_core_init(dwc_otg_core_if_t * core_if)
 				 gotgctl.d32);
 		/* Set OTG version supported */
 		core_if->otg_ver = core_if->core_params->otg_ver;
-		DWC_PRINTF("OTG VER PARAM: %d, OTG VER FLAG: %d\n",
-			   core_if->core_params->otg_ver, core_if->otg_ver);
+		//DWC_PRINTF("OTG VER PARAM: %d, OTG VER FLAG: %d\n",
+		//	   core_if->core_params->otg_ver, core_if->otg_ver);
 	}
 	
 
@@ -2147,9 +2151,9 @@ void dwc_otg_core_host_init(dwc_otg_core_if_t * core_if)
 	dwc_udelay(10);
 	
 	if ((core_if->otg_ver == 1) && (core_if->op_state == A_HOST)) {	
-		DWC_PRINTF("Init: Port Power? op_state=%d\n", core_if->op_state);
+		//DWC_PRINTF("Init: Port Power? op_state=%d\n", core_if->op_state);
 		hprt0.d32 = dwc_otg_read_hprt0(core_if);
-		DWC_PRINTF("Init1: Power Port (%d)\n", hprt0.b.prtpwr);
+		//DWC_PRINTF("Init1: Power Port (%d)\n", hprt0.b.prtpwr);
 		if (hprt0.b.prtpwr == 0) {
 			hprt0.b.prtpwr = 1;
 			DWC_WRITE_REG32(host_if->hprt0, hprt0.d32);
@@ -2301,7 +2305,7 @@ void dwc_otg_core_host_init(dwc_otg_core_if_t * core_if)
 	/* Turn on the vbus power. */
 	if ((core_if->otg_ver == 0) && (core_if->op_state == A_HOST)) {
 		hprt0.d32 = dwc_otg_read_hprt0(core_if);
-		DWC_PRINTF("Init2: Power Port (%d)\n", hprt0.b.prtpwr);
+		//DWC_PRINTF("Init2: Power Port (%d)\n", hprt0.b.prtpwr);
 		if (hprt0.b.prtpwr == 0) {
 			hprt0.b.prtpwr = 1;
 			DWC_WRITE_REG32(host_if->hprt0, hprt0.d32);
@@ -2578,7 +2582,7 @@ void dwc_otg_hc_halt(dwc_otg_core_if_t * core_if,
 		 * happen when a transfer is aborted by a higher level in
 		 * the stack.
 		 */
-#ifdef DEBUG
+#if 0
 		DWC_PRINTF
 		    ("*** %s: Channel %d, _hc->halt_pending already set ***\n",
 		     __func__, hc->hc_num);
@@ -3813,7 +3817,7 @@ void dwc_otg_ep_start_transfer(dwc_otg_core_if_t * core_if, dwc_ep_t * ep)
 		if (core_if->en_multiple_tx_fifo == 0
 		    && gtxstatus.b.nptxqspcavail == 0
 		    && !core_if->dma_enable) {
-#ifdef DEBUG
+#if 0
 			DWC_PRINTF("TX Queue Full (0x%0x)\n", gtxstatus.d32);
 #endif
 			return;
@@ -5445,7 +5449,7 @@ static int dwc_otg_setup_params(dwc_otg_core_if_t * core_if)
 	dwc_otg_set_uninitialized((int32_t *) core_if->core_params,
 				  sizeof(*core_if->core_params) /
 				  sizeof(int32_t));
-	DWC_PRINTF("Setting default values for core params\n");
+	//DWC_PRINTF("Setting default values for core params\n");
 	dwc_otg_set_param_otg_cap(core_if, dwc_param_otg_cap_default);
 	dwc_otg_set_param_dma_enable(core_if, dwc_param_dma_enable_default);
 	dwc_otg_set_param_dma_desc_enable(core_if,
@@ -5491,7 +5495,7 @@ static int dwc_otg_setup_params(dwc_otg_core_if_t * core_if)
 	dwc_otg_set_param_ulpi_fs_ls(core_if, dwc_param_ulpi_fs_ls_default);
 	dwc_otg_set_param_en_multiple_tx_fifo(core_if,
 					      dwc_param_en_multiple_tx_fifo_default);
-	DWC_PRINTF("curmode: %d, host_only: %d\n",gintsts.b.curmode,core_if->host_only);
+	//DWC_PRINTF("curmode: %d, host_only: %d\n",gintsts.b.curmode,core_if->host_only);
 	if (gintsts.b.curmode) {
 		if(!core_if->host_only){
 			/* Force device mode to get power-on values of device FIFOs */

@@ -307,7 +307,7 @@ static void meson_uart_change_speed(struct meson_uart_port *mup, unsigned long n
 	while (!(readl(&uart->status) & UART_TXEMPTY))
 		msleep(10);
 
-	printk(KERN_INFO "Changing %s baud from %d to %d\n", mup->name,mup->baud, (int)newbaud);
+	//printk(KERN_INFO "Changing %s baud from %d to %d\n", mup->name,mup->baud, (int)newbaud);
 	value = ((clk_get_rate(clk81) * 10 / (newbaud * 4) + 5) / 10) - 1;
 	mup->baud = (int)newbaud;
 #if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON6
@@ -334,25 +334,25 @@ am_uart_set_termios(struct uart_port *port, struct ktermios *termios,
     tmp = readl(&uart->mode);
     switch (termios->c_cflag & CSIZE) {
     case CS8:
-        printk(KERN_DEBUG "config %s: Character length 8bits/char\n", mup->name);
+        //printk(KERN_INFO "config %s: Character length 8bits/char\n", mup->name);
         tmp &= ~(0x3 << 20);
         break;
     case CS7:
-        printk(KERN_DEBUG "config %s: Character length 7bits/char\n", mup->name);
+        //printk(KERN_INFO "config %s: Character length 7bits/char\n", mup->name);
         tmp &= ~(0x1 << 21);
         tmp |= (0x1 << 20);
         break;
     case CS6:
-        printk(KERN_DEBUG "config %s: Character length 6bits/char\n", mup->name);
+        //printk(KERN_INFO "config %s: Character length 6bits/char\n", mup->name);
         tmp |= 0x1 << 21;
         tmp &= ~(0x1 << 20);
         break;
     case CS5:
-        printk(KERN_DEBUG "config %s: Character length 5bits/char\n", mup->name);
+        //printk(KERN_INFO "config %s: Character length 5bits/char\n", mup->name);
         tmp |= 0x3 << 20;
         break;
     default:
-        printk(KERN_DEBUG "default config %s: Character length 8bits/char\n", mup->name);
+        //printk(KERN_INFO "default config %s: Character length 8bits/char\n", mup->name);
         tmp &= ~(0x3 << 20);
         break;
     }
@@ -704,8 +704,8 @@ static void meson_uart_start_port(struct meson_uart_port *mup)
 			printk(KERN_ERR"meson_uart request pinmux error!\n");
 		}
 		/* set pinmux here */
-		printk("set %s pinmux use pinctrl subsystem\n",mup->aup->port_name[index]);
-		printk("P_AO_RTI_PIN_MUX_REG:%x\n",aml_read_reg32(P_AO_RTI_PIN_MUX_REG));
+		//printk("set %s pinmux use pinctrl subsystem\n",mup->aup->port_name[index]);
+		//printk("P_AO_RTI_PIN_MUX_REG:%x\n",aml_read_reg32(P_AO_RTI_PIN_MUX_REG));
 	}
 	// need put pinctrl      
 	aml_set_reg32_mask((uint32_t)&uart->mode, UART_RXRST);
@@ -726,7 +726,7 @@ static void meson_uart_start_port(struct meson_uart_port *mup)
 			printk(KERN_ERR"meson_uart request irq error!\n");
 	}
 
-	printk(KERN_NOTICE"start %s(irq = %d)\n", mup->name,up->irq);
+	//printk(KERN_NOTICE"start %s(irq = %d)\n", mup->name,up->irq);
 }
 
 static int meson_uart_register_port(struct platform_device *pdev,struct aml_uart_platform * aup,int port_index)
@@ -764,8 +764,8 @@ static int meson_uart_register_port(struct platform_device *pdev,struct aml_uart
 
     platform_set_drvdata(pdev, mup);
 
-	printk(KERN_NOTICE"register %s %s\n", aup->port_name[port_index],
-		ret ? "failed" : "ok" );
+	//printk(KERN_NOTICE"register %s %s\n", aup->port_name[port_index],
+	//	ret ? "failed" : "ok" );
 
        return ret;
 }
@@ -857,7 +857,7 @@ static int  meson_serial_console_setup(struct console *co, char *options)
 	int index;
 	am_uart_t *uart;
 
-	printk(KERN_DEBUG"meson_serial_console_setup\n");
+	//printk(KERN_INFO"meson_serial_console_setup\n");
 
 	/*
 	 * Check whether an invalid uart number has been specified, and
@@ -918,7 +918,7 @@ static int meson_uart_resume(struct platform_device *pdev)
     unsigned tmp;
     struct meson_uart_port *mup = (struct meson_uart_port *)platform_get_drvdata(pdev);
 
-    printk(KERN_DEBUG"meson_uart_resume\n");
+    //printk(KERN_DEBUG"meson_uart_resume\n");
 
     if(mup->bt_ops) {
 	    tmp = readl(&mup->uart->mode);

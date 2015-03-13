@@ -320,7 +320,7 @@ void cvbs_config_vdac(unsigned int flag, unsigned int cfg)
 	else
 		vdac_cfg_valid = 0;
 
-	printk("cvbs trimming.%d.v%d: 0x%x, 0x%x\n", vdac_cfg_valid, version, flag, cfg);
+	//printk("cvbs trimming.%d.v%d: 0x%x, 0x%x\n", vdac_cfg_valid, version, flag, cfg);
 
 	return ;
 }

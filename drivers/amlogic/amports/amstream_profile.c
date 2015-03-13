@@ -25,7 +25,7 @@ int vcodec_profile_register(const struct codec_profile_t *vdec_profile)
 	{
 		vcodec_profile[vcodec_profile_idx] = vdec_profile;
 		vcodec_profile_idx ++;
-		printk("regist %s codec profile\n", vdec_profile->name);
+		//printk("regist %s codec profile\n", vdec_profile->name);
 	}
 	return 0;
 }

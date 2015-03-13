@@ -868,17 +868,17 @@ static int vpu_probe(struct platform_device *pdev)
 	spin_lock_init(&vpu_lock);
 	spin_lock_init(&vpu_mem_lock);
 	
-	printk("VPU driver version: %s\n", VPU_VERION);
+	//printk("VPU driver version: %s\n", VPU_VERION);
 	detect_vpu_chip();
 	get_vpu_config(pdev);
 	set_vpu_clk(vpu_config.clk_level);
 	
 	ret = class_register(&aml_vpu_debug_class);
-	if(ret){
-		printk("class register aml_vpu_debug_class fail!\n");
-	}
+	//if(ret){
+	//	printk("class register aml_vpu_debug_class fail!\n");
+	//}
 	
-	printk("%s OK\n", __FUNCTION__);
+	//printk("%s OK\n", __FUNCTION__);
 	return 0;
 }
 

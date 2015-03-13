@@ -480,17 +480,17 @@ static int vidioc_open(struct file *file) {
     dev->ppmgr2_dev.bottom_first = 0;
     skip_frames = 0;
     dprintk(dev, 2, "vidioc_open\n");
-    printk("ionvideo open\n");
+    //printk("ionvideo open\n");
     return v4l2_fh_open(file);
 }
 
 static int vidioc_release(struct file *file) {
     struct ionvideo_dev *dev = video_drvdata(file);
     ionvideo_stop_generating(dev);
-    printk("ionvideo_stop_generating!!!!\n");
+    //printk("ionvideo_stop_generating!!!!\n");
     ppmgr2_release(&(dev->ppmgr2_dev));
     dprintk(dev, 2, "vidioc_release\n");
-    printk("ionvideo release\n");
+    //printk("ionvideo release\n");
     if (dev->fd_num > 0) {
         dev->fd_num--;
     }

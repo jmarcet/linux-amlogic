@@ -7840,9 +7840,9 @@ wl_notify_connect_status(struct wl_priv *wl, bcm_struct_cfgdev *cfgdev,
 			}
 			if (wl_get_drv_status(wl, CONNECTING, ndev))
 				wl_bss_connect_done(wl, ndev, e, data, false);
-		} else {
+		} /*else {
 			printk("%s nothing\n", __FUNCTION__);
-		}
+		} */
 	} else {
 		WL_ERR(("Invalid ndev status %d\n", wl_get_mode_by_netdev(wl, ndev)));
 	}
@@ -10200,7 +10200,7 @@ static s32 wl_event_handler(void *data)
 
 	wl = (struct wl_priv *)tsk->parent;
 
-	printk("tsk Enter, tsk = 0x%08x\n", (unsigned int)tsk);
+	//printk("tsk Enter, tsk = 0x%08x\n", (unsigned int)tsk);
 
 	while (down_interruptible (&tsk->sema) == 0) {
 		SMP_RD_BARRIER_DEPENDS();

@@ -660,7 +660,7 @@ int aml_emmc_partition_ops (struct mmc_card *card, struct gendisk *disk)
 	}
 
 
-    printk("Exit %s %s.\n", __FUNCTION__, (ret == 0)?"OK":"ERROR");
+    //printk("Exit %s %s.\n", __FUNCTION__, (ret == 0)?"OK":"ERROR");
 	return ret;
 	
 out_class3:

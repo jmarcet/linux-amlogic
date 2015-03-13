@@ -288,16 +288,16 @@ static int video_receiver_event_fun(int type, void* data, void* private_data) {
         unregFlag = 1;
         if (index != 8)
             mutex_lock(&vfpMutex);
-        printk("AML:VFRAME_EVENT_PROVIDER_UNREG\n");
+        //printk("AML:VFRAME_EVENT_PROVIDER_UNREG\n");
         if (vf_get_receiver(PROVIDER_NAME)) {
-            printk("unreg:amlvideo\n");
+            //printk("unreg:amlvideo\n");
             vf_unreg_provider(&amlvideo_vf_prov);
             omx_secret_mode = false;
         }
         first_frame = 0;
     }
     if (type == VFRAME_EVENT_PROVIDER_REG) {
-        printk("AML:VFRAME_EVENT_PROVIDER_REG\n");
+        //printk("AML:VFRAME_EVENT_PROVIDER_REG\n");
 
         if (unregFlag == 0)
             vf_notify_provider(RECEIVER_NAME, VFRAME_EVENT_RECEIVER_PARAM_SET, (void*) eventparam);
@@ -307,10 +307,10 @@ static int video_receiver_event_fun(int type, void* data, void* private_data) {
     }else if (type == VFRAME_EVENT_PROVIDER_QUREY_STATE) {
         return RECEIVER_ACTIVE ;
     }else if (type == VFRAME_EVENT_PROVIDER_START) {
-        printk("AML:VFRAME_EVENT_PROVIDER_START\n");
+        //printk("AML:VFRAME_EVENT_PROVIDER_START\n");
         if (vf_get_receiver(PROVIDER_NAME)) {
             struct vframe_receiver_s * aaa = vf_get_receiver(PROVIDER_NAME);
-            printk("aaa->name=%s",aaa->name);
+            //printk("aaa->name=%s",aaa->name);
             omx_secret_mode = true;
             vf_provider_init(&amlvideo_vf_prov, PROVIDER_NAME ,&amlvideo_vf_provider, NULL);
             vf_reg_provider(&amlvideo_vf_prov);
@@ -847,7 +847,7 @@ static int amlvideo_open(struct file *file) {
     res->end = (resource_size_t)(bstart + bsize - 1);
     res->magic = MAGIC_RE_MEM;
     videobuf_queue_res_init(&fh->vb_vidq, &vivi_video_qops, NULL, &dev->slock, fh->type, V4L2_FIELD_INTERLACED, sizeof(struct vivi_buffer), (void*) res, NULL );
-    printk("amlvideo open");
+    //printk("amlvideo open");
     return 0;
 }
 
@@ -889,7 +889,7 @@ static int amlvideo_close(struct file *file) {
     mutex_lock(&dev->mutex);
     dev->users--;
     mutex_unlock(&dev->mutex);
-    printk("amlvideo close");
+    //printk("amlvideo close");
     return 0;
 }
 

@@ -1110,7 +1110,7 @@ printk("%s: type: %d, speed: %d, config: %d, dma: %d, id: %d, phy: %x, ctrl: %x\
 		/*
 		 * Initialize the HCD
 		 */
-		printk("Working on port type = HOST\n");
+		//printk("Working on port type = HOST\n");
 		if (!dwc_otg_is_host_mode(dwc_otg_device->core_if)) {
 			printk
 			    ("Chip mode not match! -- Want HOST mode but not.  --\n");
@@ -1126,7 +1126,7 @@ printk("%s: type: %d, speed: %d, config: %d, dma: %d, id: %d, phy: %x, ctrl: %x\
 		/*
 		 * Initialize the PCD
 		 */
-		printk("Working on port type = SLAVE\n");
+		//printk("Working on port type = SLAVE\n");
 		if (!dwc_otg_is_device_mode(dwc_otg_device->core_if)) {
 			DWC_ERROR
 			    ("Chip mode not match! -- Want Device mode but not.  --\n");
@@ -1142,8 +1142,8 @@ printk("%s: type: %d, speed: %d, config: %d, dma: %d, id: %d, phy: %x, ctrl: %x\
 	}
 
 	else if (port_type == USB_PORT_TYPE_OTG) {
-		printk("Working on port type = OTG\n");
-		printk("Current port type: %s\n",
+		//printk("Working on port type = OTG\n");
+		//printk("Current port type: %s\n",
 			dwc_otg_is_host_mode(dwc_otg_device->core_if)?"HOST":"SLAVE");
 
 		retval = hcd_init(_dev);
@@ -1160,7 +1160,7 @@ printk("%s: type: %d, speed: %d, config: %d, dma: %d, id: %d, phy: %x, ctrl: %x\
 			goto fail;
 		}
 		if(!dwc_otg_get_param_adp_enable(dwc_otg_device->core_if)){
-			DWC_PRINTF("using timer detect id change, %p\n",dwc_otg_device->core_if);
+			//DWC_PRINTF("using timer detect id change, %p\n",dwc_otg_device->core_if);
 			dwc_otg_device->id_change_timer = DWC_TIMER_ALLOC("ID change timer",
 				dwc_otg_id_change_timer_handler,dwc_otg_device);
 			DWC_TIMER_SCHEDULE(dwc_otg_device->id_change_timer, 0);

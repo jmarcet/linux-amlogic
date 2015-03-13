@@ -650,8 +650,8 @@ static void dvb_demux_feed_del(struct dvb_demux_feed *feed)
 {
 	spin_lock_irq(&feed->demux->lock);
 	if (!(dvb_demux_feed_find(feed))) {
-		printk(KERN_ERR "%s: feed not in list (type=%x state=%x pid=%x)\n",
-		       __func__, feed->type, feed->state, feed->pid);
+		//printk(KERN_ERR "%s: feed not in list (type=%x state=%x pid=%x)\n",
+		//       __func__, feed->type, feed->state, feed->pid);
 		goto out;
 	}
 

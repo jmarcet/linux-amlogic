@@ -2463,7 +2463,7 @@ static int aml_sdhc_probe(struct platform_device *pdev)
         }
     }
 
-    print_tmp("%s() success!\n", __FUNCTION__);
+    //print_tmp("%s() success!\n", __FUNCTION__);
     platform_set_drvdata(pdev, host);
     return 0;
 
@@ -2482,7 +2482,7 @@ fail_init_host:
     dma_free_coherent(NULL, SDHC_BOUNCE_REQ_SIZE, host->bn_buf,
         (dma_addr_t)host->bn_dma_buf);
     kfree(host);
-    print_tmp("aml_sdhc_probe() fail!\n");
+    //print_tmp("aml_sdhc_probe() fail!\n");
     return ret;
 }
 

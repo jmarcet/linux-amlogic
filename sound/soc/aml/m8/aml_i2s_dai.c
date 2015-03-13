@@ -322,7 +322,7 @@ static int aml_i2s_dai_probe(struct platform_device *pdev)
 {
 	struct aml_i2s *i2s = NULL;
 	int ret = 0;
-	printk(KERN_DEBUG "enter %s\n", __func__);
+	//printk(KERN_DEBUG "enter %s\n", __func__);
 
 	i2s = kzalloc(sizeof(struct aml_i2s), GFP_KERNEL);
 	if (!i2s) {
@@ -333,7 +333,7 @@ static int aml_i2s_dai_probe(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, i2s);
 	
 	if(of_property_read_u32(pdev->dev.of_node, "clk_src_mpll", &i2s->mpll)){
-		printk(KERN_INFO "i2s get no clk src setting in dts, use the default mpll 0\n");
+		//printk(KERN_INFO "i2s get no clk src setting in dts, use the default mpll 0\n");
 		i2s->mpll = 0;
 	}
 	/* enable the mclk because m8 codec need it to setup */

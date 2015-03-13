@@ -1578,7 +1578,7 @@ EXPORT_SYMBOL_GPL(pinctrl_unregister);
 
 static int __init pinctrl_init(void)
 {
-	pr_info("initialized pinctrl subsystem\n");
+	//pr_info("initialized pinctrl subsystem\n");
 	pinctrl_init_debugfs();
 	return 0;
 }

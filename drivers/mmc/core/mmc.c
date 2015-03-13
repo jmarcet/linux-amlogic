@@ -470,9 +470,9 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			card->ext_csd.bkops_en = ext_csd[EXT_CSD_BKOPS_EN];
 			card->ext_csd.raw_bkops_status =
 				ext_csd[EXT_CSD_BKOPS_STATUS];
-			if (!card->ext_csd.bkops_en)
-				pr_info("%s: BKOPS_EN bit is not set\n",
-					mmc_hostname(card->host));
+			//if (!card->ext_csd.bkops_en)
+			//	pr_info("%s: BKOPS_EN bit is not set\n",
+			//		mmc_hostname(card->host));
 		}
 
 		/* check whether the eMMC card supports HPI */
@@ -508,10 +508,9 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
                 card->ext_csd.rst_n_function |= EXT_CSD_RST_N_ENABLED;
             }
         }
-        else{
-            pr_err("###check hw reset function is already enabled here\n");          
-
-        }
+        //else{
+        //    pr_err("###check hw reset function is already enabled here\n");          
+        //}
 
 		/*
 		 * RPMB regions are defined in multiples of 128K.
@@ -1056,7 +1055,7 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	/*
 	 * Activate high speed (if supported)
 	 */
-	printk("Activate high speed\n");
+	//printk("Activate high speed\n");
 	if (card->ext_csd.hs_max_dtr != 0) {
 		err = 0;
 		if (card->ext_csd.hs_max_dtr > 52000000 &&
@@ -1607,7 +1606,7 @@ int mmc_attach_mmc(struct mmc_host *host)
 	/*
 	 * Detect and init the card.
 	 */
-	printk("mmc_init_card\n");
+	//printk("mmc_init_card\n");
 	err = mmc_init_card(host, host->ocr, NULL);
 	if (err)
 		goto err;

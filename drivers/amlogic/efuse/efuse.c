@@ -529,7 +529,7 @@ struct efuse_platform_data aml_efuse_plat;
 struct device_node *np = pdev->dev.of_node;
 int usid_min,usid_max;
 #endif
-	 printk( KERN_INFO "efuse===========================================\n");
+	 //printk( KERN_INFO "efuse===========================================\n");
 	 ret = alloc_chrdev_region(&efuse_devno, 0, 1, EFUSE_DEVICE_NAME);
 	 if (ret < 0) {
 			 printk(KERN_ERR "efuse: failed to allocate major number\n");
@@ -570,7 +570,7 @@ int usid_min,usid_max;
 		 ret = PTR_ERR(devp);
 		 goto error4;
 	 }
-	 printk(KERN_INFO "efuse: device %s created\n", EFUSE_DEVICE_NAME);
+	 //printk(KERN_INFO "efuse: device %s created\n", EFUSE_DEVICE_NAME);
 #ifdef CONFIG_OF
 	if(pdev->dev.of_node){
 		of_node_get(np);
@@ -676,7 +676,7 @@ static int __init efuse_init(void)
 		printk(KERN_ERR "failed to register efuse driver, error %d\n", ret);
 		return -ENODEV;
 	}
-	printk( KERN_INFO "efuse--------------------------------------------\n");
+	//printk( KERN_INFO "efuse--------------------------------------------\n");
 
 	return ret;
 }

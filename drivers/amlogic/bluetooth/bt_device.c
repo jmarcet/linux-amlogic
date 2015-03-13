@@ -92,13 +92,13 @@ static void bt_device_off(struct bt_dev_data *pdata)
 static int bt_set_block(void *data, bool blocked)
 {
     struct bt_dev_data *pdata = data;
-    pr_info("BT_RADIO going: %s\n", blocked ? "off" : "on");
+    //pr_info("BT_RADIO going: %s\n", blocked ? "off" : "on");
 
 	if (!blocked) {
-		pr_info("BCM_BT: going ON\n");
+		//pr_info("BCM_BT: going ON\n");
 		bt_device_on(pdata);
 	} else {
-		pr_info("BCM_BT: going OFF\n");
+		//pr_info("BCM_BT: going OFF\n");
         bt_device_off(pdata);
 	}
     return 0;
@@ -145,11 +145,11 @@ static int bt_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node) {
 	    const char *str;
 	    
-	    printk(KERN_DEBUG "enter bt_probe of_node\n");
+	    //printk(KERN_DEBUG "enter bt_probe of_node\n");
 	    pdata = kzalloc(sizeof(struct bt_dev_data), GFP_KERNEL);
 		ret = of_property_read_string(pdev->dev.of_node,"gpio_reset",&str);
 		if(ret){
-			printk(KERN_WARNING "not get gpio_reset\n");
+			//printk(KERN_WARNING "not get gpio_reset\n");
 			pdata->gpio_reset = 0;
 		} else {
 		    pdata->gpio_reset = amlogic_gpio_name_map_num(str);
@@ -157,7 +157,7 @@ static int bt_probe(struct platform_device *pdev)
 		
         ret = of_property_read_string(pdev->dev.of_node,"gpio_en",&str);
 		if(ret){
-			printk(KERN_WARNING "not get gpio_en\n");
+			//printk(KERN_WARNING "not get gpio_en\n");
 			pdata->gpio_en = 0;
 		} else {
 		    pdata->gpio_en = amlogic_gpio_name_map_num(str);
@@ -165,7 +165,7 @@ static int bt_probe(struct platform_device *pdev)
 		
 		ret = of_property_read_string(pdev->dev.of_node,"gpio_wake",&str);
 		if(ret){
-			printk(KERN_WARNING "not get gpio_wake\n");
+			//printk(KERN_WARNING "not get gpio_wake\n");
 			pdata->gpio_wake = 0;
 		} else {
 		    pdata->gpio_wake = amlogic_gpio_name_map_num(str);
@@ -279,7 +279,7 @@ static struct platform_driver bt_driver = {
 
 static int __init bt_init(void)
 {
-    printk("amlogic rfkill init\n");
+	//printk("amlogic rfkill init\n");
 
 	return platform_driver_register(&bt_driver);
 }

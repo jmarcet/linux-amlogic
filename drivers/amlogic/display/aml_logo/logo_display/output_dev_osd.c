@@ -134,7 +134,7 @@ static int osd_hw_setup(logo_object_t *plogo)
 	
 }
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if 1
 void set_osd_freescaler(int index, logo_object_t *plogo, vmode_t new_mode) {
     vmode_t old_mode = plogo->para.vout_mode & VMODE_MODE_BIT_MASK;
     printk("aml_logo: outputmode changed(%d->%d), reset osd%d scaler.\n", old_mode, new_mode, index);
@@ -535,7 +535,7 @@ static int __init get_cvbs_mode(char *str)
     }else{
 	cvbsmode_hdmionly = VMODE_480CVBS;
     }
-    printk("kernel get cvbsmode form uboot is %s\n", str);
+    //printk("kernel get cvbsmode form uboot is %s\n", str);
     return 1;
 }
 __setup("cvbsmode=", get_cvbs_mode);

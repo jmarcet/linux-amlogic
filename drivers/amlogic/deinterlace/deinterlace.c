@@ -68,6 +68,7 @@
 
 //#define RUN_DI_PROCESS_IN_TIMER_IRQ
 //#define RUN_DI_PROCESS_IN_TIMER
+#undef DI_DEBUG
 
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6
 #ifdef CONFIG_AML_VSYNC_FIQ_ENABLE
@@ -2726,11 +2727,13 @@ static void di_uninit_buf(void)
 	    break;
 	}
     }
+    /*
     if(used_post_buf_index != -1){
         printk("%s keep cur di_buf %d (%d %d %d)\n",
                __func__, used_post_buf_index, used_local_buf_index[0],
                      used_local_buf_index[1],used_local_buf_index[2]);
     }
+    */
 #ifdef USE_LIST
     list_for_each_entry_safe(p, ptmp, &local_free_list_head, list) {
         list_del(&p->list);
@@ -6760,17 +6763,17 @@ static void recycle_keep_buffer(void)
     int i=0;
     if((used_post_buf_index != -1)&&(new_keep_last_frame_enable)){
 	if(di_buf_post[used_post_buf_index].type == VFRAME_TYPE_POST){
-            printk("%s recycle keep cur di_buf %d (",__func__, used_post_buf_index);
+            //printk("%s recycle keep cur di_buf %d (",__func__, used_post_buf_index);
             di_lock_irqfiq_save(irq_flag2, fiq_flag);
 	    for(i=0;i<USED_LOCAL_BUF_MAX;i++){
 		if(di_buf_post[used_post_buf_index].di_buf_dup_p[i]){
 	            queue_in(di_buf_post[used_post_buf_index].di_buf_dup_p[i],QUEUE_RECYCLE);
-	            printk(" %d ",di_buf_post[used_post_buf_index].di_buf_dup_p[i]->index);
+	            //printk(" %d ",di_buf_post[used_post_buf_index].di_buf_dup_p[i]->index);
 	          }
 		}
 	    queue_in(&di_buf_post[used_post_buf_index],QUEUE_POST_FREE);
 	    di_unlock_irqfiq_restore(irq_flag2, fiq_flag);
-	    printk(")\n");
+	    //printk(")\n");
 	}
 	used_post_buf_index = -1;
     }
@@ -6967,7 +6970,7 @@ static int di_probe(struct platform_device *pdev)
     int buf_num_avail;
     const void*name;
     int offset,size;
-    pr_dbg("di_probe\n");
+    //pr_dbg("di_probe\n");
     vout_register_client(&display_mode_notifier_nb_v);
 
     memset(&di_post_stru, 0, sizeof(di_post_stru));
@@ -7285,7 +7288,7 @@ static int  __init di_init(void)
     if(boot_init_flag&INIT_FLAG_NOT_LOAD)
         return 0;
 
-    pr_dbg("di_init\n");
+    //pr_dbg("di_init\n");
 #if 0
 	  deinterlace_device = platform_device_alloc(DEVICE_NAME,0);
     if (!deinterlace_device) {

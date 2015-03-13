@@ -28,8 +28,8 @@
 #define CEC_VERSION     "v1.3"
 #define _RX_DATA_BUF_SIZE_ 16
 
-#define _RX_CEC_DBG_ON_
-#define _TX_CEC_DBG_ON_
+//#define _RX_CEC_DBG_ON_
+//#define _TX_CEC_DBG_ON_
 
 #ifdef  _RX_CEC_DBG_ON_
 #define hdmirx_cec_dbg_print(fmt, args...) printk(KERN_WARNING fmt, ## args)//hdmi_print

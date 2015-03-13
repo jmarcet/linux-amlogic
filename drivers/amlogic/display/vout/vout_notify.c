@@ -257,7 +257,7 @@ int vout_register_server(vout_server_t*  mem_server)
 	vout_server_t  *p_server;
 
 	BUG_ON(mem_server == NULL);
-    printk("%s\n", __func__);
+    //printk("%s\n", __func__);
 
 	mutex_lock(&vout_mutex);
 	list_for_each(p_iter,&vout_module.vout_server_list )

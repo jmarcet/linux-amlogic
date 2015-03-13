@@ -35,8 +35,8 @@
 #define DEVICE_NAME "amcanvas"
 #define CLASS_NAME  "amcanvas-class"
 
-#define pr_dbg(fmt, args...) printk(KERN_DEBUG "Canvas: " fmt, ## args)
-#define pr_error(fmt, args...) printk(KERN_ERR "Canvas: " fmt, ## args)
+#define pr_dbg(fmt, args...)
+#define pr_error(fmt, args...)
 
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
 #define CANVAS_NUM	256

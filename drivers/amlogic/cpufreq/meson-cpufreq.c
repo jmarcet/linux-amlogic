@@ -395,11 +395,11 @@ static int __init meson_cpufreq_probe(struct platform_device *pdev)
 			prop = of_get_property(pdev->dev.of_node, "voltage_control", NULL);
 			if(prop)
 				voltage_control = of_read_ulong(prop,1);
-			else{
-				printk("meson_cpufreq: no voltage_control prop\n");
-			}
+			//else{
+			//	printk("meson_cpufreq: no voltage_control prop\n");
+			//}
 
-			printk("voltage_control = %d\n",voltage_control);
+			//printk("voltage_control = %d\n",voltage_control);
 		}
 #endif
 

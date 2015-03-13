@@ -112,7 +112,7 @@ static int __init early_init_dt_init(void)
 		printk("failed to register early_init driver, error %d\n", ret);
 		return -ENODEV;
 	}
-	printk("-------%s:%d----------\n",__func__,__LINE__);
+	//printk("-------%s:%d----------\n",__func__,__LINE__);
 
 	return ret;
 }

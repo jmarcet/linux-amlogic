@@ -28,7 +28,7 @@
 
 #define DEBUG_TREE      0
 #define DEBUG_PARSE     0
-#define DBG(format, args...) printk("%s, "format, __func__, ##args)
+#define DBG(format, args...)
 
 /*
  * must make sure value is 32 bit when use this macro
@@ -77,14 +77,14 @@ int aml_pmu_register_callback(pmu_callback callback, void *pdata, char *name)
     if (!pmu_callback_mutex) {
         pmu_callback_mutex = pmu_alloc_mutex();
         if (!pmu_callback_mutex) {
-            printk("%s, allocate mutex failed\n", __func__);
+            //printk("%s, allocate mutex failed\n", __func__);
             return -ENOMEM;
         }
     }
     pmu_mutex_lock(pmu_callback_mutex);
     cg = kzalloc(sizeof(*cg), GFP_KERNEL);
     if (!cg) {
-        printk("%s, allocate callback failed\n", __func__);
+        //printk("%s, allocate callback failed\n", __func__);
         pmu_mutex_unlock(pmu_callback_mutex);
         return -ENOMEM; 
     }
@@ -93,19 +93,19 @@ int aml_pmu_register_callback(pmu_callback callback, void *pdata, char *name)
     strcpy(cg->name, name);
     if (!g_callbacks) {                                                 // add first callback
         g_callbacks = cg;
-        printk("callback %s registed, cg:%p\n", cg->name, cg);
+        //printk("callback %s registed, cg:%p\n", cg->name, cg);
         pmu_mutex_unlock(pmu_callback_mutex);
         return 0;
     }
     for (cn = g_callbacks; cn->next; cn = cn->next) {
         if (name && !strcmp(cn->name, name)) {
-            printk("%s, callback %s is already exist\n", __func__, name);
+            //printk("%s, callback %s is already exist\n", __func__, name);
             pmu_mutex_unlock(pmu_callback_mutex);
             return -EINVAL;
         }
     }
     cn->next = cg;
-    printk("callback %s registed, cg:%p\n", cg->name, cg);
+    //printk("callback %s registed, cg:%p\n", cg->name, cg);
     pmu_mutex_unlock(pmu_callback_mutex);
     return 0;
 }
@@ -119,7 +119,7 @@ int aml_pmu_unregister_callback(char *name)
     if (name && !strcmp(tmp->name, name)) {                             // first node is target
         g_callbacks = g_callbacks->next;    
         kfree(tmp);
-        printk("%s, callback %s unregisted\n", __func__, name);
+        //printk("%s, callback %s unregisted\n", __func__, name);
         find = 1;
     }
     if (g_callbacks) {
@@ -127,7 +127,7 @@ int aml_pmu_unregister_callback(char *name)
             if (name && !strcmp(cn->name, name)) {
                 tmp->next = cn->next;
                 kfree(cn);
-                printk("%s, callback %s unregisted\n", __func__, name);
+                //printk("%s, callback %s unregisted\n", __func__, name);
                 find = 1;
                 break;
             }
@@ -136,7 +136,7 @@ int aml_pmu_unregister_callback(char *name)
     }
     pmu_mutex_unlock(pmu_callback_mutex);
     if (!find) {
-        printk("%s, callback %s not find\n", __func__, name);
+        //printk("%s, callback %s not find\n", __func__, name);
         return -1;
     }
     return 0;
@@ -170,7 +170,7 @@ EXPORT_SYMBOL(aml_pmu_get_ts);
 int aml_pmu_register_api(struct aml_pmu_api *api)
 {
     if (!api || g_aml_pmu_api) {
-        printk("%s, invalid input, api:%p\n", __func__, g_aml_pmu_api);    
+        //printk("%s, invalid input, api:%p\n", __func__, g_aml_pmu_api);    
         return -EINVAL;
     }
     g_aml_pmu_api = api;
@@ -197,15 +197,15 @@ EXPORT_SYMBOL(aml_pmu_get_api);
 int aml_pmu_register_driver(struct aml_pmu_driver *driver)
 {
     if (driver == NULL) {
-        printk("%s, ERROR:NULL driver\n", __func__);    
+        //printk("%s, ERROR:NULL driver\n", __func__);    
         return -1;
     }
     if (g_driver != NULL) {
-        printk("%s, ERROR:driver %s has alread registed\n", __func__, driver->name);
+        //printk("%s, ERROR:driver %s has alread registed\n", __func__, driver->name);
         return -1;
     }
     if (!driver->pmu_get_coulomb || !driver->pmu_update_status) {
-        printk("%s, lost important functions\n", __func__);
+        //printk("%s, lost important functions\n", __func__);
         return -1;
     }
     g_driver = driver;
@@ -322,13 +322,13 @@ static int aml_pmus_probe(struct platform_device *pdev)
 
     for_each_child_of_node(pmu_node, child) {
         /* register exist pmu */
-        printk("%s, child name:%s\n", __func__, child->name);
+        //printk("%s, child name:%s\n", __func__, child->name);
         err = of_property_read_string(child, "i2c_bus", &str);
         if (err) {
-            printk("%s, get 'i2c_bus' failed, ret:%d\n", __func__, err);
+            //printk("%s, get 'i2c_bus' failed, ret:%d\n", __func__, err);
             continue;
         }
-        printk("%s, i2c_bus:%s\n", __func__, str);
+        //printk("%s, i2c_bus:%s\n", __func__, str);
         if (!strncmp(str, "i2c_bus_ao", 10)) { 
             bus_type = AML_I2C_BUS_AO;
         } else if (!strncmp(str, "i2c_bus_b", 9)) {
@@ -340,26 +340,26 @@ static int aml_pmus_probe(struct platform_device *pdev)
         }
         err = of_property_read_string(child, "status", &str);
         if (err) {
-            printk("%s, get 'status' failed, ret:%d\n", __func__, err);
+            //printk("%s, get 'status' failed, ret:%d\n", __func__, err);
             continue;
         }
         if (strcmp(str, "okay") && strcmp(str, "ok")) {              // status is not OK, do not probe it
-            printk("%s, device %s status is %s, stop probe it\n", __func__, child->name, str); 
+            //printk("%s, device %s status is %s, stop probe it\n", __func__, child->name, str); 
             continue;
         }
         err = of_property_read_u32(child, "reg", &addr);
         if (err) {
-            printk("%s, get 'reg' failed, ret:%d\n", __func__, err);
+            //printk("%s, get 'reg' failed, ret:%d\n", __func__, err);
             continue;
         }
         memset(&board_info, 0, sizeof(board_info));
         adapter = i2c_get_adapter(bus_type);
-        if (!adapter) {
-            printk("%s, wrong i2c adapter:%d\n", __func__, bus_type);
-        }
+        //if (!adapter) {
+        //    printk("%s, wrong i2c adapter:%d\n", __func__, bus_type);
+        //}
         err = of_property_read_string(child, "compatible", &str);
         if (err) {
-            printk("%s, get 'compatible' failed, ret:%d\n", __func__, err);
+            //printk("%s, get 'compatible' failed, ret:%d\n", __func__, err);
             continue;
         }
         strncpy(board_info.type, str, I2C_NAME_SIZE);
@@ -367,7 +367,7 @@ static int aml_pmus_probe(struct platform_device *pdev)
         board_info.of_node = child;                                     // for device driver
         client = i2c_new_device(adapter, &board_info);
         if (!client) {
-            printk("%s, allocate i2c_client failed\n", __func__);    
+            //printk("%s, allocate i2c_client failed\n", __func__);    
             continue;
         }
         printk("Allocate new i2c device: adapter:%d, addr:0x%x, node name:%s, type:%s\n", 
@@ -402,7 +402,7 @@ static  struct platform_driver aml_pmu_prober = {
 static int __init aml_pmu_probe_init(void)
 {
     int ret;
-    printk("call %s in\n", __func__);
+    //printk("call %s in\n", __func__);
     ret = platform_driver_register(&aml_pmu_prober);
     return ret;
 }

@@ -2464,7 +2464,7 @@ static struct codec_profile_t amvenc_avc_profile = {
 };
 static int __init amvenc_avc_driver_init_module(void)
 {
-    amlog_level(LOG_LEVEL_INFO, "amvenc_avc module init\n");
+    //amlog_level(LOG_LEVEL_INFO, "amvenc_avc module init\n");
 
     if (platform_driver_register(&amvenc_avc_driver)) {
         amlog_level(LOG_LEVEL_ERROR, "failed to register amvenc_avc driver\n");

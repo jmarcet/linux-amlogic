@@ -2664,46 +2664,46 @@ static int ethernet_probe(struct platform_device *pdev)
         int ret;
 	int res;
 	struct am_net_private *np=NULL;
-	printk("ethernet_driver probe!\n");
+	//printk("ethernet_driver probe!\n");
 #ifdef CONFIG_OF
 	if (!pdev->dev.of_node) {
-		printk("eth: pdev->dev.of_node == NULL!\n");
+	//	printk("eth: pdev->dev.of_node == NULL!\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"ethbaseaddr",&ethbaseaddr);
 	if (ret) {
-		printk("Please config ethbaseaddr.\n");
+	//	printk("Please config ethbaseaddr.\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"interruptnum",&interruptnum);
 	if (ret) {
-		printk("Please config interruptnum.\n");
+	//	printk("Please config interruptnum.\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"phy_interface",&phy_interface); // 0 rgmii 1: RMII
-	if (ret) {
-		printk("Please config phy  interface.\n");
-	}
+	//if (ret) {
+	//	printk("Please config phy  interface.\n");
+	//}
 	ret = of_property_read_u32(pdev->dev.of_node,"savepowermode",&savepowermode);
-	if (ret) {
-		printk("Please config savepowermode.\n");
-	}
+	//if (ret) {
+	//	printk("Please config savepowermode.\n");
+	//}
 	ret = of_property_read_u32(pdev->dev.of_node,"reset_pin_enable",&reset_pin_enable);
-	if (ret) {
-		printk("Please config reset_pin_enable.\n");
-	}
+	//if (ret) {
+	//	printk("Please config reset_pin_enable.\n");
+	//}
 	ret = of_property_read_u32(pdev->dev.of_node,"reset_delay",&reset_delay);
-	if (ret) {
-		printk("Please config reset_delay.\n");
-	}
+	//if (ret) {
+	//	printk("Please config reset_delay.\n");
+	//}
 	ret = of_property_read_string(pdev->dev.of_node,"reset_pin",&reset_pin);
-	if (ret) {
-		printk("Please config reset_pin.\n");
-	}
+	//if (ret) {
+	//	printk("Please config reset_pin.\n");
+	//}
 	ret = of_property_read_u32(pdev->dev.of_node,"new_maclogic",&new_maclogic);
-	if (ret) {
-		printk("Please config new_maclogic.\n");
-	}
+	//if (ret) {
+	//	printk("Please config new_maclogic.\n");
+	//}
 	if(reset_pin_enable){
 		reset_pin_num = amlogic_gpio_name_map_num(reset_pin);
 		amlogic_gpio_request(reset_pin_num, OWNER_NAME);
@@ -2827,8 +2827,8 @@ static struct platform_driver ethernet_driver = {
 /* --------------------------------------------------------------------------*/
 static int __init am_net_init(void)
 {
-	printk("[highspeed-eth] Starting eth driver. For more information, visit: "
-		"https://github.com/mlinuxguy/odroid-c1-network-driver\n");
+	//printk("[highspeed-eth] Starting eth driver. For more information, visit: "
+	//	"https://github.com/mlinuxguy/odroid-c1-network-driver\n");
 	if (platform_driver_register(&ethernet_driver)) {
 		printk("failed to register ethernet_pm driver\n");
 		g_ethernet_registered = 0;
@@ -2860,7 +2860,7 @@ static void am_net_free(struct net_device *ndev)
 /* --------------------------------------------------------------------------*/
 static void __exit am_net_exit(void)
 {
-	printk(DRV_NAME "exit\n");
+	//printk(DRV_NAME "exit\n");
 	am_net_free(my_ndev);
 	free_netdev(my_ndev);
 	aml_mdio_unregister(my_ndev);

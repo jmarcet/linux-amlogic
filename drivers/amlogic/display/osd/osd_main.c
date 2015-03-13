@@ -1731,7 +1731,7 @@ osd_probe(struct platform_device *pdev)
 		osddev_init();
     	}
 	vinfo = get_current_vinfo();
-	printk("%s, vinfo:%p\n", __func__, vinfo);
+	//printk("%s, vinfo:%p\n", __func__, vinfo);
 
     	for (index=0;index<OSD_COUNT;index++)
     	{
@@ -1792,14 +1792,14 @@ osd_probe(struct platform_device *pdev)
 		//clear framebuffer memory
 		amlog_level(LOG_LEVEL_HIGH,"Frame buffer memory assigned at phy:0x%08x, vir:0x%p, size=%dK\n",
 	    	fbdev->fb_mem_paddr, fbdev->fb_mem_vaddr, fbdev->fb_len >> 10);
-		printk("%s, mydef_var:%p, vinfo:%p\n", __func__, mydef_var, vinfo);
+		//printk("%s, mydef_var:%p, vinfo:%p\n", __func__, mydef_var, vinfo);
 
 		mydef_var[index].width=vinfo->screen_real_width;
 		mydef_var[index].height=vinfo->screen_real_height;
 		if( init_logo_obj && index==logo_osd_index ) //adjust default var info
 		{
 			int  bpp=init_logo_obj->dev->output_dev.osd.color_depth;//bytes per pixel
-			printk("don't find to display_size_default from mesonfb-dts\n");
+			//printk("don't find to display_size_default from mesonfb-dts\n");
 			mydef_var[index].xres=init_logo_obj->dev->vinfo->width;
 			mydef_var[index].yres=init_logo_obj->dev->vinfo->height;	
 			mydef_var[index].xres_virtual=init_logo_obj->dev->vinfo->width;
@@ -1813,10 +1813,10 @@ osd_probe(struct platform_device *pdev)
 		} else {
 			if (index == OSD0){
 				ret = of_property_read_u32_array(pdev->dev.of_node, "display_size_default", &var_screeninfo[0], 5);
-				if(ret){
-					printk("don't find to display_size_default from mesonfb-dts\n");
-				}
-				else {			
+				//if(ret){
+				//	printk("don't find to display_size_default from mesonfb-dts\n");
+				//}
+				if(!ret) {			
 					int  bpp=var_screeninfo[4];//bytes per pixel
 					mydef_var[index].xres=var_screeninfo[0];
 					mydef_var[index].yres=var_screeninfo[1];	
@@ -1824,14 +1824,14 @@ osd_probe(struct platform_device *pdev)
 					mydef_var[index].yres_virtual=var_screeninfo[3];//logo always use double buffer
 					mydef_var[index].bits_per_pixel=bpp;
 				
-					amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\r\n",mydef_var[index].bits_per_pixel);
+					//amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\r\n",mydef_var[index].bits_per_pixel);
 					if(mydef_var[index].bits_per_pixel>32) 
 					{
 						mydef_var[index].bits_per_pixel=32;
 					}
 				}
 			}
-			amlog_level(LOG_LEVEL_HIGH,"---------------clear framebuffer%d memory  \r\n",index);
+			//amlog_level(LOG_LEVEL_HIGH,"---------------clear framebuffer%d memory  \r\n",index);
 			memset((char*)fbdev->fb_mem_vaddr, 0x00, fbdev->fb_len);
 		}
 
@@ -1913,7 +1913,7 @@ osd_probe(struct platform_device *pdev)
 	}else{
 		osddev_set_osd_reverse(osd_info.index, osd_info.osd_reverse);
 	}
-	amlog_level(LOG_LEVEL_HIGH,"osd probe ok  \r\n");
+	//amlog_level(LOG_LEVEL_HIGH,"osd probe ok  \r\n");
 	return 0;
 
 failed2:
@@ -2014,7 +2014,7 @@ osd_driver = {
 static int __init
 osd_init_module(void)
 {
-	amlog_level(LOG_LEVEL_HIGH,"osd_init\n");
+	//amlog_level(LOG_LEVEL_HIGH,"osd_init\n");
 
 #ifndef MODULE
     {

@@ -677,7 +677,7 @@ static int audiodsp_init_mcode(struct audiodsp_priv *priv)
 	priv->dsp_heap_start=0;
 	priv->code_mem_size=AUDIO_DSP_MEM_SIZE -REG_MEM_SIZE;
 	priv->dsp_code_start=AUDIO_DSP_START_ADDR;
-    DSP_PRNT("DSP start addr 0x%x\n",AUDIO_DSP_START_ADDR);
+    //DSP_PRNT("DSP start addr 0x%x\n",AUDIO_DSP_START_ADDR);
 	priv->dsp_stack_size=1024*64;
 	priv->dsp_gstack_size=512;
 	priv->dsp_heap_size=1024*1024;
@@ -1118,10 +1118,10 @@ int audiodsp_probe(void )
 	if (res < 0) {
 		DSP_PRNT("Can't register  char devie for " DSP_NAME "\n");
 		goto error1;
-	} else {
+	} /* else {
 		DSP_PRNT("register " DSP_NAME " to char divece(%d)\n",
 			  AUDIODSP_MAJOR);
-	}
+	} */
 
 	res = class_register(&audiodsp_class);
 	if(res <0 ){

@@ -12,11 +12,8 @@
 #include <linux/string.h>
 #include <linux/sched.h>
 
-#define DVFS_DBG(format, args...) \
-    if (1) printk(KERN_DEBUG "[DVFS]"format, ##args)
-
-#define DVFS_WARN(format, args...) \
-    if (1) printk(KERN_DEBUG "[DVFS]"format, ##args)
+#define DVFS_DBG(format, args...)
+#define DVFS_WARN(format, args...)
 
 #define DEBUG_DVFS      0
 
@@ -341,7 +338,7 @@ static int aml_dvfs_init_for_master(struct aml_dvfs_master *master)
     size = sizeof(struct cpufreq_frequency_table) * (master->table_count + 1);
     master->freq_table = kzalloc(size, GFP_KERNEL);
     if (master->freq_table == NULL) {
-        printk("%s, allocate buffer failed\n", __func__); 
+        //printk("%s, allocate buffer failed\n", __func__); 
         return -ENOMEM;
     }
     for (i = 0; i < master->table_count; i++) {
@@ -458,7 +455,7 @@ static  struct platform_driver aml_dvfs_prober= {
 static int __init aml_dvfs_init(void)
 {
     int ret;
-    printk("call %s in\n", __func__);
+    //printk("call %s in\n", __func__);
     ret = platform_driver_register(&aml_dvfs_prober);
     return ret;
 }

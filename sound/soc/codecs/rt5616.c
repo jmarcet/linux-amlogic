@@ -1798,7 +1798,7 @@ struct i2c_driver rt5616_i2c_driver = {
 
 static int __init rt5616_modinit(void)
 {
-    printk("enter %s\n",__func__);
+    //printk("enter %s\n",__func__);
     return i2c_add_driver(&rt5616_i2c_driver);
 }
 module_init(rt5616_modinit);

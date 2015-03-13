@@ -63,10 +63,10 @@ static int test_codec_of_node(struct device_node* p_node, aml_audio_codec_info_t
 
 	ret = of_property_read_string(p_node, "codec_name", &audio_codec_dev->name);
 	if (ret) {
-        printk("no of property codec_name!\n");
+        //printk("no of property codec_name!\n");
 		goto exit;
     }
-	printk("test codec %s\n", audio_codec_dev->name);
+	//printk("test codec %s\n", audio_codec_dev->name);
 	ret = of_property_read_string(p_node, "status", &audio_codec_dev->status);
 	if(ret){
 		printk("%s:can't get status info!\n",audio_codec_dev->name);
@@ -208,7 +208,7 @@ static int aml_audio_codec_probe(struct platform_device *pdev)
 		
 		if (ret == 0){
 			ext_codec = 1;
-			printk("using external codec, index = %d\n", codec_info.codec_index);
+			//printk("using external codec, index = %d\n", codec_info.codec_index);
 			break;
 		}
     }
@@ -221,7 +221,7 @@ static int aml_audio_codec_probe(struct platform_device *pdev)
 	}
     
 	if (ext_codec &&(!strcmp(audio_codec_dev->name, "dummy_codec"))){
-		printk("using external dummy codec\n");
+		//printk("using external dummy codec\n");
 		strlcpy(codec_info.name_bus, "dummy_codec.0", NAME_SIZE);
 		strlcpy(codec_info.name, "dummy", NAME_SIZE);
 		goto exit;

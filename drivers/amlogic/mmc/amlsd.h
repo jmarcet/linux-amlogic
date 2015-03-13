@@ -11,8 +11,7 @@
 
 extern unsigned sdhc_debug;
 extern unsigned sdio_debug;
-#define DEBUG_SD_OF		1
-//#define DEBUG_SD_OF			0
+#define DEBUG_SD_OF		0
 
 #define MODULE_NAME		"amlsd"
 
@@ -71,7 +70,7 @@ void aml_sd_uart_detect_clr (struct amlsd_platform* pdata);
     if (!of_property_read_u32(node, prop_name, &prop)){  			\
 		value = prop;												\
 		prop = 0;													\
-	    if (DEBUG_SD_OF) {                                          \
+	    if (0) {                                          \
 	        printk("get property:%25s, value:0x%08x\n",    			\
 	            prop_name, (unsigned int)value);                           		\
 	    }															\
@@ -80,7 +79,7 @@ void aml_sd_uart_detect_clr (struct amlsd_platform* pdata);
 #define SD_PARSE_GPIO_NUM_PROP(node, prop_name, str, gpio_pin)		\
 	if(!of_property_read_string(node, prop_name, &str)) { 			\
 		gpio_pin = amlogic_gpio_name_map_num(str);					\
-		if (DEBUG_SD_OF) {                                     		\
+		if (0) {                                     		\
 	        printk("get property:%25s, str:%s\n",    				\
 	            prop_name, str);    								\
 		}															\
@@ -89,7 +88,7 @@ void aml_sd_uart_detect_clr (struct amlsd_platform* pdata);
 #define SD_PARSE_STRING_PROP(node, prop_name, str, prop)      		\
 	if (!of_property_read_string(node, prop_name, &str)){ 			\
 		strcpy(prop, str);											\
-		if (DEBUG_SD_OF) {											\
+		if (0) {											\
 			printk("get property:%25s, str:%s\n", 					\
 				prop_name, prop);									\
 		}															\

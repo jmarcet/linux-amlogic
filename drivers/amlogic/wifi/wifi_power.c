@@ -320,7 +320,7 @@ static int wifi_power_probe(struct platform_device *pdev)
     	ret = of_property_read_string(pdev->dev.of_node, "valid", &str);
 		if(ret)
 		{
-			printk("Error: Didn't get power valid value --- %s %d\n",__func__,__LINE__);
+		    //printk("Error: Didn't get power valid value --- %s %d\n",__func__,__LINE__);
 		    power = 1;
 		} else {
 			if(!strncmp(str,"low",3))
@@ -336,7 +336,7 @@ static int wifi_power_probe(struct platform_device *pdev)
 	        return -1;
 	    } else {
 	    	pdata->power_gpio = amlogic_gpio_name_map_num(str);
-	    	printk("wifi_power power_gpio is %d\n",pdata->power_gpio);
+	    	//printk("wifi_power power_gpio is %d\n",pdata->power_gpio);
 	    	//ret = amlogic_gpio_request(pdata->power_gpio,WIFI_POWER_MODULE_NAME);
 	        //mcli pdata->usb_set_power(0);    //power on   
 	        //pdata->usb_set_power(1);    //power on   
@@ -355,7 +355,7 @@ static int wifi_power_probe(struct platform_device *pdev)
 		        return -1;
 		     }else{
 				pdata->power_gpio2 = amlogic_gpio_name_map_num(str);
-		        printk("wifi_power power_gpio2 is %d\n",pdata->power_gpio2);
+		        //printk("wifi_power power_gpio2 is %d\n",pdata->power_gpio2);
 		     }
 	   }
 		 

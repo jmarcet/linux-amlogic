@@ -1153,7 +1153,7 @@ void audio_set_958_mode(unsigned mode, _aiu_958_raw_setting_t * set)
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 0, 3, 3); // endian
 
         }
-        printk("IEC958 16bit\n");
+        //printk("IEC958 16bit\n");
     }
 
     audio_hw_958_reset(0, 1);

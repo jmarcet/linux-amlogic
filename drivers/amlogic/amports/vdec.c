@@ -674,7 +674,7 @@ static int  vdec_probe(struct platform_device *pdev)
     res.start = (phys_addr_t)get_reserve_block_addr(r);
     res.end = res.start+ (phys_addr_t)get_reserve_block_size(r)-1;
 
-    printk("init vdec memsource %d->%d\n",res.start,res.end);
+    //printk("init vdec memsource %d->%d\n",res.start,res.end);
     res.flags = IORESOURCE_MEM;
 
     vdec_set_resource(&res, &pdev->dev);

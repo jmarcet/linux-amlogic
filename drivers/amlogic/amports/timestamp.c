@@ -112,7 +112,7 @@ EXPORT_SYMBOL(timestamp_apts_enable);
 void timestamp_apts_start(u32 enable)
 {
   audio_pts_started = enable;
-  printk("audio pts started::::::: %d\n", enable);
+  //printk("audio pts started::::::: %d\n", enable);
 }
 EXPORT_SYMBOL(timestamp_apts_start);
 
@@ -140,7 +140,7 @@ EXPORT_SYMBOL(timestamp_pcrscr_set);
 void timestamp_firstvpts_set(u32 pts)
 {
     first_vpts = pts;
-    printk("video first pts = %x\n", first_vpts);
+    //printk("video first pts = %x\n", first_vpts);
 }
 
 EXPORT_SYMBOL(timestamp_firstvpts_set);
@@ -155,7 +155,7 @@ EXPORT_SYMBOL(timestamp_firstvpts_get);
 void timestamp_checkin_firstvpts_set(u32 pts)
 {
     first_checkin_vpts = pts;
-    printk("video first checkin pts = %x\n", first_checkin_vpts);
+    //printk("video first checkin pts = %x\n", first_checkin_vpts);
 }
 EXPORT_SYMBOL(timestamp_checkin_firstvpts_set);
 
@@ -169,7 +169,7 @@ EXPORT_SYMBOL(timestamp_checkin_firstvpts_get);
 void timestamp_firstapts_set(u32 pts)
 {
     first_apts = pts;
-    printk("audio first pts = %x\n", first_apts);
+    //printk("audio first pts = %x\n", first_apts);
 }
 
 EXPORT_SYMBOL(timestamp_firstapts_set);

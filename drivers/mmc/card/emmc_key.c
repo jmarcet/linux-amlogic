@@ -407,7 +407,7 @@ int emmc_key_init (struct mmc_card *card)
 	int err = 0;
     int bit = card->csd.read_blkbits;
 
-    printk("card key: card_blk_probe. \n");
+    //printk("card key: card_blk_probe. \n");
 	emmckey_info = kmalloc(sizeof(*emmckey_info), GFP_KERNEL);
 	if(emmckey_info == NULL){
 		printk("%s:%d,kmalloc memory fail\n",__func__,__LINE__);
@@ -447,7 +447,7 @@ int emmc_key_init (struct mmc_card *card)
 	if(err){
         printk("emmc key register fail.\n");
 	}
-	printk("emmc key: %s:%d ok. \n",__func__,__LINE__);
+	//printk("emmc key: %s:%d ok. \n",__func__,__LINE__);
 	return err;
 
 exit_err:

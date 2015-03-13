@@ -7072,10 +7072,10 @@ dhdsdio_probe(uint16 venid, uint16 devid, uint16 bus_no, uint16 slot,
 #ifdef PROP_TXSTATUS
 	// terence 20131215: disable_proptx should be set before dhd_attach
 	if (bus->sih->chip == BCM4339_CHIP_ID) {
-		printf("%s: Enable prop_txstatus\n", __FUNCTION__);
+		//printf("%s: Enable prop_txstatus\n", __FUNCTION__);
 		disable_proptx = 0;
 	} else {
-		printf("%s: Disable prop_txstatus\n", __FUNCTION__);
+		//printf("%s: Disable prop_txstatus\n", __FUNCTION__);
 		disable_proptx = 1;
 	}
 #endif
@@ -7802,9 +7802,9 @@ dhdsdio_download_firmware(struct dhd_bus *bus, osl_t *osh, void *sdh)
 	dhd_conf_set_fw_name_by_mac(bus->dhd, bus->sdh, bus->fw_path);
 	dhd_conf_set_nv_name_by_mac(bus->dhd, bus->sdh, bus->nv_path);
 
-	printk("Final fw_path=%s\n", bus->fw_path);
-	printk("Final nv_path=%s\n", bus->nv_path);
-	printk("Final conf_path=%s\n", bus->dhd->conf_path);
+	//printk("Final fw_path=%s\n", bus->fw_path);
+	//printk("Final nv_path=%s\n", bus->nv_path);
+	//printk("Final conf_path=%s\n", bus->dhd->conf_path);
 
 	ret = _dhdsdio_download_firmware(bus) == 0;
 

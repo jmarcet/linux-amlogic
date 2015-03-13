@@ -298,7 +298,7 @@ static struct platform_driver aml_wdt_driver = {
 };
 static int __init aml_wdt_driver_init(void) 
 {
-	printk("%s,%d\n",__func__,__LINE__);
+	//printk("%s,%d\n",__func__,__LINE__);
 	disable_watchdog();
 	return platform_driver_register(&(aml_wdt_driver)); 
 } 

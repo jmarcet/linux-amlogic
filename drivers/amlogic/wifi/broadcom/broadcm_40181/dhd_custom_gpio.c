@@ -16,7 +16,7 @@
 #include <wlioctl.h>
 #include <wl_iw.h>
 
-#define WL_ERROR(x) printf x
+#define WL_ERROR(x)
 #define WL_TRACE(x)
 
 #ifdef CUSTOMER_HW_AMLOGIC

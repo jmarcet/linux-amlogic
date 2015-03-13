@@ -1484,7 +1484,7 @@ osd_ext_probe(struct platform_device *pdev)
 				}
 			}
 #if 0 //avoid clearing the mem of uboot osd1 logo
-			amlog_level(LOG_LEVEL_HIGH, "---------------clear framebuffer%d memory  \r\n", index + 2);
+			//amlog_level(LOG_LEVEL_HIGH, "---------------clear framebuffer%d memory  \r\n", index + 2);
 			memset((char*)fbdev->fb_mem_vaddr, 0x80, fbdev->fb_len);
 #endif
 		}

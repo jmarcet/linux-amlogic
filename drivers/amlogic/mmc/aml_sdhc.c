@@ -1158,7 +1158,7 @@ static int aml_sdhc_probe(struct platform_device *pdev)
         }
     }
 
-    print_tmp("%s() success!\n", __FUNCTION__);
+    //print_tmp("%s() success!\n", __FUNCTION__);
     platform_set_drvdata(pdev, host);
     return 0;
 

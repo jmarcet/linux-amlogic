@@ -60,7 +60,7 @@ static int amlsd_get_host_caps(struct device_node* of_node,
 		caps |= MMC_CAP_4_BIT_DATA;
 	}
     pdata->caps = caps;
-    printk("pdata->caps %x\n", pdata->caps);
+    //printk("pdata->caps %x\n", pdata->caps);
 	return 0;
 }
 
@@ -94,7 +94,7 @@ static int amlsd_get_host_caps2(struct device_node* of_node,
         }
     };
     pdata->caps2 = caps;
-    printk("pdata->caps2 %x\n", pdata->caps2);
+    //printk("pdata->caps2 %x\n", pdata->caps2);
 	return 0;
 }
 
@@ -108,7 +108,7 @@ int amlsd_get_reg_base(struct platform_device* pdev,
 		dev_err(&pdev->dev, "of_iomap fail\n");
 		return -EINVAL;
 	}
-    printk("host->base %x\n", (u32)host->base);
+    //printk("host->base %x\n", (u32)host->base);
 	return 0;
 }
 
