@@ -47,7 +47,9 @@
 #include <linux/kthread.h>
 #include "am_net8218.h"
 #include <mach/mod_gate.h>
-
+#ifdef CONFIG_AML1220
+#include <linux/amlogic/aml_pmu.h>
+#endif
 #define MODULE_NAME "ethernet"
 #define DRIVER_NAME "ethernet"
 
@@ -64,7 +66,7 @@ MODULE_DESCRIPTION("Amlogic Ethernet Driver");
 MODULE_AUTHOR("Platform-BJ@amlogic.com>");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
-
+int aml1220_write(int32_t add, uint8_t val);
 // >0 basic init and remove info;
 // >1 further setup info;
 // >2 rx data dump
@@ -78,6 +80,9 @@ static int g_debug = 1;
 // These two now control how many packets per tasklet are sent/received
 static int g_mdcclk = 2;
 static int new_maclogic = 0;
+#ifdef CONFIG_AML1220
+static int used_pmu4_phy = 0;
+#endif
 static unsigned int ethbaseaddr = ETHBASE;
 static unsigned int savepowermode = 0;
 static int interruptnum = ETH_INTERRUPT;
@@ -789,6 +794,24 @@ static void aml_adjust_link(struct net_device *dev)
 		val = (8<<27)|(7 << 24)|(1<<16)|(1<<15)|(1 << 13)|(1 << 12)|(4 << 4)|(0 << 1);
 		PERIPHS_SET_BITS(P_PREG_ETHERNET_ADDR0, val);
 	}
+#ifdef CONFIG_AML1220
+	if(phydev->phy_id == PMU4_PHY_ID){
+		aml1220_write(0x98,0x47);
+/*
+eth_cfg_57	0x99	7:6	R/W	0	co_st_miimode[1:0]
+		5	R/W	0	co_smii_source_sync
+		4	R/W	0	co_st_pllbp
+		3	R/W	0	co_st_adcbp
+		2	R/W	0	co_st_fxmode
+		1	R/W	0	co_en_high
+		0	R/W	0	co_automdix_en
+*/
+		aml1220_write(0x99,0x40);
+
+		aml1220_write(0x9a,0x07);
+	}
+#endif
+
 	if (phydev->link) {
 //#define ETH_MAC_0_Configuration         (0x0000)
 		u32 ctrl = readl((void*)(priv->base_addr + ETH_MAC_0_Configuration));
@@ -834,6 +857,23 @@ static void aml_adjust_link(struct net_device *dev)
 						val =0x4100b040;
 						WRITE_CBUS_REG(P_PREG_ETHERNET_ADDR0, val);
 					}
+#ifdef CONFIG_AML1220
+					if(phydev->phy_id == PMU4_PHY_ID){
+						aml1220_write(0x98,0x41);
+/*
+eth_cfg_57	0x99	7:6	R/W	0	co_st_miimode[1:0]
+		5	R/W	0	co_smii_source_sync
+		4	R/W	0	co_st_pllbp
+		3	R/W	0	co_st_adcbp
+		2	R/W	0	co_st_fxmode
+		1	R/W	0	co_en_high
+		0	R/W	0	co_automdix_en	
+*/
+						aml1220_write(0x99,0x40);
+
+						aml1220_write(0x9a,0x07);
+					}
+#endif
 					break;
 				default:
 					printk("%s: Speed (%d) is not 10"
@@ -938,7 +978,7 @@ static int reset_mac(struct net_device *dev)
 	int res;
 	unsigned long flags;
 	int tmp;
-
+	printk("----> reset_mac\n");
 	spin_lock_irqsave(&np->lock, flags);
 	res = alloc_ringdesc(dev);
 	spin_unlock_irqrestore(&np->lock, flags);
@@ -2650,6 +2690,156 @@ static int ethernet_late_resume(struct early_suspend *dev)
 	return 0;
 }
 #endif
+
+#ifdef CONFIG_AML1220
+//#define EXT_CLK
+/* --------------------------------------------------------------------------*/
+/**
+ * @brief PMU4_PHY-CONFIG
+ *
+ * @param void
+ *
+ * @return void
+ */
+/* --------------------------------------------------------------------------*/
+void pmu4_phy_conifg(void){
+		int i;
+		uint8_t value;
+		int data;
+		uint8_t data_lo;
+		uint8_t data_hi;
+		// eth ldo
+//		aml_clr_reg32_mask(P_PERIPHS_PIN_MUX_9, 0xf00000c0);
+//		aml_set_reg32_mask(P_PERIPHS_PIN_MUX_10, 0xc000);
+		aml1220_write(0x04,0x01);
+		aml1220_write(0x05,0x01);
+		mdelay(10);
+		// pinmux
+	/*	8a---33
+2c---51
+2d---41
+20---0
+21---3*/
+		aml1220_write(0x2c,0x51);
+		aml1220_write(0x2d,0x41);
+		aml1220_write(0x20,0x0);
+		aml1220_write(0x21,0x3);
+#ifdef EXT_CLK
+		aml1220_write(0x14,0x01);
+#else
+		aml1220_write(0x14,0x00);
+#endif
+
+		aml1220_write(0x15,0x3f);
+
+		// pll
+		aml1220_write(0x78,0x06);
+		aml1220_write(0x79,0x05);
+		aml1220_write(0x7a,0xa1);
+		aml1220_write(0x7b,0xac);
+		aml1220_write(0x7c,0x5b);
+		aml1220_write(0x7d,0xa0);
+		aml1220_write(0x7e,0x20);
+		aml1220_write(0x7f,0x49);
+		aml1220_write(0x80,0xd6);
+		aml1220_write(0x81,0x0b);
+		aml1220_write(0x82,0xd1);
+		aml1220_write(0x83,0x00);
+		aml1220_write(0x84,0x00);
+		aml1220_write(0x85,0x00);
+		/*cfg4- --- cfg 45*/
+		aml1220_write(0x88,0x0);
+		aml1220_write(0x89,0x0);
+		aml1220_write(0x8A,0x33);
+		aml1220_write(0x8B,0x01);
+		aml1220_write(0x8C,0xd0);
+
+		aml1220_write(0x8D,0x01);
+		//aml1220_write(0x8C,0x01);
+		//aml1220_write(0x8D,0xc0);
+		aml1220_write(0x8E,0x00);
+
+/* pmu4 phyid = 20142014*/
+		aml1220_write(0x94,0x14);
+		aml1220_write(0x95,0x20);
+
+		aml1220_write(0x96,0x14);
+		aml1220_write(0x97,0x20);
+
+/*phyadd & mode
+eth_cfg_56	0x98	7:3	R/W	0	co_st_phyadd[4:0]
+		2:0	R/W	0	co_st_mode[2:0]
+		eth_phy_co_st_mode
+    //           000 - 10Base-T Half Duplex, auto neg disabled
+    //           001 - 10Base-T Full Duplex, auto neg disabled
+    //           010 - 100Base-TX Half Duplex, auto neg disabled
+    //           011 - 100Base-TX Full Duplex, auto neg disabled
+    //           100 - 100Base-TX Half Duplex, auto neg enabled
+    //           101 - Repeater mode, auto neg enabled
+    //           110 - Power Down Mode
+    //           111 - All capable, auto neg enabled, automdix enabled
+
+*/
+#ifdef EXT_CLK
+		aml1220_write(0x98,0x73);
+#else
+		aml1220_write(0x98,0x47);
+#endif
+/*
+0x99	7:6	R/W	0	co_st_miimode[1:0]
+	5	R/W	0	co_smii_source_sync
+	4	R/W	0	co_st_pllbp
+	3	R/W	0	co_st_adcbp
+	2	R/W	0	co_st_fxmode
+	1	R/W	0	co_en_high
+	0	R/W	0	co_automdix_en
+0x9A	7			reserved
+	6	R/W	0	co_pwruprst_byp
+	5	R/W	0	co_clk_ext
+	4	R/W	0	co_st_scan
+	3	R/W	0	co_rxclk_inv
+	2	R/W	0	co_phy_enb
+	1	R/W	0	co_clkfreq
+	0	R/W	0	eth_clk_enable
+*/
+		aml1220_write(0x99,0x61);
+/*
+eth_cfg_58	0x9a
+*/
+		aml1220_write(0x9a,0x07);
+/*
+eth_cfg_59	0x9b
+*/
+//		aml1220_write(0x75,0x04);
+//		aml1220_write(0x63,0x22);
+		aml1220_write(0x04,0x01);
+		aml1220_write(0x05,0x01);
+		value = 0;
+		printk("--------> read 0x9c\n");
+		#if 0
+		while((value&0x01) == 0)
+			aml1220_read(0x9c,&value);
+		#endif
+		printk("----2----> read 0x9c over!\n");
+		aml1220_write(0x9b,0x00);
+		aml1220_write(0x9b,0x80);
+		aml1220_write(0x9b,0x00);
+		mdelay(4);
+		printk("phy init though i2c done\n");
+		for (i=0;i<0xb0;i++){
+			aml1220_read(i, &value);
+			printk("  i2c[%x]=0x%x\n",i,value);
+		}
+		printk("phy reg dump though i2c:\n");
+		for (i=0;i<0x20;i++){
+				aml1220_write(0xa6, i);
+				aml1220_read(0xa7,&data_lo);
+				aml1220_read(0xa8,&data_hi);
+			  data = (data_hi<<8)|data_lo;
+				printk("  phy[%x]=0x%x\n", i, data);
+		}
+}
+#endif
 /* --------------------------------------------------------------------------*/
 /**
  * @brief ethernet_probe
@@ -2664,50 +2854,61 @@ static int ethernet_probe(struct platform_device *pdev)
         int ret;
 	int res;
 	struct am_net_private *np=NULL;
-	//printk("ethernet_driver probe!\n");
+	printk("ethernet_driver probe!\n");
 #ifdef CONFIG_OF
 	if (!pdev->dev.of_node) {
-	//	printk("eth: pdev->dev.of_node == NULL!\n");
+		printk("eth: pdev->dev.of_node == NULL!\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"ethbaseaddr",&ethbaseaddr);
 	if (ret) {
-	//	printk("Please config ethbaseaddr.\n");
+		printk("Please config ethbaseaddr.\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"interruptnum",&interruptnum);
 	if (ret) {
-	//	printk("Please config interruptnum.\n");
+		printk("Please config interruptnum.\n");
 		return -1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node,"phy_interface",&phy_interface); // 0 rgmii 1: RMII
-	//if (ret) {
-	//	printk("Please config phy  interface.\n");
-	//}
+	if (ret) {
+		printk("Please config phy  interface.\n");
+	}
 	ret = of_property_read_u32(pdev->dev.of_node,"savepowermode",&savepowermode);
-	//if (ret) {
-	//	printk("Please config savepowermode.\n");
-	//}
+	if (ret) {
+		printk("Please config savepowermode.\n");
+	}
 	ret = of_property_read_u32(pdev->dev.of_node,"reset_pin_enable",&reset_pin_enable);
-	//if (ret) {
-	//	printk("Please config reset_pin_enable.\n");
-	//}
+	if (ret) {
+		printk("Please config reset_pin_enable.\n");
+	}
 	ret = of_property_read_u32(pdev->dev.of_node,"reset_delay",&reset_delay);
-	//if (ret) {
-	//	printk("Please config reset_delay.\n");
-	//}
+	if (ret) {
+		printk("Please config reset_delay.\n");
+	}
 	ret = of_property_read_string(pdev->dev.of_node,"reset_pin",&reset_pin);
-	//if (ret) {
-	//	printk("Please config reset_pin.\n");
-	//}
+	if (ret) {
+		printk("Please config reset_pin.\n");
+	}
 	ret = of_property_read_u32(pdev->dev.of_node,"new_maclogic",&new_maclogic);
-	//if (ret) {
-	//	printk("Please config new_maclogic.\n");
-	//}
+	if (ret) {
+		printk("Please config new_maclogic.\n");
+	}
 	if(reset_pin_enable){
 		reset_pin_num = amlogic_gpio_name_map_num(reset_pin);
 		amlogic_gpio_request(reset_pin_num, OWNER_NAME);
 	}
+
+#ifdef CONFIG_AML1220
+	ret = of_property_read_u32(pdev->dev.of_node,"used_pmu4_phy",&used_pmu4_phy);
+	if (ret) {
+		printk("Please config used_pmu4_phy.\n");
+	}
+	if(used_pmu4_phy){
+		pmu4_phy_conifg();
+	}
+#endif
+
 	ret = of_property_read_bool(pdev->dev.of_node, "disable_phyrefclk");
 	if (ret) {
 		int clk_25mout;
@@ -2747,12 +2948,6 @@ static int ethernet_probe(struct platform_device *pdev)
 	np = netdev_priv(my_ndev);
 	if(np->phydev && savepowermode)
 		np->phydev->drv->suspend(np->phydev);
-	//switch_mod_gate_by_name("ethernet",0);
-
-	//if (!eth_pdata) {
-	//	printk("\nethernet pm ops resource undefined.\n");
-	//	return -EFAULT;
-	//}
 
 	return 0;
 }
@@ -2827,8 +3022,8 @@ static struct platform_driver ethernet_driver = {
 /* --------------------------------------------------------------------------*/
 static int __init am_net_init(void)
 {
-	//printk("[highspeed-eth] Starting eth driver. For more information, visit: "
-	//	"https://github.com/mlinuxguy/odroid-c1-network-driver\n");
+	printk("[highspeed-eth] Starting eth driver. For more information, visit: "
+		"https://github.com/mlinuxguy/odroid-c1-network-driver\n");
 	if (platform_driver_register(&ethernet_driver)) {
 		printk("failed to register ethernet_pm driver\n");
 		g_ethernet_registered = 0;
@@ -2860,7 +3055,7 @@ static void am_net_free(struct net_device *ndev)
 /* --------------------------------------------------------------------------*/
 static void __exit am_net_exit(void)
 {
-	//printk(DRV_NAME "exit\n");
+	printk(DRV_NAME "exit\n");
 	am_net_free(my_ndev);
 	free_netdev(my_ndev);
 	aml_mdio_unregister(my_ndev);
