@@ -944,19 +944,85 @@ static int get_target_vmode(int framerate_target)
 				mode_target = VMODE_720P_59HZ;
 				break;
 			case VMODE_1080I:
+			case VMODE_1080I_50HZ:
 				mode_target = VMODE_1080I_59HZ;
 				break;
-			case VMODE_1080P_24HZ:
-				mode_target = VMODE_1080P_23HZ;
-				break;
 			case VMODE_1080P:
-				mode_target = VMODE_1080P_59HZ;
+			case VMODE_1080P_24HZ:
+			case VMODE_1080P_50HZ:
+				if( framerate_target==2397 )
+					mode_target = VMODE_1080P_23HZ;
+				else
+					mode_target = VMODE_1080P_59HZ;
 				break;
 			case VMODE_4K2K_24HZ:
 				mode_target = VMODE_4K2K_23HZ;
 				break;
 			case VMODE_4K2K_30HZ:
 				mode_target = VMODE_4K2K_29HZ;
+				break;
+			default:
+				break;
+		}
+	}
+	else if( framerate_target==2400 ){
+		switch( mode_target ){
+			case VMODE_1080I_50HZ:
+			case VMODE_1080I_59HZ:
+				mode_target = VMODE_1080I;
+				break;
+			case VMODE_1080P_23HZ:
+			case VMODE_1080P_50HZ:
+			case VMODE_1080P_59HZ:
+				mode_target = VMODE_1080P_24HZ;
+				break;
+			case VMODE_4K2K_23HZ:
+			case VMODE_4K2K_25HZ:
+			case VMODE_4K2K_29HZ:
+			case VMODE_4K2K_30HZ:
+				mode_target = VMODE_4K2K_24HZ;
+				break;
+			default:
+				break;
+		}
+	}
+	else if( (framerate_target==2500) || (framerate_target==5000) ){
+		switch( mode_target ){
+			case VMODE_720P:
+				mode_target = VMODE_720P_50HZ;
+				break;
+			case VMODE_1080I:
+			case VMODE_1080I_59HZ:
+				mode_target = VMODE_1080I_50HZ;
+				break;
+			case VMODE_1080P:
+			case VMODE_1080P_24HZ:
+			case VMODE_1080P_59HZ:
+				mode_target = VMODE_1080P_50HZ;
+				break;
+			case VMODE_4K2K_23HZ:
+			case VMODE_4K2K_24HZ:
+			case VMODE_4K2K_30HZ:
+				mode_target = VMODE_4K2K_25HZ;
+				break;
+			default:
+				break;
+		}
+	}
+	else if( (framerate_target==3000) || (framerate_target==6000) ){
+		switch( mode_target ){
+			case VMODE_1080I_50HZ:
+			case VMODE_1080I_59HZ:
+				mode_target = VMODE_1080I;
+				break;
+			case VMODE_1080P_24HZ:
+			case VMODE_1080P_50HZ:
+			case VMODE_1080P_59HZ:
+				mode_target = VMODE_1080P;
+				break;
+			case VMODE_4K2K_24HZ:
+			case VMODE_4K2K_30HZ:
+				mode_target = VMODE_4K2K_30HZ;
 				break;
 			default:
 				break;
