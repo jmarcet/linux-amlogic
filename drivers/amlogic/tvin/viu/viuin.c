@@ -93,6 +93,10 @@ static unsigned short v_cut_offset = 0;
 module_param(v_cut_offset,ushort,0664);
 MODULE_PARM_DESC(v_cut_offset,"the cut window vertical offset for viuin");
 
+static unsigned short open_cnt = 0;
+module_param(open_cnt,ushort,0664);
+MODULE_PARM_DESC(open_cnt,"open_cnt for vdin0/1");
+
 typedef struct viuin_s{
         unsigned int flag;
         struct vframe_prop_s *prop;
@@ -119,7 +123,7 @@ static void ve_dnlp_calculate_tgt(struct vframe_prop_s *prop)
     struct vframe_prop_s *p = prop;
     ulong data[5];
     ulong i = 0, j = 0, ave = 0, max = 0, div = 0;
-    
+
     // old historic luma sum
     j = ve_dnlp_luma_sum;
     // new historic luma sum
@@ -208,7 +212,7 @@ static void ve_dnlp_calculate_tgt(struct vframe_prop_s *prop)
     data[4] = (ve_dnlp_tgt[53] - ve_dnlp_tgt[48]) << 1;
     for (j = 1; j <= 4; j++)
         ve_dnlp_tgt[53 - j] = ve_dnlp_tgt[53] - (data[4] * j + 5) / 10;
-        
+
 
 }
 
@@ -296,7 +300,7 @@ int gamma_adjust2( int nLow, int nHigh, int fAlphaL, int fAlphaH, int *pDiv, int
 		if ( i < nHigh )
 			pLut[i] = (pGain[i] * pLut[i] + 1024) / 2048;
 		else
-			pLut[i] = pLut[nHigh] + (pGain[i] * 
+			pLut[i] = pLut[nHigh] + (pGain[i] *
 				(pLut[i] - pLut[nHigh]) + 1024) / 2048;
 		//printf("%d ", pGain[i]);
 	}
@@ -310,7 +314,7 @@ int gamma_adjust2( int nLow, int nHigh, int fAlphaL, int fAlphaH, int *pDiv, int
 
 		pLut[i] = (pLut[im2] + 2 * pLut[im1] + 2 * pLut[i] +
 					 2 * pLut[ip1] + pLut[ip2] + 4) /8;
-		
+
 	}
 
 	return 0;
@@ -337,7 +341,7 @@ int gamma_adjust(void)
 	for (i = 0; i < 256; i++){
 		pDiv[i] = 256 * 2048 / (i+1);//256?
 	}//i
-	if (!gamma_proc_enable) 
+	if (!gamma_proc_enable)
 		return 0;
 	if (gamma_proc_enable == 2){
 		for (i = 0; i < 256; i++){
@@ -365,7 +369,7 @@ int gamma_adjust(void)
 		gamma_proc_enable = 0;
 		for (i = 0; i < 256; i++) {
 			gamma_table[i] = base_gamma_table[i]<<2;
-		}	
+		}
 		for (i = 1; i < 64; i++)
 			for (j = 0; j < 4; j++) {
 				gamma_table[i*4 + j] = base_gamma_table[i*4 + j]*ve_dnlp_tgt[i]/i;
@@ -373,7 +377,7 @@ int gamma_adjust(void)
 		if (gamma_dbg_en) {
 			for (i = 0; i < 256; i++){
 				printk("type %d,gamma_table[%d] = %d\n",gamma_type, i, gamma_table[i]);
-			    }	
+			    }
 		}
 		set_lcd_gamma_table_lvds(gamma_table, LCD_H_SEL_R);
 		set_lcd_gamma_table_lvds(gamma_table, LCD_H_SEL_G);
@@ -384,14 +388,14 @@ int gamma_adjust(void)
 		gamma_proc_enable = 0;
 		for (i = 0; i < 256; i++) {
 			gamma_table[i] = base_gamma_table[i]<<2;
-		}	
+		}
 		for (i = 1; i < 64; i++)
 			for (j = 0; j < 4; j++){
 				gamma_table[i*4 + j] = base_gamma_table[i*4 + j]*ve_dnlp_tgt[i]/i;
 			}
 		for (i = 0; i < 256; i++) {
 			pLut[i] = gamma_table[i];
-                                                
+
 		}
 
 		gamma_adjust2(nLow, nHigh, fAlphaL, fAlphaH, pDiv, pLut);
@@ -399,17 +403,17 @@ int gamma_adjust(void)
 			gamma_table[i] = pLut[i];
                         if(gamma_dbg_en)
 			        printk("type %d,gamma table [%d] = %d\n",gamma_type, i, gamma_table[i]);
-		}				
+		}
 		set_lcd_gamma_table_lvds(gamma_table, LCD_H_SEL_R);
 		set_lcd_gamma_table_lvds(gamma_table, LCD_H_SEL_G);
 		set_lcd_gamma_table_lvds(gamma_table, LCD_H_SEL_B);
 		//printk("gamma_adjust\n");
-	}	
-		
+	}
+
 	return 0;
 }
 
-static ssize_t gamma_proc_show(struct class *cla, 
+static ssize_t gamma_proc_show(struct class *cla,
 		struct class_attribute *attr, char *buf)
 {
     return sprintf(buf, "gamma_proc_enable=%d ,ve_dnlp_rt=0x%x,ve_dnlp_rl=0x%x,ve_dnlp_black=0x%x,ve_dnlp_white=0x%x\n",
@@ -423,8 +427,8 @@ static ssize_t gamma_proc_show(struct class *cla,
 // [ 7: 0] white 0~16
 //0x10200202
 
-static ssize_t 
-gamma_proc_store(struct class *cla,struct class_attribute *attr, 
+static ssize_t
+gamma_proc_store(struct class *cla,struct class_attribute *attr,
 				const char *buf, size_t count)
 {
 	size_t r;
@@ -440,8 +444,8 @@ gamma_proc_store(struct class *cla,struct class_attribute *attr,
 	}
 	printk("val = %x, val>>28 = %d\n", val, val>>28);
 	en = (val>>28)&0x1;
-    
-	if (en) {  
+
+	if (en) {
 		ve_dnlp_rt = (val>>24)&0xf;  //7
 		ve_dnlp_rl = (val>>16)&0xff; //0
 		ve_dnlp_black = (val>>8)&0xff;   //2
@@ -452,7 +456,7 @@ gamma_proc_store(struct class *cla,struct class_attribute *attr,
 			ve_dnlp_black = 16;
 		if (ve_dnlp_white > 16)
 			ve_dnlp_white = 16;
-		
+
 		para.port  = TVIN_PORT_VIU;
 		para.fmt = TVIN_SIG_FMT_MAX;
                 para.cfmt = TVIN_RGB444;
@@ -461,8 +465,8 @@ gamma_proc_store(struct class *cla,struct class_attribute *attr,
 		para.h_active = 1024;
 		para.v_active = 768;
 		para.hsync_phase = 1;
-		para.vsync_phase  = 0;                                
-                                
+		para.vsync_phase  = 0;
+
 		if (gamma_proc_on == 0){
                         /*enable isr function*/
                         gamma_tune_en = true;
@@ -485,14 +489,14 @@ gamma_proc_store(struct class *cla,struct class_attribute *attr,
 	return count;
 }
 
-static ssize_t env_backlight_show(struct class *cla, 
+static ssize_t env_backlight_show(struct class *cla,
 		struct class_attribute *attr, char *buf)
 {
 	return sprintf(buf, "%d\n", backlight);
 }
 
 
-static ssize_t env_backlight_store(struct class *cla, 
+static ssize_t env_backlight_store(struct class *cla,
 		struct class_attribute *attr, const char *buf, size_t count)
 {
 	size_t r;
@@ -505,7 +509,7 @@ static ssize_t env_backlight_store(struct class *cla,
 	}
 	printk("val = %x\n", val);
 	backlight = val;
-    
+
 	if (backlight > 255)
 		backlight = 255;
 	_set_backlight_level(backlight);
@@ -513,7 +517,7 @@ static ssize_t env_backlight_store(struct class *cla,
 		fAlphaL = 17;
 	else
 		fAlphaL = 10;
-		
+
 	return count;
 }
 static struct class_attribute gamma_proc_class_attrs[] = {
@@ -529,44 +533,68 @@ static int viuin_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
         else
                 return -1;
 }
-
+void viuin_check_venc_line(viuin_t *devp_local)
+{
+	unsigned int vencv_line_cur,cnt;
+	cnt = 0;
+	do{
+		vencv_line_cur = (RD(devp_local->enc_info_addr)>>16)&0x1fff;
+		udelay(10);
+		cnt++;
+		if(cnt > 100000)
+			break;
+	}while(vencv_line_cur != 1);
+	if(vencv_line_cur != 1)
+		printk("**************%s,vencv_line_cur:%d,cnt:%d***********\n",__func__,vencv_line_cur,cnt);
+}
 static int viuin_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
         viuin_t *devp = container_of(fe,viuin_t,frontend);
+	unsigned int viu_mux = 0;
         if(!memcpy(&devp->parm,fe->private_data,sizeof(vdin_parm_t))){
-                printk("[viuin..]%s memcpy error.\n",__func__); 
+                printk("[viuin..]%s memcpy error.\n",__func__);
                 return -1;
         }
         /*open the venc to vdin path*/
         switch(RD_BITS(VPU_VIU_VENC_MUX_CTRL,0,2)){
                 case 0:
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x88,4,8);
+                        viu_mux = 0x8;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x88,4,8);
 			devp->enc_info_addr = ENCL_INFO_READ;
                         break;
-                case 1:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x11,4,8);
+                case 1:
+                        viu_mux = 0x1;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x11,4,8);
 			devp->enc_info_addr = ENCI_INFO_READ;
                         break;
-                case 2:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x22,4,8);
+                case 2:
+                        viu_mux = 0x2;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x22,4,8);
 			devp->enc_info_addr = ENCP_INFO_READ;
                         break;
-                case 3:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x44,4,8);
+                case 3:
+                        viu_mux = 0x4;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x44,4,8);
 			devp->enc_info_addr = ENCT_INFO_READ;
                         break;
                 default:
                         break;
         }
-        devp->flag = 0; 
+	viuin_check_venc_line(devp);
+	WR_BITS(VPU_VIU_VENC_MUX_CTRL,viu_mux,4,4);
+	WR_BITS(VPU_VIU_VENC_MUX_CTRL,viu_mux,8,4);
+        devp->flag = 0;
+        open_cnt++;
         return 0;
 }
 static void viuin_close(struct tvin_frontend_s *fe)
-{        
+{
         viuin_t *devp = container_of(fe,viuin_t,frontend);
+		viuin_check_venc_line(devp);
         memset(&devp->parm,0,sizeof(vdin_parm_t));
         /*close the venc to vdin path*/
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,8);
+        if(open_cnt)
+            open_cnt--;
+        if(open_cnt == 0){
+		WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,8,4);
+        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,4);
+		}
 }
 
 static void viuin_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
@@ -580,32 +608,36 @@ static void viuin_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
 	vsync_enter_line_max = 0;
 	vsync_enter_line_threshold_overflow_count = 0;
 	devp->flag = AMVIUIN_DEC_START;
-	
+
 	return;
 }
 static void viuin_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
-         
+
         viuin_t *devp = container_of(fe,viuin_t,frontend);
-       	if (devp->flag && AMVIUIN_DEC_START) 
+       	if (devp->flag && AMVIUIN_DEC_START)
 	        devp->flag |= AMVIUIN_DEC_STOP;
         else
                 printk("[viuin..]%s viu in dec isn't start.\n",__func__);
-        
+
 }
 
 static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
-{	
-	viuin_t *devp = container_of(fe,viuin_t,frontend);	
-	
-	if (!devp) 	    
+{
+    int curr_port;
+
+	viuin_t *devp = container_of(fe,viuin_t,frontend);
+
+	if (!devp)
 	    return -ENODEV;
-	    	
+
+    curr_port = RD_BITS(VPU_VIU_VENC_MUX_CTRL,0,2);
+
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 	vsync_enter_line_curr = (READ_VCBUS_REG(devp->enc_info_addr)>>16)&0x1fff;
 	if(vsync_enter_line_curr > vsync_enter_line_max)
                 vsync_enter_line_max = vsync_enter_line_curr;
-	if(vsync_enter_line_max_threshold > vsync_enter_line_min_threshold){
+	if(vsync_enter_line_max_threshold > vsync_enter_line_min_threshold && curr_port == 0){
 		if((vsync_enter_line_curr > vsync_enter_line_max_threshold)||(vsync_enter_line_curr < vsync_enter_line_min_threshold)){
 		        vsync_enter_line_threshold_overflow_count++;
 		        return TVIN_BUF_SKIP;
@@ -613,18 +645,18 @@ static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 	}
 #endif
 #ifdef CONFIG_GAMMA_AUTO_TUNE
-	if (gamma_tune_en) {	
+	if (gamma_tune_en) {
 		devp->prop = fe->private_data;
 		// calculate dnlp target data
 		ve_dnlp_calculate_tgt(devp->prop);
 		gamma_proc_enable = 1;
                 gamma_adjust();
                 if(gamma_dbg_en)
-                        gamma_dbg_en = false; 
+                        gamma_dbg_en = false;
 	}
 #endif
         return 0;
-        
+
 }
 
 static struct tvin_decoder_ops_s viu_dec_ops ={
@@ -641,7 +673,7 @@ static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_proper
         viuin_t *devp = container_of(fe,viuin_t,frontend);
 
         #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)\
-			||(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B))
+			||(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B)||( MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV))
         prop->color_format = TVIN_YUV422;
         #else
         prop->color_format = TVIN_RGB444;
@@ -650,7 +682,7 @@ static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_proper
 
         prop->scaling4w = devp->parm.dest_hactive;
 	prop->scaling4h = devp->parm.dest_vactive;
-	
+
 	prop->vs = v_cut_offset;
 	prop->ve = 0;
 	prop->hs = 0;
@@ -666,7 +698,7 @@ static bool viu_check_frame_skip(struct tvin_frontend_s *fe)
 		return true;
 	}
 	return false;
-		
+
 }
 
 static struct tvin_state_machine_ops_s viu_sm_ops ={
@@ -700,12 +732,12 @@ static int viuin_probe(struct platform_device *pdev)
 		ve_dnlp_tgt[i] = i << 2;
 		//ve_dnlp_lpf[i] = ve_dnlp_tgt[i] << ve_dnlp_rt;
 	}
-#endif  
+#endif
         sprintf(viuin_devp->frontend.name, "%s", DEVICE_NAME);
         if(!tvin_frontend_init(&viuin_devp->frontend,&viu_dec_ops,&viu_sm_ops,0)) {
                 if(tvin_reg_frontend(&viuin_devp->frontend))
                         printk("[viuin..]%s register viu frontend error.\n",__func__);
-        }        
+        }
         platform_set_drvdata(pdev,viuin_devp);
         printk("[viuin..]%s probe ok.\n",__func__);
 	return 0;
@@ -715,13 +747,13 @@ err:
 		class_remove_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]);
 	}
 #endif
-	class_destroy(gamma_proc_clsp); 
-                
-	return -1;  
+	class_destroy(gamma_proc_clsp);
+
+	return -1;
 }
 
 static int viuin_remove(struct platform_device *pdev)
-{        
+{
         struct viuin_s *devp = platform_get_drvdata(pdev);
   #ifdef CONFIG_GAMMA_AUTO_TUNE
   		int i=0;

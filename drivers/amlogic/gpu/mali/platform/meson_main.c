@@ -28,6 +28,12 @@
 #include "common/mali_osk_profiling.h"
 
 int mali_pm_statue = 0;
+u32 mali_gp_reset_fail = 0;
+module_param(mali_gp_reset_fail, int, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IROTH); /* rw-rw-r-- */
+MODULE_PARM_DESC(mali_gp_reset_fail, "times of failed to reset GP");
+u32 mali_core_timeout = 0;
+module_param(mali_core_timeout, int, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IROTH); /* rw-rw-r-- */
+MODULE_PARM_DESC(mali_core_timeout, "times of failed to reset GP");
 
 static struct mali_gpu_device_data mali_gpu_data =
 {
@@ -60,6 +66,8 @@ int mali_pdev_pre_init(struct platform_device* ptr_plt_dev)
 
 void mali_pdev_post_init(struct platform_device* pdev)
 {
+	mali_gp_reset_fail = 0;
+	mali_core_timeout = 0;
 #ifdef CONFIG_PM_RUNTIME
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37))
 	pm_runtime_set_autosuspend_delay(&(pdev->dev), 1000);

@@ -159,7 +159,7 @@ void cec_isr_post_process(void)
 
 void cec_usr_cmd_post_process(void)
 {
-    cec_tx_message_list_t *p, *ptmp;
+    cec_usr_message_list_t *p, *ptmp;
     /* usr command post process */
     list_for_each_entry_safe(p, ptmp, &cec_tx_msg_phead, list) {
         cec_ll_tx(p->msg, p->length);
@@ -234,7 +234,7 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
 #if 1           // Please match with H/W cec config
 // GPIOAO_12
     aml_set_reg32_bits(P_AO_RTI_PIN_MUX_REG, 0, 14, 1);       // bit[14]: AO_PWM_C pinmux                  //0xc8100014
-    aml_set_reg32_bits(P_AO_RTI_PULL_UP_REG, 0, 12, 1);       // bit[12]: disable AO_12 internal pull-up   //0xc810002c
+    aml_set_reg32_bits(P_AO_RTI_PULL_UP_REG, 1, 12, 1);       // bit[12]: enable AO_12 internal pull-up   //0xc810002c
     aml_set_reg32_bits(P_AO_RTI_PIN_MUX_REG, 1, 17, 1);       // bit[17]: AO_CEC pinmux                    //0xc8100014
     ao_cec_init();
 #else
@@ -402,10 +402,10 @@ void register_cec_rx_msg(unsigned char *msg, unsigned char len )
 
 void register_cec_tx_msg(unsigned char *msg, unsigned char len )
 {
-    cec_tx_message_list_t* cec_usr_message_list = kmalloc(sizeof(cec_tx_message_list_t), GFP_ATOMIC);
+    cec_usr_message_list_t* cec_usr_message_list = kmalloc(sizeof(cec_usr_message_list_t), GFP_ATOMIC);
 
     if (cec_usr_message_list != NULL) {
-        memset(cec_usr_message_list, 0, sizeof(cec_tx_message_list_t));
+        memset(cec_usr_message_list, 0, sizeof(cec_usr_message_list_t));
         memcpy(cec_usr_message_list->msg, msg, len);
         cec_usr_message_list->length = len;
 
@@ -443,7 +443,7 @@ void cec_input_handle_message(void)
     }
 }
 
-void unregister_cec_tx_msg(cec_tx_message_list_t* cec_tx_message_list)
+void unregister_cec_tx_msg(cec_usr_message_list_t* cec_tx_message_list)
 {
 
     if (cec_tx_message_list != NULL) {

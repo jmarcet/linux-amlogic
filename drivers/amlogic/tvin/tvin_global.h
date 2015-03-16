@@ -16,8 +16,25 @@
 #ifndef __TVIN_GLOBAL_H
 #define __TVIN_GLOBAL_H
 
+#include <mach/io.h>
 #include <linux/amlogic/tvin/tvin.h>
+#include <mach/am_regs.h>
 
+#ifdef TVBUS_REG_ADDR
+#define R_APB_REG(reg) aml_read_reg32(TVBUS_REG_ADDR(reg))
+#define W_APB_REG(reg, val) aml_write_reg32(TVBUS_REG_ADDR(reg), val)
+#define R_APB_BIT(reg, start, len) \
+	aml_get_reg32_bits(TVBUS_REG_ADDR(reg), start, len)
+#define W_APB_BIT(reg, val, start, len) \
+	aml_set_reg32_bits(TVBUS_REG_ADDR(reg), val, start, len)
+#else
+#define R_APB_REG(reg) READ_APB_REG(reg)
+#define W_APB_REG(reg, val) WRITE_APB_REG(reg, val)
+#define R_APB_BIT(reg, start, len) \
+	READ_APB_REG_BITS(reg, start, len)
+#define W_APB_BIT(reg, val, start, len) \
+	WRITE_APB_REG_BITS(reg, val, start, len)
+#endif
 // ***************************************************************************
 // *** enum definitions *********************************************
 // ***************************************************************************
@@ -40,11 +57,11 @@
 #define CVD_PART3_REG_6         0xfa
 
 //#define ACD_REG_NUM1            0x32  //0x00-0x32 except 0x1E&0x31
-//#define ACD_REG_NUM2            0x39  //the sum of the part2 acd register 
+//#define ACD_REG_NUM2            0x39  //the sum of the part2 acd register
 #define ACD_REG_NUM            0xff//the sum all of the acd register
-
-//#define CRYSTAL_24M
-
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#define CRYSTAL_24M
+#endif
 #ifndef CRYSTAL_24M
 #define CRYSTAL_25M
 #endif
@@ -85,9 +102,6 @@
 #define CVD2_DCRESTORE_ACCUM     0x99       // [5:0] = 25(MHz)
 #endif
 
-
-
-
 #define TVAFE_SET_CVBS_PGA_EN
 #ifdef TVAFE_SET_CVBS_PGA_EN
 #define TVAFE_SET_CVBS_PGA_START    5
@@ -96,9 +110,13 @@
 #define CVD2_DGAIN_WINDOW           0x000F
 #define CVD2_DGAIN_LIMITH CVD2_DGAIN_MIDDLE + CVD2_DGAIN_WINDOW
 #define CVD2_DGAIN_LIMITL CVD2_DGAIN_MIDDLE - CVD2_DGAIN_WINDOW
+#define CVD2_DGAIN_MAX		    0x0600
+#define CVD2_DGAIN_MIN		    0x0100
 #endif
 
+//#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
 #define TVAFE_SET_CVBS_CDTO_EN
+//#endif
 #ifdef TVAFE_SET_CVBS_CDTO_EN
 #define TVAFE_SET_CVBS_CDTO_START   300
 #define TVAFE_SET_CVBS_CDTO_STEP    0
@@ -188,6 +206,7 @@ typedef struct tvin_sig_property_s {
 
 #define BT656IN_ANCI_DATA_SIZE          0x4000 //save anci data from bt656in
 #define CAMERA_IN_ANCI_DATA_SIZE        0x4000 //save anci data from bt656in
+
 
 #endif // __TVIN_GLOBAL_H
 

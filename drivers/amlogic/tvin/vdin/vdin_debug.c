@@ -176,13 +176,22 @@ static void vdin_dump_histgram(vdin_dev_t *devp)
 			printk("\n");
 	}
 }
-static void vdin_write_mem(vdin_dev_t *devp,char *path)
+static void vdin_write_mem(vdin_dev_t *devp,char *type,char *path)
 {
-	unsigned int real_size=0, size=0;
+	unsigned int real_size=0, size=0, vtype=0;
         struct file *filp = NULL;
         loff_t pos = 0;
         mm_segment_t old_fs;
+	void *dts = NULL;
 
+	vtype = simple_strtol(type,NULL,10);
+	if(!devp->curr_wr_vfe){
+	        devp->curr_wr_vfe = provider_vf_get(devp->vfp);
+	        if(!devp->curr_wr_vfe){
+	        	pr_info("no buffer to write.\n");
+	        	return;
+	        }
+        }
         old_fs = get_fs();
 	set_fs(KERNEL_DS);
 	printk("bin file path =%s\n",path);
@@ -191,17 +200,26 @@ static void vdin_write_mem(vdin_dev_t *devp,char *path)
                 printk(KERN_ERR"read %s error.\n",path);
                 return;
         }
-        if(!devp->curr_wr_vfe){
-	        devp->curr_wr_vfe = provider_vf_get(devp->vfp);
-        }
-        real_size = (devp->curr_wr_vfe->vf.width*devp->curr_wr_vfe->vf.height<<1);
         devp->curr_wr_vfe->vf.type = VIDTYPE_VIU_SINGLE_PLANE|VIDTYPE_VIU_FIELD|VIDTYPE_VIU_422;
-        size = vfs_read(filp,phys_to_virt(canvas_get_addr(devp->curr_wr_vfe->vf.canvas0Addr)),real_size,&pos);
+        if(vtype == 1){
+        	devp->curr_wr_vfe->vf.type |= VIDTYPE_INTERLACE_TOP;
+        	real_size = (devp->curr_wr_vfe->vf.width*devp->curr_wr_vfe->vf.height);
+        	printk("current vframe type is top.\n");
+        }else if(vtype == 3){
+        	devp->curr_wr_vfe->vf.type |= VIDTYPE_INTERLACE_BOTTOM;
+        	real_size = (devp->curr_wr_vfe->vf.width*devp->curr_wr_vfe->vf.height);
+        	printk("current vframe type is bottom.\n");
+        }else{
+                real_size = (devp->curr_wr_vfe->vf.width*devp->curr_wr_vfe->vf.height<<1);
+        }
+	dts = ioremap(canvas_get_addr(devp->curr_wr_vfe->vf.canvas0Addr),real_size);
+        size = vfs_read(filp,dts,real_size,&pos);
         if(size < real_size){
 	        pr_info("%s read %u < %u error.\n",__func__,size,real_size);
                 return;
         }
         vfs_fsync(filp,0);
+	iounmap(dts);
         filp_close(filp,NULL);
         set_fs(old_fs);
 	provider_vf_put(devp->curr_wr_vfe, devp->vfp);
@@ -283,6 +301,9 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                         case 8://CVBS2
                                 port = TVIN_PORT_CVBS2;
                                 break;
+			case 9://CVBS3 as atvdemod to cvd
+				port = TVIN_PORT_CVBS3;
+                                break;
                         default:
                                 port = TVIN_PORT_CVBS0;
                                 break;
@@ -292,26 +313,26 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 devp->flags |= VDIN_FLAG_FS_OPENED;
 	        /* request irq */
 	        snprintf(devp->irq_name, sizeof(devp->irq_name),  "vdin%d-irq", devp->index);
-		pr_info("vdin work in normal mode\n");
-		ret = request_irq(devp->irq, vdin_isr, IRQF_SHARED, devp->irq_name, (void *)devp);
+			pr_info("vdin work in normal mode\n");
+			ret = request_irq(devp->irq, vdin_isr, IRQF_SHARED, devp->irq_name, (void *)devp);
 
-                /*disable irq untill vdin is configured completely*/
-                disable_irq_nosync(devp->irq);
+			/*disable irq untill vdin is configured completely*/
+			disable_irq_nosync(devp->irq);
 	        /* remove the hardware limit to vertical [0-max]*/
 	        WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
 	        pr_info("open device %s ok\n", dev_name(devp->dev));
-                vdin_open_fe(port,0,devp);
-                devp->parm.port = port;
-                devp->parm.info.fmt = fmt;
-                devp->fmt_info_p  = (struct tvin_format_s*)tvin_get_fmt_info(fmt);
-				devp->flags |= VDIN_FLAG_DEC_STARTED;
-                vdin_start_dec(devp);
+			vdin_open_fe(port,0,devp);
+			devp->parm.port = port;
+			devp->parm.info.fmt = fmt;
+			devp->fmt_info_p  = (struct tvin_format_s*)tvin_get_fmt_info(fmt);
+			devp->flags |= VDIN_FLAG_DEC_STARTED;
+			vdin_start_dec(devp);
         }
         else if(!strcmp(parm[0],"tvstop")){
                 vdin_stop_dec(devp);
                 vdin_close_fe(devp);
                 devp->flags &= (~VDIN_FLAG_FS_OPENED);
-		devp->flags &= (~VDIN_FLAG_DEC_STARTED);
+				devp->flags &= (~VDIN_FLAG_DEC_STARTED);
 	        /* free irq */
 	        free_irq(devp->irq,(void *)devp);
 	        /* reset the hardware limit to vertical [0-1079]  */
@@ -395,7 +416,7 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         else if(!strcmp(parm[0],"force_recycle")) {
                 devp->flags |= VDIN_FLAG_FORCE_RECYCLE;
         }else if(!strcmp(parm[0],"read_pic")){
-        	vdin_write_mem(devp,parm[1]);
+        	vdin_write_mem(devp,parm[1],parm[2]);
 }
 
 
@@ -765,7 +786,8 @@ static void memp_set(int type)
 	case MEMP_VDIN_WITH_3D:
 
 #if defined(VDIN_V1)
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
+//#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)||
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);	// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);		// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);	// set ch8 arbiter weight to 0
@@ -784,11 +806,16 @@ static void memp_set(int type)
                 aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
 #endif
+		memp = type;
 		break;
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+       aml_write_reg32(P_VPU_VDIN_ASYNC_HOLD_CTRL, 0x80408040);
+#endif
 #if defined(VDIN_V1)
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
+//#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
@@ -811,7 +838,8 @@ static void memp_set(int type)
 	case MEMP_ATV_WITHOUT_3D:
 	case MEMP_ATV_WITH_3D:
 #if defined(VDIN_V1)
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
+//#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0

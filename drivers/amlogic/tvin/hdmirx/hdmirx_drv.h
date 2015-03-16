@@ -2,7 +2,7 @@
  * hdmirx_drv.h for HDMI device driver, and declare IO function,
  * structure, enum, used in TVIN AFE sub-module processing
  *
- * Copyright (C) 2012 AMLOGIC, INC. All Rights Reserved.
+ * Copyright (C) 2014 AMLOGIC, INC. All Rights Reserved.
  * Author: Rain Zhang <rain.zhang@amlogic.com>
  * Author: Xiaofei Zhu <xiaofei.zhu@amlogic.com>
  *
@@ -19,10 +19,10 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2014/05/08"
+#define HDMIRX_VER "Ref.2015/01/13b"
+
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
-#define CEC_FUNC_ENABLE		0
 
 /*
  * enum definitions
@@ -120,12 +120,21 @@ typedef enum HDMI_Video_Type_ {
 
 /*
 */
-#define USE_GPIO_FOR_HPD
+//#define USE_GPIO_FOR_HPD
+
+/** Configuration clock minimum [kHz] */
+#define CFG_CLK_MIN				(10000UL)
+/** Configuration clock maximum [kHz] */
+#define CFG_CLK_MAX				(160000UL)
 
 /** TMDS clock minimum [kHz] */
 #define TMDS_CLK_MIN			(24000UL)//(25000UL)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 /** TMDS clock maximum [kHz] */
+#define TMDS_CLK_MAX			(600000UL)//(340000UL)
+#else
 #define TMDS_CLK_MAX			(340000UL)
+#endif
 
 struct hdmi_rx_phy
 {
@@ -162,21 +171,21 @@ struct hdmi_rx_ctrl_video
 	/** Pixel clock frequency [kHz] */
 	unsigned long pixel_clk;
 	/** Refresh rate [0.01Hz] */
-	unsigned long refresh_rate;
+	uint16_t refresh_rate;
 	/** Interlaced */
 	bool interlaced;
 	/** Vertical offset */
-	unsigned voffset;
+	uint16_t voffset;
 	/** Vertical active */
-	unsigned vactive;
+	uint16_t vactive;
 	/** Vertical total */
-	unsigned vtotal;
+	uint16_t vtotal;
 	/** Horizontal offset */
-	unsigned hoffset;
+	uint16_t hoffset;
 	/** Horizontal active */
-	unsigned hactive;
+	uint16_t hactive;
 	/** Horizontal total */
-	unsigned htotal;
+	uint16_t htotal;
 
 	/** AVI Y1-0, video format */
 	unsigned video_format;
@@ -300,6 +309,7 @@ struct aud_info_s{
     int channel_allocation;
     int down_mix_inhibit;
     int level_shift_value;
+	int audio_samples_packet_received;
 
     /* channel status */
     unsigned char channel_status[CHANNEL_STATUS_SIZE];
@@ -335,9 +345,17 @@ struct rx {
 
 	/* wrapper */
 	unsigned int state;
-	unsigned char pow5v_state[10];
-	bool tx_5v_status;
-	bool tx_5v_status_pre;
+	unsigned int pre_state;
+	unsigned char portA_pow5v_state_pre;
+	unsigned char portB_pow5v_state_pre;
+	unsigned char portC_pow5v_state_pre;
+	unsigned char portD_pow5v_state_pre;
+	unsigned char portA_pow5v_state;
+	unsigned char portB_pow5v_state;
+	unsigned char portC_pow5v_state;
+	unsigned char portD_pow5v_state;
+	bool current_port_tx_5v_status;
+	//bool tx_5v_status_pre;
 	bool no_signal;
 	int hpd_wait_time;
 	int audio_wait_time;
@@ -377,27 +395,33 @@ int hdmirx_control_clk_range(unsigned long min, unsigned long max);
 int hdmirx_packet_fifo_rst(void);
 void hdmirx_audio_enable(bool en);
 int hdmirx_audio_fifo_rst(void);
+int	hdmirx_iaudioclk_domain_reset(void);
 void hdmirx_phy_hw_reset(void);
-void phy_init(int rx_port_sel, int dcm);
+void hdmirx_phy_init(int rx_port_sel, int dcm);
 void hdmirx_hw_config(void);
 void hdmirx_hw_reset(void);
+void hdmirx_timingchange_reset(void);
 void hdmirx_set_hpd(int port, unsigned char val);
 int hdmirx_interrupts_cfg( bool enable);
 int hdmirx_interrupts_hpd( bool enable);
 void hdmirx_phy_reset(bool enable);
 void hdmirx_phy_pddq(int enable);
+void cec_dbg_post_cmd(int command,int value);
+void hdmirx_phy_fast_switching(int enable);
+void hdmirx_audiopll_update(void);
 
 int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *params);
 int hdmirx_packet_get_avi(struct hdmi_rx_ctrl_video *params);
-int hdmirx_config_audio(void);
+int hdmirx_audio_init(void);
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params);
-int hdmirx_get_tmds_clock(void);
-int hdmirx_get_pixel_clock(void);
+unsigned int hdmirx_get_tmds_clock(void);
+unsigned int hdmirx_get_pixel_clock(void);
+unsigned int hdmirx_get_audio_clock(void);
+
 void hdmirx_read_audio_info(struct aud_info_s* audio_info);
-int hdmirx_get_pdec_aud_sts(void);
 void hdmirx_read_vendor_specific_info_frame(struct vendor_specific_info_s* vs);
 void hdmirx_set_pinmux(void);
-int hdmirx_get_clock(int index);
+unsigned int hdmirx_get_clock(int index);
 
 /**
  * all functions declare
@@ -426,8 +450,9 @@ extern int hdmirx_hw_get_dvi_info(void);
 extern int hdmirx_hw_get_pixel_repeat(void);
 extern bool hdmirx_hw_check_frame_skip(void);
 extern int hdmirx_print(const char *fmt, ...);
-extern int hdmirx_log_flag;
 extern int hdmirx_de_repeat_enable;
 extern int hdmirx_hw_dump_reg(unsigned char* buf, int size);
+extern bool hdmirx_audio_pll_lock(void);
+extern bool hdmirx_tmds_pll_lock(void);
 
 #endif  // _TVHDMI_H

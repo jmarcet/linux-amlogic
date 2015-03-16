@@ -43,6 +43,7 @@
 #include <linux/amlogic/aml_lcd_bl.h>
 #include <linux/amlogic/aml_bl_extern.h>
 #endif
+#include <linux/amlogic/vout/lcdoutc.h>
 
 //#define MESON_BACKLIGHT_DEBUG
 #ifdef MESON_BACKLIGHT_DEBUG
@@ -100,6 +101,8 @@ typedef struct {
     unsigned char method;
 
     int gpio;
+    unsigned char gpio_on;
+    unsigned char gpio_off;
     unsigned dim_max;
     unsigned dim_min;
     unsigned char pwm_port;
@@ -175,7 +178,7 @@ static void power_on_bl(int bl_flag)
             aml_set_reg32_bits(P_LED_PWM_REG0, 1, 12, 2);
 #endif
             mdelay(20);
-            bl_gpio_direction_output(bl_config.gpio, 1);
+            bl_gpio_direction_output(bl_config.gpio, bl_config.gpio_on);
             break;
         case BL_CTL_PWM_NEGATIVE:
         case BL_CTL_PWM_POSITIVE:
@@ -228,7 +231,7 @@ static void power_on_bl(int bl_flag)
             mdelay(20);
             if (bl_config.pwm_gpio_used) {
                 if (bl_config.gpio)
-                    bl_gpio_direction_output(bl_config.gpio, 1);
+                    bl_gpio_direction_output(bl_config.gpio, bl_config.gpio_on);
             }
             break;
         case BL_CTL_PWM_COMBO:
@@ -388,13 +391,13 @@ void bl_power_off(int bl_flag)
 
     switch (bl_config.method) {
         case BL_CTL_GPIO:
-            bl_gpio_direction_output(bl_config.gpio, 0);
+            bl_gpio_direction_output(bl_config.gpio, bl_config.gpio_off);
             break;
         case BL_CTL_PWM_NEGATIVE:
         case BL_CTL_PWM_POSITIVE:
             if (bl_config.pwm_gpio_used) {
                 if (bl_config.gpio)
-                    bl_gpio_direction_output(bl_config.gpio, 0);
+                    bl_gpio_direction_output(bl_config.gpio, bl_config.gpio_off);
             }
             switch (bl_config.pwm_port) {
                 case BL_PWM_A:
@@ -1031,9 +1034,9 @@ static inline int _get_backlight_config(struct platform_device *pdev)
         DPRINT("bl control_method: %s(%u)\n", bl_ctrl_method_table[bl_config.method], bl_config.method);
 
         if (bl_config.method == BL_CTL_GPIO) {
-            ret = of_property_read_string(pdev->dev.of_node, "bl_gpio_port", &str);
+            ret = of_property_read_string_index(pdev->dev.of_node, "bl_gpio_port_on_off", 0, &str);
             if (ret) {
-                printk("faild to get bl_gpio_port!\n");
+                printk("faild to get bl_gpio_port_on_off!\n");
 #if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6)
                 str = "GPIOD_1";
 #elif ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B))
@@ -1046,12 +1049,39 @@ static inline int _get_backlight_config(struct platform_device *pdev)
                 if (ret) {
                     printk("faild to alloc bl gpio (%s)!\n", str);
                 }
-                bl_config.gpio = val;
+                bl_config.gpio = val;                
                 DPRINT("bl gpio = %s(%d)\n", str, bl_config.gpio);
             }
             else {
                 bl_config.gpio = -1;
             }
+            ret = of_property_read_string_index(pdev->dev.of_node, "bl_gpio_port_on_off", 1, &str);
+            if (ret) {
+                printk("faild to get bl_gpio_port_on!\n");
+                bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_HIGH;
+            }
+            else {
+								if (strcmp(str, "2") == 0)
+                    bl_config.gpio_on = LCD_POWER_GPIO_INPUT;
+                else if(strcmp(str, "0") == 0)
+                		bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_LOW; 
+                else
+                		bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_HIGH; 		   
+            }
+            ret = of_property_read_string_index(pdev->dev.of_node, "bl_gpio_port_on_off", 2, &str);
+            if (ret) {
+                printk("faild to get bl_gpio_port_off!\n");
+                bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_LOW;
+            }
+            else {
+								if (strcmp(str, "2") == 0)
+                    bl_config.gpio_off = LCD_POWER_GPIO_INPUT;
+                else if(strcmp(str, "1") == 0)
+                		bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_HIGH; 
+                else
+                		bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_LOW; 		   
+            } 	
+            DPRINT("bl gpio_on=%u, bl gpio_off=%u\n", bl_config.gpio_on, bl_config.gpio_off);
             ret = of_property_read_u32_array(pdev->dev.of_node,"bl_gpio_dim_max_min",&bl_para[0],2);
             if (ret) {
                 printk("faild to get bl_gpio_dim_max_min\n");
@@ -1078,9 +1108,9 @@ static inline int _get_backlight_config(struct platform_device *pdev)
                 DPRINT("bl_pwm gpio_used: %u\n", bl_config.pwm_gpio_used);
             }
             if (bl_config.pwm_gpio_used == 1) {
-                ret = of_property_read_string(pdev->dev.of_node, "bl_gpio_port", &str);
+                ret = of_property_read_string(pdev->dev.of_node, "bl_gpio_port_on_off", &str);
                 if (ret) {
-                    printk("faild to get bl_gpio_port!\n");
+                    printk("faild to get bl_gpio_port_on_off!\n");
 #if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6)
                     str = "GPIOD_1";
 #elif ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B))
@@ -1099,7 +1129,34 @@ static inline int _get_backlight_config(struct platform_device *pdev)
                 else {
                     bl_config.gpio = -1;
                 }
+                          ret = of_property_read_string_index(pdev->dev.of_node, "bl_gpio_port_on_off", 1, &str);
+            if (ret) {
+                printk("faild to get bl_gpio_port_on!\n");
+                bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_HIGH;
             }
+            else {
+								if (strcmp(str, "2") == 0)
+                    bl_config.gpio_on = LCD_POWER_GPIO_INPUT;
+                else if(strcmp(str, "0") == 0)
+                		bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_LOW; 
+                else
+                		bl_config.gpio_on = LCD_POWER_GPIO_OUTPUT_HIGH; 		   
+            }
+            ret = of_property_read_string_index(pdev->dev.of_node, "bl_gpio_port_on_off", 2, &str);
+            if (ret) {
+                printk("faild to get bl_gpio_port_off!\n");
+                bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_LOW;
+            }
+            else {
+								if (strcmp(str, "2") == 0)
+                    bl_config.gpio_off = LCD_POWER_GPIO_INPUT;
+                else if(strcmp(str, "1") == 0)
+                		bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_HIGH; 
+                else
+                		bl_config.gpio_off = LCD_POWER_GPIO_OUTPUT_LOW; 		   
+            } 	
+            DPRINT("gpio_on=%u, gpio_off=%u\n", bl_config.gpio_on, bl_config.gpio_off);
+          }
             ret = of_property_read_string_index(pdev->dev.of_node, "bl_pwm_port_gpio_used", 0, &str);
             if (ret) {
                 printk("faild to get bl_pwm_port_gpio_used!\n");
@@ -1153,7 +1210,7 @@ static inline int _get_backlight_config(struct platform_device *pdev)
             }
             bl_config.pwm_max = (bl_config.pwm_cnt * bl_para[0] / 100);
             bl_config.pwm_min = (bl_config.pwm_cnt * bl_para[1] / 100);
-            DPRINT("bl pwm_duty max=%u\%, min=%u\%\n", bl_para[0], bl_para[1]);
+            DPRINT("bl pwm_duty max=%u%%, min=%u%%\n", bl_para[0], bl_para[1]);
         }
         else if (bl_config.method == BL_CTL_PWM_COMBO) {
             ret = of_property_read_u32(pdev->dev.of_node,"bl_pwm_combo_high_low_level_switch",&val);
@@ -1249,7 +1306,7 @@ static inline int _get_backlight_config(struct platform_device *pdev)
             bl_config.combo_high_pre_div = pwm_pre_div;
             bl_config.combo_high_duty_max = (bl_config.combo_high_cnt * bl_para[1] / 100);
             bl_config.combo_high_duty_min = (bl_config.combo_high_cnt * bl_para[2] / 100);
-            DPRINT("bl pwm_combo high freq=%uHz, duty_max=%u\%, duty_min=%u\%\n", pwm_freq, bl_para[1], bl_para[2]);
+            DPRINT("bl pwm_combo high freq=%uHz, duty_max=%u%%, duty_min=%u%%\n", pwm_freq, bl_para[1], bl_para[2]);
             ret = of_property_read_u32_array(pdev->dev.of_node,"bl_pwm_combo_low_freq_duty_max_min",&bl_para[0],3);
             if (ret) {
                 printk("faild to get bl_pwm_combo_low_freq_duty_max_min\n");
@@ -1268,7 +1325,7 @@ static inline int _get_backlight_config(struct platform_device *pdev)
             bl_config.combo_low_pre_div = pwm_pre_div;
             bl_config.combo_low_duty_max = (bl_config.combo_low_cnt * bl_para[1] / 100);
             bl_config.combo_low_duty_min = (bl_config.combo_low_cnt * bl_para[2] / 100);
-            DPRINT("bl pwm_combo low freq=%uHz, duty_max=%u\%, duty_min=%u\%\n", pwm_freq, bl_para[1], bl_para[2]);
+            DPRINT("bl pwm_combo low freq=%uHz, duty_max=%u%%, duty_min=%u%%\n", pwm_freq, bl_para[1], bl_para[2]);
         }
 
         //pinmux

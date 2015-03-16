@@ -88,7 +88,6 @@ obj-$(CONFIG_AM_DVB) += dvb_tv/
 obj-$(CONFIG_AM_SMARTCARD) += smartcard/
 
 obj-$(CONFIG_AM_WIFI) += wifi/
-
 obj-y += bluetooth/
 obj-$(CONFIG_MESON_NFC) += nfc/
 
@@ -112,3 +111,5 @@ obj-y += crypto/
 #obj-$(CONFIG_MESON_TRUSTZONE) += trustzone/
 obj-$(CONFIG_MESON_TRUSTZONE) += secure_monitor/
 obj-y += spi/
+
+obj-y += defendkey/

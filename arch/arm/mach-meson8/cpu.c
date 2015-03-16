@@ -34,8 +34,10 @@
 static int meson_cpu_version[MESON_CPU_VERSION_LVL_MAX+1];
 int __init meson_cpu_version_init(void)
 {
-	unsigned int version,ver;	
+	unsigned int version,ver;
+#ifndef CONFIG_MESON_TRUSTZONE
 	unsigned int  *version_map;
+#endif
 
 	meson_cpu_version[MESON_CPU_VERSION_LVL_MAJOR] = 
 		aml_read_reg32(P_ASSIST_HW_REV);
@@ -82,3 +84,11 @@ int get_meson_cpu_version(int level)
 	return 0;
 }
 EXPORT_SYMBOL(get_meson_cpu_version);
+
+int (*get_cpu_temperature_celius)(void) = NULL;
+EXPORT_SYMBOL_GPL(get_cpu_temperature_celius);
+
+int get_cpu_temperature(void)
+{
+	return get_cpu_temperature_celius ? get_cpu_temperature_celius() : -1;
+}

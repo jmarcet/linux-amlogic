@@ -72,7 +72,7 @@ MODULE_AMLOG(LOG_LEVEL_ERROR, 0, LOG_LEVEL_DESC, LOG_DEFAULT_MASK_DESC);
 #define ORI_BUFFER_START_ADDR   0x01000000
 
 #define INTERLACE_FLAG          0x80
-#define BOTTOM_FIELD_FIRST_FLAG 0x40
+#define TOP_FIELD_FIRST_FLAG    0x40
 
 /* protocol registers */
 #define MP4_PIC_RATIO       AV_SCRATCH_5
@@ -84,6 +84,7 @@ MODULE_AMLOG(LOG_LEVEL_ERROR, 0, LOG_LEVEL_DESC, LOG_DEFAULT_MASK_DESC);
 #define MP4_NOT_CODED_CNT   AV_SCRATCH_A
 #define MP4_VOP_TIME_INC    AV_SCRATCH_B
 #define MP4_OFFSET_REG      AV_SCRATCH_C
+#define MP4_SYS_RATE        AV_SCRATCH_E
 #define MEM_OFFSET_REG      AV_SCRATCH_F
 
 #define PARC_FORBIDDEN              0
@@ -409,7 +410,7 @@ static irqreturn_t vmpeg4_isr(int irq, void *dev_id)
             vf->pts_us64 = pts_us64;
             vf->duration = duration >> 1;
             vf->duration_pulldown = 0;
-            vf->type = (reg & BOTTOM_FIELD_FIRST_FLAG) ? VIDTYPE_INTERLACE_BOTTOM : VIDTYPE_INTERLACE_TOP;
+            vf->type = (reg & TOP_FIELD_FIRST_FLAG) ? VIDTYPE_INTERLACE_TOP : VIDTYPE_INTERLACE_BOTTOM;
 #ifdef NV21
             vf->type |= VIDTYPE_VIU_NV21;
 #endif
@@ -440,7 +441,7 @@ static irqreturn_t vmpeg4_isr(int irq, void *dev_id)
             vf->duration = duration >> 1;
 
             vf->duration_pulldown = 0;
-            vf->type = (reg & BOTTOM_FIELD_FIRST_FLAG) ? VIDTYPE_INTERLACE_BOTTOM : VIDTYPE_INTERLACE_TOP;
+            vf->type = (reg & TOP_FIELD_FIRST_FLAG) ? VIDTYPE_INTERLACE_BOTTOM : VIDTYPE_INTERLACE_TOP;
 #ifdef NV21
             vf->type |= VIDTYPE_VIU_NV21;
 #endif
@@ -745,7 +746,8 @@ static void vmpeg4_prot_init(void)
     WRITE_VREG(MDEC_PIC_DC_THRESH, 0x404038aa);
 #endif
 
-WRITE_VREG(MP4_PIC_WH, (vmpeg4_amstream_dec_info.width << 16) | vmpeg4_amstream_dec_info.height);
+    WRITE_VREG(MP4_PIC_WH, (vmpeg4_amstream_dec_info.width << 16) | vmpeg4_amstream_dec_info.height);
+    WRITE_VREG(MP4_SYS_RATE, vmpeg4_amstream_dec_info.rate);
 }
 
 static void vmpeg4_local_init(void)
@@ -887,18 +889,21 @@ static s32 vmpeg4_init(void)
 
 static int amvdec_mpeg4_probe(struct platform_device *pdev)
 {
-    struct resource *mem;
+    struct vdec_dev_reg_s *pdata = (struct vdec_dev_reg_s *)pdev->dev.platform_data;
 
-    if (!(mem = platform_get_resource(pdev, IORESOURCE_MEM, 0))) {
+    if (pdata == NULL) {
         amlog_level(LOG_LEVEL_ERROR, "amvdec_mpeg4 memory resource undefined.\n");
         return -EFAULT;
     }
 
-    buf_start = mem->start;
-    buf_size = mem->end - mem->start + 1;
+    buf_start = pdata->mem_start;
+    buf_size = pdata->mem_end - pdata->mem_start + 1;
     buf_offset = buf_start - ORI_BUFFER_START_ADDR;
 
-    memcpy(&vmpeg4_amstream_dec_info, (void *)mem[1].start, sizeof(vmpeg4_amstream_dec_info));
+    if (pdata->sys_info) {
+        vmpeg4_amstream_dec_info = *pdata->sys_info;
+    }
+
     if (vmpeg4_init() < 0) {
         amlog_level(LOG_LEVEL_ERROR, "amvdec_mpeg4 init failed.\n");
 

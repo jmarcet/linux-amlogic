@@ -1945,7 +1945,6 @@ static int hdmitx_set_audmode(struct hdmi_tx_dev_s* hdmitx_device, Hdmi_tx_audio
 {
     unsigned int audio_N_para = 6272;
     unsigned int audio_N_tolerance = 3;
-    unsigned int multiplier = 1;
 //    unsigned int audio_CTS = 30000;
     
     hdmi_print(INF, AUD "audio channel num is %d\n", hdmitx_device->cur_audio_param.channel_num);
@@ -2069,21 +2068,14 @@ static int hdmitx_set_audmode(struct hdmi_tx_dev_s* hdmitx_device, Hdmi_tx_audio
     hdmi_print(INF, AUD "reset audio N para\n");
     switch(audio_param->sample_rate){
         case FS_44K1:
+            audio_N_para = 6272 * 2;
+            break;
         case FS_48K:
-            multiplier = 2;
+            audio_N_para = 6144 * 2;
             break;
         default:
             break;
     }
-
-    //1080p24hz mode is a special case - at least for yamaha amps
-    //it needs 3 times the normal npara to get a stable audio lock
-    if((hdmitx_device->cur_VIC == HDMI_1080p24))
-    {
-      multiplier = 3;
-    }
-
-    audio_N_para *= multiplier;
 
     //TODO. Different audio type, maybe have different settings
     switch(audio_param->type){
@@ -2313,7 +2305,7 @@ static int hdmitx_cntl(hdmitx_dev_t* hdmitx_device, unsigned cmd, unsigned argv)
     }
     else if(cmd == HDMITX_EARLY_SUSPEND_RESUME_CNTL) {
         if(argv == HDMITX_EARLY_SUSPEND) {
-            aml_set_reg32_bits(P_HHI_VID_PLL_CNTL, 1, 30, 1);
+            //aml_set_reg32_bits(P_HHI_VID_PLL_CNTL, 1, 30, 1);
             hdmi_phy_suspend();
         }
         if(argv == HDMITX_LATE_RESUME) {
@@ -2908,7 +2900,7 @@ void HDMITX_Meson_Init(hdmitx_dev_t* hdmitx_device)
     aml_write_reg32(P_HDMI_CTRL_PORT, aml_read_reg32(P_HDMI_CTRL_PORT)|(1<<15)); //APB3 err_en
     hdmi_wr_reg(0x10, 0xff);
 
-    hdmi_phy_suspend();
+  //  hdmi_phy_suspend();
 
     /**/    
     hdmi_hw_init(hdmitx_device);

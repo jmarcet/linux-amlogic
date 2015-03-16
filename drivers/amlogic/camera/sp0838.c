@@ -122,7 +122,7 @@ MODULE_DESCRIPTION("sp0838 On Board");
 MODULE_AUTHOR("amlogic-sh");
 MODULE_LICENSE("GPL v2");
 
-#define SP0838_DRIVER_VERSION "SP0838-COMMON-01-140722"
+#define SP0838_DRIVER_VERSION "SP0838-COMMON-01-140808"
 
 static unsigned video_nr = -1;  /* videoX start number, -1 is autodetect. */
 
@@ -1014,10 +1014,10 @@ void set_SP0838_param_wb(struct sp0838_device *dev,enum  camera_wb_flip_e para)
 		buf[1]=0x01;
 		i2c_put_byte_add8(client,buf,2);
 		buf[0]=0x28;
-		buf[1]=0x98;//98
+		buf[1]=0x5a;//98
 		i2c_put_byte_add8(client,buf,2);
 		buf[0]=0x29;
-		buf[1]=0xc0;//c0
+		buf[1]=0x62;//c0
 		i2c_put_byte_add8(client,buf,2);
 		buf[0]=0xfd;
 		buf[1]=0x00;
@@ -1859,7 +1859,7 @@ static int vidioc_streamon(struct file *file, void *priv, enum v4l2_buf_type i)
 	para.hs_bp = 0;
 	para.vs_bp = 2;
 	para.cfmt = TVIN_YVYU422;
-        para.dfmt = TVIN_NV21;
+        para.dfmt = TVIN_YVYU422;
 	para.scan_mode = TVIN_SCAN_MODE_PROGRESSIVE;	
 	para.skip_count =  2; //skip_num
 	printk("0a19,h=%d, v=%d, frame_rate=%d\n", sp0838_h_active, sp0838_v_active, sp0838_frmintervals_active.denominator);

@@ -161,10 +161,10 @@ typedef  struct {
 #define  FBIOPUT_OSD_REVERSE		0x4515
 #define  FBIOPUT_OSD_ROTATE_ON   	0x4516
 #define  FBIOPUT_OSD_ROTATE_ANGLE	0x4517
-#define  FBIOPUT_OSD_SYNC_ADD	0x4518
 #define GET_UMP_SECURE_ID_BUF1 _IOWR('m', 311, unsigned int)
 #define GET_UMP_SECURE_ID_BUF2 _IOWR('m', 312, unsigned int)
 #define FBIOPUT_OSD2_CURSOR_DATA _IOWR('m', 313, unsigned int)
+#define  FBIOPUT_OSD_SYNC_ADD	0x4518
 #define  OSD_INVALID_INFO   		0xffffffff
 
 #define  OSD_FIRST_GROUP_START   	1

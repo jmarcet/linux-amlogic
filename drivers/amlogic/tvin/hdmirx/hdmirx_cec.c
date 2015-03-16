@@ -45,7 +45,6 @@
 #include "hdmi_rx_reg.h"
 #include "hdmirx_cec.h"
 
-#if CEC_FUNC_ENABLE
 #define CEC_ONE_TOUCH_PLAY_FUNC_SUPPORT				1	// TV, CEC switches
 #define CEC_ROUTING_CONTROL_FUNC_SUPPORT			1	// TV, CEC switches
 #define CEC_STANDBY_FUNC_SUPPORT					1	// All
@@ -67,10 +66,15 @@
 
 #define LOGIC_ADDR_EXIST	0x88
 #define LOGIC_ADDR_NULL		0x00
-struct _cec_dev_map_ cec_map[16];
+struct _cec_dev_map cec_map[16];
 
-static int cec_log = 0;  // 1: error log  2: info log  3 all
-static bool set_polling_msg_flag = true;
+static int cec_enable = 1;
+static int arc_enable = 1;
+static int cec_log = 3;  // 1: error log  2: info log  3 all
+static enum _cec_map_status cec_map_status = E_CEC_MAP_UPDATE_START;
+static int cec_retry_cnt = 0;
+static int cec_dev_index = 1;
+
 static bool get_ack_flag = false;   //just used to ping dev on the cec line
 static int cec_wait_for_ack_cnt = 30;
 static int cec_ctrl_wait_times = 3;
@@ -78,55 +82,43 @@ static int ping_dev_cnt = 0;	// if = 0, start ping dev (1--14)
 								// if = 140, ping dev completed, statt post msg get phyaddr and name
 								// if = 141, post msg over,do nothing
 
-_cec_msg_queue_  queue;
+_cec_msg_queue  rx_queue;
+_cec_msg_queue  tx_queue;
 
 int cec_handler(bool get_msg, bool get_ack)
 {
-	int wait_cnt = 0;
-	int i = 0;
+	//int wait_cnt = 0;
 
-	while(hdmirx_rd_dwc(HDMIRX_DWC_CEC_CTRL) != 0x00000002)
+	if(hdmirx_rd_dwc(HDMIRX_DWC_CEC_CTRL) != 0x00000002)
 	{
-		mdelay(1);
-		if(wait_cnt++ > cec_ctrl_wait_times){
-			hdmirx_wr_dwc(HDMIRX_DWC_CEC_LOCK, 0);
-			if(cec_log & (1<<0))
-				printk("\n\n cec error --- clr current tx info\n\n");
-			return 0;
-		}
+		//mdelay(1);
+		//if(wait_cnt++ > cec_ctrl_wait_times){
+		//clear current lock state, messge is wrong
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_LOCK, 0);
+		if(cec_log)
+			printk("\n\n cec error --- clr current tx info\n\n");
+		return 0;
+		//}
 	}
-	//for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
-	//	if(st_cec_msg[i].info == MSG_NULL)
-			//break;
-	//}
 	if(get_msg){
-		while(queue.msg[queue.end].info != MSG_NULL){
-			if(i++ > 30){
-				if(cec_log & (1<<0))
-					printk("\n rx overflow %s\n",__FUNCTION__);
-				break;
-			}
-			queue.end = (queue.end+1) % CEC_MSG_QUEUE_SIZE;
-		}
-		queue.msg[queue.end].info = MSG_RX;
-		queue.msg[queue.end].msg_len = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_CNT);
-		queue.msg[queue.end].addr = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA0);
-		queue.msg[queue.end].opcode = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA1);
-		queue.msg[queue.end].msg_data[0] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA2);
-		queue.msg[queue.end].msg_data[1] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA3);
-		queue.msg[queue.end].msg_data[2] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA4);
-		queue.msg[queue.end].msg_data[3] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA5);
-		queue.msg[queue.end].msg_data[4] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA6);
-		queue.msg[queue.end].msg_data[5] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA7);
-		queue.msg[queue.end].msg_data[6] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA8);
-		queue.msg[queue.end].msg_data[7] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA9);
-		queue.msg[queue.end].msg_data[8] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA10);
-		queue.msg[queue.end].msg_data[9] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA11);
-		queue.msg[queue.end].msg_data[10] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA12);
-		queue.msg[queue.end].msg_data[11] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA13);
-		queue.msg[queue.end].msg_data[12] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA14);
-		queue.msg[queue.end].msg_data[13] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA15);
-		queue.end = (queue.end+1) % CEC_MSG_QUEUE_SIZE;
+		rx_queue.cec_msg[rx_queue.wr_index].msg_len = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_CNT);
+		rx_queue.cec_msg[rx_queue.wr_index].addr = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA0);
+		rx_queue.cec_msg[rx_queue.wr_index].cmd = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA1);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[0] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA2);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[1] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA3);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[2] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA4);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[3] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA5);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[4] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA6);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[5] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA7);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[6] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA8);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[7] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA9);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[8] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA10);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[9] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA11);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[10] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA12);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[11] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA13);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[12] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA14);
+		rx_queue.cec_msg[rx_queue.wr_index].msg_data[13] = hdmirx_rd_dwc(HDMIRX_DWC_CEC_RX_DATA15);
+		rx_queue.wr_index = (rx_queue.wr_index+1) % CEC_MSG_QUEUE_SIZE;
 		//clr CEC lock bit
 		hdmirx_wr_dwc(HDMIRX_DWC_CEC_LOCK, 0);
 	}
@@ -136,7 +128,36 @@ int cec_handler(bool get_msg, bool get_ack)
 	return 0;
 }
 
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
+#define HHI_CLK_32K_CNTL         0x105a
+#define Wr_reg_bits(reg, val, start, len) \
+  WRITE_MPEG_REG(reg, (READ_MPEG_REG(reg) & ~(((1L<<(len))-1)<<(start)))|((unsigned int)(val) << (start)))
+#endif
+int cec_init(void)
+{
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	unsigned int data32;
+	//set cec clk 32768k
+	//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
+	//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
+	// HDMI IP CEC clock = 24M/732=32786.9Hz
+    data32  = 0;
+    data32 |= 0         << 16;  // [17:16] clk_sel: 0=oscin; 1=slow_oscin; 2=fclk_div3; 3=fclk_div5.
+    data32 |= 1         << 15;  // [   15] clk_en
+    data32 |= (732-1)   << 0;   // [13: 0] clk_div
+    WRITE_MPEG_REG(HHI_32K_CLK_CNTL,    data32);
+#else
+	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
+	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
+#endif
+	//set logic addr
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_L, 0x00000001);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_H, 0x00000000);
 
+	//enable cec eom irq & ack irq
+	hdmirx_wr_dwc(HDMIRX_DWC_AUD_CLK_IEN_SET, (3<<16));
+	return 0;
+}
 
 void cec_state(bool cec_rx)
 {
@@ -187,17 +208,11 @@ void cec_state(bool cec_rx)
     }
     printk("\n****************CEC***************\n\n");
 }
-void clean_cec_message(void)
-{
-	int i = 0;
-	queue.head = 0;
-	queue.end = 0;
-	for (i = 0; i < CEC_MSG_QUEUE_SIZE; i++)
-		queue.msg[i].info = MSG_NULL;
-}
+
 
 void dump_cec_message(int all)
 {
+	#if 0
 	int i = 0;
 	for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
 		if((queue.msg[i].info == MSG_RX) && (all==1)){
@@ -226,20 +241,21 @@ void dump_cec_message(int all)
 			printk("\n------ buffer %d end --------\n",i);
 		}
 	}
+	#endif
 }
-
 void cec_dump_dev_map(void)
 {
 	int i = 0;
 	for (i=1; i<=E_LA_MAX; i++){
-		if(cec_map[i].cec_dev_logicaddr == LOGIC_ADDR_NULL)
+		if(cec_map[i].logic_addr == LOGIC_ADDR_NULL)
 			continue;
 		printk("\n ************************\n");
-		printk("logicaddr=%d,  phyaddr=%x,  type=%d\n",i,cec_map[i].cec_dev_phyaddr,cec_map[i].cec_dev_type);
+		printk("logicaddr=%d,  phyaddr=%x,  type=%d\n",i,cec_map[i].phy_addr,cec_map[i].cec_dev_type);
 		printk("devname = %s\n",cec_map[i].cec_dev_name);
 		printk("************************\n");
 	}
 }
+/*
 static bool cec_dev_is_exist(_cec_dev_logic_addr_ logic_addr)
 {
 	if(cec_map[logic_addr].cec_dev_logicaddr == LOGIC_ADDR_EXIST)
@@ -247,72 +263,127 @@ static bool cec_dev_is_exist(_cec_dev_logic_addr_ logic_addr)
 	else
 		return false;
 }
-void cec_add_dev(_cec_dev_logic_addr_ logic_addr,int physical_addr,_cec_dev_type_ dev_type)
+*/
+void cec_add_dev(_cec_logic_addr logic_addr,unsigned int physical_addr,_cec_dev_type dev_type)
 {
-	cec_map[logic_addr].cec_dev_logicaddr = LOGIC_ADDR_EXIST;
-	cec_map[logic_addr].cec_dev_phyaddr	= physical_addr;
-	cec_map[logic_addr].cec_dev_type = dev_type;
+	cec_map[logic_addr].logic_addr		= LOGIC_ADDR_EXIST;
+	cec_map[logic_addr].phy_addr		= physical_addr;
+	cec_map[logic_addr].cec_dev_type 	= dev_type;
 	cec_map[logic_addr].cec_dev_name[0] = '\0';
 }
 
-#define PING_DEV_SUCCESS	1
-#define PING_DEV_FAIL		2
-#define PING_DEV_WAIT		3
-#define PING_DEV_OVER		4
-static int cec_ping_logic_addr(int cnt)
-{
-	int i = cnt%10;
-	int ret = PING_DEV_WAIT;
 
-	if(cnt > 140)
-		return PING_DEV_OVER;
-	if(i == 1) {
+bool cec_ping_logic_addr(void)
+{
+	if(get_ack_flag){
+		cec_map[cec_dev_index].logic_addr = LOGIC_ADDR_EXIST;
+		cec_dev_index++;
 		get_ack_flag = false;
+		if(cec_log){
+			printk("ping dev %d success\n",cec_dev_index);
+		}
+	}
+	if(cec_retry_cnt >= 5){
+		cec_map[cec_dev_index].logic_addr = LOGIC_ADDR_NULL;
+		cec_retry_cnt = 0;
+		cec_dev_index++;
+	}
+	if(cec_dev_index < 15) {
 	    hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, cnt/10 + 1);
-		if(cec_log & (1<<1))
-			printk("\nPing dev %d\n",cnt/10+1);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000001);  //TX data num 1 byte
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, cec_dev_index);
+		if(cec_log)
+			printk("\nPing dev %d\n",cec_dev_index);
+		cec_retry_cnt++;
+		get_ack_flag = false;
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000001);
 		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	}else if(i < 7){
-		if(get_ack_flag){
-			get_ack_flag = false;
-			cec_map[cnt/10 + 1].cec_dev_logicaddr = LOGIC_ADDR_EXIST;
-			return PING_DEV_SUCCESS;
-		}
-	}else{
-		cec_map[cnt/10 + 1].cec_dev_logicaddr = LOGIC_ADDR_NULL;
-		return PING_DEV_FAIL;
+		return false;
 	}
-	return PING_DEV_WAIT;
-	/*
-	while(!get_ack_flag){
-		mdelay(1);
-		if(i++>cec_wait_for_ack_cnt){
-			printk("\n cec ctrl err");
-    		return false;
-		}
-	}
-
-	*/
-	//return true;
-
+	cec_dev_index = 1;
+	return true;
 }
-void cec_post_msg_to_buf(_cec_dev_logic_addr_ logic_addr,_cec_op_code_ op_code, struct _cec_msg_ *msg)
+bool cec_update_cec_parameters(_cec_cmd cmd)
 {
-	int i=0;
-	for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
-		if(queue.msg[i].info == MSG_NULL){
-			break;
-		}
+	if(get_ack_flag){
+		cec_dev_index++;
+		cec_retry_cnt = 0;
+		get_ack_flag = false;
 	}
-	if((i>=CEC_MSG_QUEUE_SIZE)&&(cec_log&(1<<0)))
-		printk("\n tx overflow %s \n",__FUNCTION__);
-	memcpy(&queue.msg[i], msg, sizeof(_cec_msg_));
+	if(cec_retry_cnt++ >= 5){
+		cec_dev_index++;
+		cec_retry_cnt = 0;
+	}
+	if(cec_dev_index >= 15)
+		return true;
+	if(cec_map[cec_dev_index].logic_addr == LOGIC_ADDR_EXIST)
+		cec_post_msg(cec_dev_index, cmd, 0, 2);
+	else{
+		cec_dev_index++;
+		cec_retry_cnt = 0;
+	}
+	return false;
 }
 
-void cec_post_givephyaddr(_cec_dev_logic_addr_ logic_addr)
+void cec_update_cec_map(void)
 {
+	static int wait_cnt = 0;
+	if(cec_map_status == E_CEC_MAP_UPDATE_COMPLETED)
+		return;
+	if(wait_cnt++ < 4)
+		return;
+	wait_cnt = 0;
+	switch(cec_map_status){
+	case E_CEC_MAP_UPDATE_START:
+		cec_map_status = E_CEC_MAP_POLLLING;
+		break;
+	case E_CEC_MAP_POLLLING:
+		if(cec_ping_logic_addr()){
+			cec_map_status = E_CEC_MAP_GET_VENDOR_ID;
+			if(cec_log)
+				printk("-> E_CEC_MAP_GET_VENDOR_ID\n");
+			cec_dev_index = 1;
+		}
+		break;
+	case E_CEC_MAP_GET_VENDOR_ID:
+		if(cec_update_cec_parameters(E_MSG_GIVE_DEVICE_VENDOR_ID)){
+			cec_map_status = E_CEC_MAP_GET_PHYSICAL_ADDR;
+			if(cec_log)
+				printk("-> E_CEC_MAP_GET_PHYSICAL_ADDR\n");
+			cec_dev_index = 1;
+		}
+		break;
+	case E_CEC_MAP_GET_PHYSICAL_ADDR:
+		if(cec_update_cec_parameters(E_MSG_REPORT_PHYSICAL_ADDRESS)){
+			cec_map_status = E_CEC_MAP_GET_OSD_NAME;
+			if(cec_log)
+				printk("-> E_CEC_MAP_GET_OSD_NAME\n");
+			cec_dev_index = 1;
+		}
+		break;
+	case E_CEC_MAP_GET_OSD_NAME:
+		if(cec_update_cec_parameters(E_MSG_OSDNT_GIVE_OSD_NAME)){
+			cec_map_status = E_CEC_MAP_GET_CEC_VERSION;
+			if(cec_log)
+				printk("-> E_CEC_MAP_GET_CEC_VERSION\n");
+			cec_dev_index = 1;
+		}
+		break;
+	case E_CEC_MAP_GET_CEC_VERSION:
+		if(cec_update_cec_parameters(E_MSG_CEC_VERSION)){
+			cec_map_status = E_CEC_MAP_UPDATE_COMPLETED;
+			if(cec_log)
+				printk("-> E_CEC_MAP_UPDATE_COMPLETED\n");
+			cec_dev_index = 1;
+		}
+		break;
+	default:
+		break;
+
+	}
+}
+void cec_post_givephyaddr(_cec_logic_addr logic_addr)
+{
+	#if 0
 	int i=0;
 	for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
 		if(queue.msg[i].info == MSG_NULL){
@@ -327,9 +398,87 @@ void cec_post_givephyaddr(_cec_dev_logic_addr_ logic_addr)
 	queue.msg[i].addr = logic_addr;
 	if(cec_log&(1<<1))
 		printk("\n tx %d post msg %s \n",logic_addr,__FUNCTION__);
+	#endif
 }
-void cec_post_giveosdname(_cec_dev_logic_addr_ logic_addr)
+
+//--------------------------- IO_CTL ---------------------------------------//
+void hdmirx_cec_fun_onoff(bool enable)
 {
+	if(enable){
+		cec_enable = 1;
+		//cec eom irq enable
+		hdmirx_wr_dwc(HDMIRX_DWC_AUD_CLK_IEN_SET, (1<<17));
+	}else{
+		cec_enable = 0;
+		//cec eom irq enable
+		hdmirx_wr_dwc(HDMIRX_DWC_AUD_CLK_IEN_SET, (0<<17));
+	}
+	if(cec_log)
+		printk("cec_status: %d\n",enable);
+
+}
+void hdmirx_cec_arc_onoff(bool enable)
+{
+	if(enable)
+		arc_enable = 1;
+	else
+		arc_enable = 0;
+	if(cec_log)
+		printk("arc_status: %d\n",enable);
+}
+
+void cec_post_msg_to_buf(struct _cec_msg *msg)
+{
+	memcpy(&tx_queue.cec_msg[tx_queue.wr_index], msg, sizeof(_cec_msg));
+	tx_queue.wr_index = (tx_queue.wr_index+1) % CEC_MSG_QUEUE_SIZE;
+}
+
+void cec_post_msg(_cec_logic_addr addr, _cec_cmd cmd, int* data, int length)
+{
+	int i=0;
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, addr);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, cmd);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, length);
+	if(length <=2){
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
+	}else{
+		for(; i<length-2; i++){
+			hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA2+i*4, data[i]);
+		}
+	}
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
+}
+
+int hdmirx_get_cec_msg_cnt(void)
+{
+	if(rx_queue.wr_index >= rx_queue.rd_index)
+		return (rx_queue.wr_index - rx_queue.rd_index);
+	else
+		return (CEC_MSG_QUEUE_SIZE + rx_queue.wr_index - rx_queue.rd_index);
+}
+
+void hdmirx_cec_clear_rx_buffer(void)
+{
+	rx_queue.rd_index = rx_queue.wr_index = 0;
+}
+
+struct _cec_msg *hdmirx_get_rx_msg(void)
+{
+	struct _cec_msg *msg;
+	if(rx_queue.wr_index == rx_queue.rd_index){
+		printk("error,no rx msg,ioctl_get\n");
+		return 0;
+	}
+	msg = &rx_queue.cec_msg[rx_queue.rd_index];
+	//memcpy(msg ,rx_queue.cec_msg[rx_queue.rd_index], sizeof(struct _cec_msg_));
+
+	rx_queue.rd_index = (rx_queue.rd_index+1) % CEC_MSG_QUEUE_SIZE;
+	return msg;
+}
+void cec_post_giveosdname(_cec_logic_addr logic_addr)
+{
+	#if 0
 	int i=0;
 	for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
 		if(queue.msg[i].info == MSG_NULL){
@@ -344,72 +493,78 @@ void cec_post_giveosdname(_cec_dev_logic_addr_ logic_addr)
 	queue.msg[i].addr = logic_addr;
 	if(cec_log&(1<<1))
 		printk("\n tx %d post msg %s \n",logic_addr,__FUNCTION__);
+	#endif
+}
+void cec_dbg_post_cmd(int command,int value)
+{
+	//int i=0;
+	tx_queue.cec_msg[tx_queue.wr_index].msg_len = 3;
+	tx_queue.cec_msg[tx_queue.wr_index].cmd = command;
+	tx_queue.cec_msg[tx_queue.wr_index].addr = 0x04;
+	tx_queue.cec_msg[tx_queue.wr_index].msg_data[0] = value;
+	tx_queue.wr_index = (tx_queue.wr_index+1) % CEC_MSG_QUEUE_SIZE;
+	if(cec_log&(1<<1))
+		printk("\n tx post msg command %x vaule %x \n",command,value);
 
 }
 
-
-
 int hdmirx_cec_tx_monitor(void)
 {
-	int i = 0;
+	//int i = 0;
+	if(cec_map_status <= E_CEC_MAP_POLLLING)
+		return 0;
 	if(hdmirx_rd_dwc(HDMIRX_DWC_CEC_CTRL) & (1<<0))
 		return 0;
-
-	for(i=0; i<CEC_MSG_QUEUE_SIZE; i++){
-		if(queue.msg[i].info == MSG_TX){
-			break;
-		}
-	}
-	if(i >= CEC_MSG_QUEUE_SIZE){
+	if(tx_queue.rd_index == tx_queue.wr_index)
 		return 0;
-	}
 	hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, queue.msg[i].addr);
-	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, queue.msg[i].opcode);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, tx_queue.cec_msg[tx_queue.rd_index].addr);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, tx_queue.cec_msg[tx_queue.rd_index].cmd);
 	if(cec_log&(1<<1))
-		printk("\n tx handle opcpde %x\n",queue.msg[i].opcode);
-	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, queue.msg[i].msg_len);
-	if(queue.msg[i].msg_len>2)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA2, queue.msg[i].msg_data[0]);
-	if(queue.msg[i].msg_len>3)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA3, queue.msg[i].msg_data[1]);
-	if(queue.msg[i].msg_len>4)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA4, queue.msg[i].msg_data[2]);
-	if(queue.msg[i].msg_len>5)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA5, queue.msg[i].msg_data[3]);
-	if(queue.msg[i].msg_len>6)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA6, queue.msg[i].msg_data[4]);
-	if(queue.msg[i].msg_len>7)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA7, queue.msg[i].msg_data[5]);
-	if(queue.msg[i].msg_len>8)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA8, queue.msg[i].msg_data[6]);
-	if(queue.msg[i].msg_len>9)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA9, queue.msg[i].msg_data[7]);
-	if(queue.msg[i].msg_len>10)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA10, queue.msg[i].msg_data[8]);
-	if(queue.msg[i].msg_len>11)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA11, queue.msg[i].msg_data[9]);
-	if(queue.msg[i].msg_len>12)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA12, queue.msg[i].msg_data[10]);
-	if(queue.msg[i].msg_len>13)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA13, queue.msg[i].msg_data[11]);
-	if(queue.msg[i].msg_len>14)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA14, queue.msg[i].msg_data[12]);
-	if(queue.msg[i].msg_len>15)
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA15, queue.msg[i].msg_data[13]);
+		printk("\n tx handle opcpde %x\n",tx_queue.cec_msg[tx_queue.rd_index].cmd);
+	hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, tx_queue.cec_msg[tx_queue.rd_index].msg_len);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>2)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA2, tx_queue.cec_msg[tx_queue.rd_index].msg_data[0]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>3)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA3, tx_queue.cec_msg[tx_queue.rd_index].msg_data[1]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>4)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA4, tx_queue.cec_msg[tx_queue.rd_index].msg_data[2]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>5)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA5, tx_queue.cec_msg[tx_queue.rd_index].msg_data[3]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>6)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA6, tx_queue.cec_msg[tx_queue.rd_index].msg_data[4]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>7)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA7, tx_queue.cec_msg[tx_queue.rd_index].msg_data[5]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>8)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA8, tx_queue.cec_msg[tx_queue.rd_index].msg_data[6]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>9)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA9, tx_queue.cec_msg[tx_queue.rd_index].msg_data[7]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>10)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA10, tx_queue.cec_msg[tx_queue.rd_index].msg_data[8]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>11)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA11, tx_queue.cec_msg[tx_queue.rd_index].msg_data[9]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>12)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA12, tx_queue.cec_msg[tx_queue.rd_index].msg_data[10]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>13)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA13, tx_queue.cec_msg[tx_queue.rd_index].msg_data[11]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>14)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA14, tx_queue.cec_msg[tx_queue.rd_index].msg_data[12]);
+	if(tx_queue.cec_msg[tx_queue.rd_index].msg_len>15)
+		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA15, tx_queue.cec_msg[tx_queue.rd_index].msg_data[13]);
 
 	hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	queue.msg[i].info = MSG_NULL;
+	tx_queue.rd_index = (tx_queue.rd_index+1) % CEC_MSG_QUEUE_SIZE;
+
 	return 0;
 }
 
 int hdmirx_cec_rx_monitor(void)
 {
-	int i = 0;
+	//int i = 0;
 	//static int ping_dev_cnt = 0;
-	int initiator_addr = queue.msg[queue.head].addr >> 4;
-	int dest_addr = queue.msg[queue.head].addr & 0xf;
-
+	//int initiator_addr = rx_queue.cec_msg[queue.head].addr >> 4;
+	//int dest_addr = rx_queue.cec_msg[queue.head].addr & 0xf;
+	/*
 	if(cec_ping_logic_addr(ping_dev_cnt) == PING_DEV_SUCCESS){
 		ping_dev_cnt = (ping_dev_cnt/10 + 1)*10;
 	}
@@ -425,385 +580,99 @@ int hdmirx_cec_rx_monitor(void)
 		}
 		ping_dev_cnt++;
 	}
-
-	if(queue.head == queue.end)
+	*/
+	if(cec_map_status <= E_CEC_MAP_POLLLING)
 		return 0;
-	if(queue.msg[queue.head].info != MSG_RX){
-		queue.head = (queue.head+1) % CEC_MSG_QUEUE_SIZE;
+	if(rx_queue.wr_index == rx_queue.rd_index)
 		return 0;
+	if(cec_log&(1<<1)){
+		printk("\n rx msg %x",rx_queue.cec_msg[rx_queue.rd_index].cmd);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].addr);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[0]);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[1]);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[2]);
 	}
-	if(cec_log&(1<<1))
-		printk("\n rx msg %x",queue.msg[queue.head].opcode);
-	switch(queue.msg[queue.head].opcode){
-#if CEC_ONE_TOUCH_PLAY_FUNC_SUPPORT
-	case E_MSG_IMAGE_VIEW_ON:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ACTIVE_SOURCE--len error");
-			break;
-		}
-		//if in standby, first pwr on
-		//if in text display,then turn to the image display state
-		//need not turn off PIP and tv menu.
-	case E_MSG_TEXT_VIEW_ON:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_TEXT_VIEW_ON--len error");
-			break;
-		}
-		//if in standby, firstly power on
-		//if pip text/menu on---remove text, OSD menu or PIP
-		break;
-#endif
-#if	(CEC_ROUTING_CONTROL_FUNC_SUPPORT || CEC_ONE_TOUCH_PLAY_FUNC_SUPPORT)
-	case E_MSG_ACTIVE_SOURCE:
-		if((queue.msg[queue.head].msg_len!=4)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ACTIVE_SOURCE--len error");
-			break;
-		}
-		//if in standby, first pwr on
-		//root(tv) and switch must change to active port with physical addr
-		break;
-#endif
-#if CEC_ROUTING_CONTROL_FUNC_SUPPORT
-	case E_MSG_INACTIVE_SOURCE:
-		if((queue.msg[queue.head].msg_len!=4)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_INACTIVE_SOURCE--len error");
-			break;
-		}
-		//initiator tell TV,no video to be presented to TV, or initiator will
-		//going to standby by customer; then TV must routing change to internal
-		//tuner,and sent "active source"(unsupported func) or sent "set stream path" to another dev
-		break;
-	case E_MSG_REQUEST_ACTIVE_SOURCE:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_REQ_ACTIVE_SOURCE--len error");
-			break;
-		}
-		break;
-	case E_MSG_ROUTING_CHANGE:
-		if((queue.msg[queue.head].msg_len!=6)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ROUTING_CHANGE--len error");
-			break;
-		}
-		break;
-	case E_MSG_ROUTING_INFO:
-		if((queue.msg[queue.head].msg_len!=6)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ROUTING_INFO--len error");
-			break;
-		}
-		break;
-	case E_MSG_SET_STREM_PATH:
-		if(cec_log&(1<<1))
-			printk("\n E_MSG_SET_STREM_PATH 0x86");
-		break;
-#endif
-#if CEC_STANDBY_FUNC_SUPPORT
-	case E_MSG_STANDBY:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ROUTING_INFO--len error");
-			break;
-		}
-		//pwr down
-		break;
-#endif
-#if CEC_ONE_TOUCH_RECORD_FUNC_SUPPORT	//only for recorder
-	case E_MSG_RECORD_ON:
-	case E_MSG_RECORD_OFF:
-	case E_MSG_RECORD_STATUS:
-	case E_MSG_RECORD_TV_SCREEN:
-		break;
-#endif
-#if CEC_TIMER_PROGRAMMER_FUNC_SUPPORT	//optional
-	case E_MSG_CLEAR_ANALOG_TIMER:
-	case E_MSG_CLEAR_DIGITAL_TIMER:
-	case E_MSG_CLEAR_EXT_TIMER:
-	case E_MSG_SET_ANALOG_TIMER:
-	case E_MSG_SET_DIGITAL_TIMER:
-	case E_MSG_SET_EXT_TIMER:
-	case E_MSG_SET_TIMER_PROGRAM_TITLE:
-	case E_MSG_TIMER_CLEARD_STATUS:
-	case E_MSG_TIMER_STATUS:
-		break;
-#endif
-#if (CEC_SYSTEM_INFORMATION_FUNC_SUPPORT || CEC_VENDOR_SPECIFIC_FUNC_SUPPORT)
-	case E_MSG_CEC_VERSION:
-		if((queue.msg[queue.head].msg_len!=3)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_CEC_VERSION--len error");
-			break;
-		}
-		break;
-	case E_MSG_GET_CEC_VERSION:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_GET_CEC_VERSION--len error");
-			break;
-		}
-		break;
-#endif
-#if CEC_SYSTEM_INFORMATION_FUNC_SUPPORT
-	case E_MSG_GIVE_PHYSICAL_ADDRESS:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_GIVE_PHYSICAL_ADDRESS--len error");
-			break;
-		}
-		break;
-	case E_MSG_REPORT_PHYSICAL_ADDRESS:
-		if((queue.msg[queue.head].msg_len!=5)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_SI_REPORT_PHYSICAL_ADDRESS--len error");
-			break;
-		}
-		if (initiator_addr<E_LA_MAX)
-			cec_add_dev(initiator_addr,
-				(queue.msg[queue.head].msg_data[0]<<8)|(queue.msg[queue.head].msg_data[1]),
-					queue.msg[queue.head].msg_data[2]);
-		break;
-	case E_MSG_GET_MENU_LANGUAGE:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_GET_MENU_LANGUAGE--len error");
-			break;
-		}
-		break;
-	case E_MSG_SET_MENU_LANGUAGE:
-		if(cec_log&(1<<1))
-			printk("\n E_MSG_SET_MENU_LANGUAGE 0x32");
-		break;
-#endif
-#if CEC_DECK_CONTROL_FUNC_SUPPORT	//optional
-	case E_MSG_DECK_CTRL:
-	case E_MSG_DECK_STATUS:
-	case E_MSG_GIVE_DECK_STATUS:
-	case E_MSG_PLAY:
-		break;
-#endif
-#if CEC_TUNER_CONTROL_FUNC_SUPPORT	//optional
-	case E_MSG_GIVE_TUNER_STATUS:
-	case E_MSG_SEL_ANALOG_SERVICE:
-	case E_MSG_SEL_DIGITAL_SERVICE:
-	case E_MSG_TUNER_DEVICE_STATUS:
-	case E_MSG_TUNER_STEP_DEC:
-	case E_MSG_TUNER_STEP_INC:
-		break;
-#endif
-#if CEC_VENDOR_SPECIFIC_FUNC_SUPPORT
-	case E_MSG_DEVICE_VENDOR_ID:
-    	//do nothing : any other interested device may store the vendor ID of the device
-		if((queue.msg[queue.head].msg_len!=5)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_VS_DEVICE_VENDOR_ID--len error");
-			break;
-		}
-		break;
-	case E_MSG_GIVE_DEVICE_VENDOR_ID:
-		if((queue.msg[queue.head].msg_len!=2)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_GIVE_DEVICE_VENDOR_ID--len error");
-			break;
-		}
-		break;
-	case E_MSG_VENDOR_COMMAND:			//optional
-	case E_MSG_VENDOR_COMMAND_WITH_ID:	//optional
-	case E_MSG_VENDOR_RC_BUT_DOWN:		//optional
-	case E_MSG_VENDOR_RC_BUT_UP:		//optional
-		break;
-#endif
-#if CEC_OSD_DISPLAY_FUNC_SUPPORT
-	case E_MSG_SET_OSD_STRING:			//optional
-		break;
-#endif
-#if CEC_DEVICE_OSD_NAME_TRANSFER_FUNC_SUPPORT
-	case E_MSG_OSDNT_GIVE_OSD_NAME:		//optional	TV no use
-		break;
-	case E_MSG_OSDNT_SET_OSD_NAME:		//optional	but pioneer DVD send
-		if((queue.msg[queue.head].msg_len!=3)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_ACTIVE_SOURCE--len error");
-			break;
-		}
-		//memcpy(cec_map[queue.msg[queue.head].addr>>4].cec_dev_name,
-				//queue.msg[queue.head].msg_data,
-					//queue.msg[queue.head].msg_len-2);
-		if(queue.msg[queue.head].msg_len >= 3)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[0] = queue.msg[queue.head].msg_data[0];
-		if(queue.msg[queue.head].msg_len >= 4)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[1] = queue.msg[queue.head].msg_data[1];
-		if(queue.msg[queue.head].msg_len >= 5)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[2] = queue.msg[queue.head].msg_data[2];
-		if(queue.msg[queue.head].msg_len >= 6)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[3] = queue.msg[queue.head].msg_data[3];
-		if(queue.msg[queue.head].msg_len >= 7)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[4] = queue.msg[queue.head].msg_data[4];
-		if(queue.msg[queue.head].msg_len >= 8)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[5] = queue.msg[queue.head].msg_data[5];
-		if(queue.msg[queue.head].msg_len >= 9)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[6] = queue.msg[queue.head].msg_data[6];
-		if(queue.msg[queue.head].msg_len >= 10)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[7] = queue.msg[queue.head].msg_data[7];
-		if(queue.msg[queue.head].msg_len >= 11)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[8] = queue.msg[queue.head].msg_data[8];
-		if(queue.msg[queue.head].msg_len >= 12)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[9] = queue.msg[queue.head].msg_data[9];
-		if(queue.msg[queue.head].msg_len >= 13)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[10] = queue.msg[queue.head].msg_data[10];
-		if(queue.msg[queue.head].msg_len >= 14)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[11] = queue.msg[queue.head].msg_data[11];
-		if(queue.msg[queue.head].msg_len >= 15)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[12] = queue.msg[queue.head].msg_data[12];
-		if(queue.msg[queue.head].msg_len >= 16)
-			cec_map[queue.msg[queue.head].addr>>4].cec_dev_name[13] = queue.msg[queue.head].msg_data[13];
-		break;
-#endif
-#if CEC_DEVICE_MENU_CONTROL_FUNC_SUPPORT
-	case E_MSG_DMC_MENU_STATUS:
-		if((queue.msg[queue.head].msg_len!=3)&&(cec_log&(1<<0))){
-			printk("\n E_MSG_DMC_MENU_STATUS--len error");
-			break;
-		}
-		break;
-	case E_MSG_DMC_MENU_REQUEST:
-		break;
-#endif
-#if (CEC_REMOTE_CONTROL_FUNC_PASSTHROUGH_SUPPORT || CEC_DEVICE_MENU_CONTROL_FUNC_SUPPORT)
-	case E_MSG_UI_PRESS:
-	case E_MSG_UI_RELEASE:
-		break;
-#endif
-#if CEC_POWER_STATUS_FUNC_SUPPORT
-	case E_MSG_GIVE_DEVICE_POWER_STATUS:
-	case E_MSG_REPORT_POWER_STATUS:
-		break;
-#endif
-#if CEC_GENERAL_PROTOCAL_FUNC_SUPPORT
-	case E_MSG_ABORT_MESSAGE:
-	case E_MSG_FEATURE_ABORT:
-		break;
-#endif
-#if CEC_SYSTEM_AUDIO_CONTROL_FUNC_SUPPORT
-	case E_MSG_ARC_GIVE_AUDIO_STATUS:
-	case E_MSG_ARC_GIVE_SYSTEM_AUDIO_MODE_STATUS:
-	case E_MSG_ARC_REPORT_AUDIO_STATUS:
-	case E_MSG_ARC_SET_SYSTEM_AUDIO_MODE:
-	case E_MSG_ARC_SYSTEM_AUDIO_MODE_REQUEST:
-	case E_MSG_ARC_SYSTEM_AUDIO_MODE_STATUS:
-	case E_MSG_ARC_SET_AUDIO_RATE:
-		break;
-#endif
-#if CEC_SYSTEM_INFORMATION_FUNC_SUPPORT
-	case E_MSG_ARC_INITIATE_ARC:
-	case E_MSG_ARC_REPORT_ARC_INITIATED:
-	case E_MSG_ARC_REPORT_ARC_TERMINATED:
-	case E_MSG_ARC_REQUEST_ARC_INITATION:
-	case E_MSG_ARC_REQUEST_ARC_TERMINATION:
-	case E_MSG_ARC_TERMINATED_ARC:
-		break;
-#endif
-	case E_MSG_CDC_MESSAGE:
-		break;
+	switch(rx_queue.cec_msg[rx_queue.rd_index].cmd){
+	case CMD_TCL_WIFI:
+	case CMD_TCL_ETHERNET:
+	case CMD_TCL_3D:
+	case CMD_TCL_PANEL_REVERSE:
+	case CMD_VPU_INIT:
+	case CMD_VPU_ENABLE:
+	case CMD_VPU_BYPASS:
+	case CMD_VPU_OUTPUT_MUX:
+	case CMD_VPU_TIMING:
+	case CMD_VPU_SOURCE:
+	case CMD_TCL_BRIDGE_SW_VER:
+	//case CMD_G9_MAINCODE_VER:
+	case CMD_TCL_DEVICE_ID:
+	//case CMD_G9_BOOTCODE_VER:
+	case CMD_TCL_CLIENT_TYPE:
+	//case CMD_INFO_G9_TO_FBC:
+	case CMD_TCL_DEVICE_NUM:
+	//case CMD_INFO_FBC_TO_G9:
+	case CMD_TCL_ACTIVE_KEY:
+	//case CMD_TIME_SYNC:
+	case CMD_TCL_ACTIVE_STATUS:
+	//case CMD_KEY_TRANSLATION:
+	case CMD_DBG_RD_REGISTER_ACCESS:
+	case CMD_DBG_RD_MEMORY_ACCESS:
+	case CMD_DBG_RD_SPI_ACCESS:
+	case CMD_DBG_RD_VPU_MEMORY_ACCESS:
+	case CMD_DBG_RD_MEMORY_TRANSFER:
+	case CMD_DBG_INPUT_KEY_DOWN:
+	case CMD_DBG_INPUT_KEY_UP:
+	case CMD_DBG_INPUT_REBOOT:
+	case CMD_DBG_WR_REGISTER_ACCESS:
+	case CMD_DBG_WR_MEMORY_ACCESS:
+	case CMD_DBG_WR_SPI_ACCESS:
+	case CMD_DBG_WR_VPU_MEMORY_ACCESS:
+	case CMD_DBG_WR_MEMORY_TRANSFER:
+	case CMD_NATURE_LIGHT_ONOFF:
+	case CMD_USR_BACKLIGHT_ONOFF:
+	case CMD_USR_BRIGHTNESS:
+	case CMD_USR_CONTRAST:
+	case CMD_USR_BACKLIGHT:
+	case CMD_USR_SATURATION:
+	case CMD_USR_DYNAMIC_CONTRAST:
+	case CMD_USR_PICTURE_MODE:
+	case CMD_TEST_PATTERN_ONOFF:
+	case CMD_TEST_PATTERN_SELECT:
+	case CMD_USR_GAMMA:
+	case CMD_DEF_SOUND_MODE:
+	case CMD_DEF_COLOR_TEMPERATURE:
+	case CMD_DEF_BRIGHTNESS:
+	case CMD_DEF_CONTRAST:
+	case CMD_DEF_COLOR:
+	case CMD_DEF_BACKLIGHT:
+	case CMD_AUTO_LUMA_ONOFF:
+	case CMD_HISTOGRAM:
+	case CMD_BLEND:
+	case CMD_DEMULA:
+	case CMD_COLORSPACE_CONVERSION:
+	case CMD_CM2:
+	case CMD_DEF_RED_GAIN:
+	case CMD_DEF_GREEN_GAIN:
+	case CMD_DEF_BLUE_GAIN:
+	case CMD_DEF_RED_OFFSET:
+	case CMD_DEF_GREEN_OFFSET:
+	case CMD_DEF_BLUE_OFFSET:
+	case CMD_DEF_PRE_RED_OFFSET:
+	case CMD_DEF_PRE_GREEN_OFFSET:
+	case CMD_DEF_PRE_BLUE_OFFSET:
+	case CMD_WHITEBLANCE:
+	case CMD_SET_SW_VERSION:
+	case CMD_3D:
 	default:
-		if(cec_log&(1<<1))
-			printk("\n msg %x not explain",queue.msg[queue.head].opcode);
 		break;
 	}
-	queue.msg[queue.head].info = MSG_NULL;
-	queue.head = (queue.head+1) % CEC_MSG_QUEUE_SIZE;
+	rx_queue.rd_index = (rx_queue.rd_index+1) % CEC_MSG_QUEUE_SIZE;
 	return 0;
 }
-void CEC_Config_LogicAddress(int addr)
-{
-    if(addr>15)
-		addr = 15;
-	if(addr >= 8){
-		hdmirx_wr_dwc(0x1f18,1<<(addr-8));
-		hdmirx_wr_dwc(0x1f14,0);
-  	}else{
-  		hdmirx_wr_dwc(0x1f14,1<<addr);
-		hdmirx_wr_dwc(0x1f18,0);
-  	}
 
-}
-
-#define HHI_CLK_32K_CNTL         0x105a
-#define Wr_reg_bits(reg, val, start, len) \
-  WRITE_MPEG_REG(reg, (READ_MPEG_REG(reg) & ~(((1L<<(len))-1)<<(start)))|((unsigned int)(val) << (start)))
-
-int cec_init(void)
-{
-	//set cec clk 32768k
-	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
-	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
-	//set logic addr
-	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_L, 0x00000001);
-	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_H, 0x00000000);
-
-	return 0;
-}
-/*
-void cec_ping_logic_addr(int cnt)
-{
-    enum _cec_dev_logic_addr_ i = E_LA_TV;
-	//if(!flag)
-		//cec_polling_msg(addr);
-	//else
-		//get_ping_ack();
-
-	for (i=E_LA_TV; i<E_LA_UNREGISTERED; i++){
-		if(msAPI_CEC_PingDevice(i)){
-			cec_dev_logicaddr[i] = LOGIC_ADDR_EXIST;
-			printk("\n logic %d exist",i);
-		}else{
-			cec_dev_logicaddr[i] = LOGIC_ADDR_NULL;
-			printk("\n logic %d NULL",i);
-		}
-	}
-
-}
-*/
-int test_cec(int flag)
-{
-    int enCecErrorCode = 0;
-	if(flag == 1){//pwr down
-	    hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, 0x0000<<4 | 4);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, 0x36);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000002);  //TX data num 1 byte
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	}else if(flag == 2){
-		//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
-		//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
-	    //enCecErrorCode = MApi_CEC_TxSendMsg(enPingDevice, (MsCEC_MSGLIST)0, (U8*)&enPingDevice, 0);
-	    //hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00000001);
-	    hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, 0x0000<<4 | 0xf);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, 0x82);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000002);  //TX data num 1 byte
-		//hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_L, 0x00000001);
-		//hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_H, 0x00000000);
-
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	}else if(flag == 3){//
-		//cec_ping_logic_addr(31);
-	}else if(flag == 4){// get physical addr
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, 0x0000<<4 | 4);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, 0x83);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000002);  //TX data num 1 byte
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	}
-	else if(flag == 5){// get physical addr
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000002);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA0, 0x0000<<4 | 4);
-		//hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_DATA1, 0x83);
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_TX_CNT, 0x00000001);  //TX data num 1 byte
-		printk("\n polling");
-		hdmirx_wr_dwc(HDMIRX_DWC_CEC_CTRL, 0x00000003);
-	}
-    return enCecErrorCode;
-
-
-
-    //hdmirx_rd_check_reg(HDMIRX_DEV_ID_DWC, HDMIRX_DWC_AUD_CLK_ISTS,     0, 0);
-
-}
 
 MODULE_PARM_DESC(cec_wait_for_ack_cnt, "\n cec_wait_for_ack_cnt \n");
 module_param(cec_wait_for_ack_cnt, int, 0664);
-
-MODULE_PARM_DESC(set_polling_msg_flag, "\n set_polling_msg_flag \n");
-module_param(set_polling_msg_flag, bool, 0664);
 
 MODULE_PARM_DESC(ping_dev_cnt, "\n ping_dev_cnt \n");
 module_param(ping_dev_cnt, int, 0664);
@@ -814,5 +683,8 @@ module_param(cec_log, int, 0664);
 MODULE_PARM_DESC(cec_ctrl_wait_times, "\n cec_ctrl_wait_times \n");
 module_param(cec_ctrl_wait_times, int, 0664);
 
-#endif
+MODULE_PARM_DESC(cec_enable, "\n cec_enable \n");
+module_param(cec_enable, int, 0664);
 
+MODULE_PARM_DESC(arc_enable, "\n arc_enable \n");
+module_param(arc_enable, int, 0664);

@@ -132,7 +132,7 @@
 #define VBI_BUF_DIV_EN //kuka add
 #define VBI_ON_M6TV //VBI in M6TV IC only support CC format
 #ifdef VBI_ON_M6TV
-#undef VBI_IRQ_EN
+//#undef VBI_IRQ_EN	//mark for which may result in getting reply vbi data!
 #endif
 
 // ***************************************************************************
@@ -214,7 +214,7 @@ typedef struct vbi_dev_s {
     unsigned char        *pac_addr_end;
     unsigned int         current_pac_wptr;
     unsigned int         last_pac_wptr;
-    unsigned int         vs_delay;
+    unsigned int         vs_delay;	//skip start frame vs for the vbi data is not ready so quickly
 
     struct vbi_slicer_s   *slicer;
     bool                   vbi_start;

@@ -275,7 +275,7 @@ static void mali_decide_next_status(struct mali_gpu_utilization_data *data, int*
 					change_mode = 2;
 				}
 			}
-		} else if (currentStep > pmali_plat->scale_info.minpp) {
+		} else if (currentStep > pmali_plat->scale_info.minclk) {
 			change_mode = 1;
 		} else if (num_cores_enabled > 1) { /* decrease PPS */
 			if (data->utilization_pp <= ld_down) {
@@ -393,4 +393,12 @@ void mali_gpu_utilization_callback(struct mali_gpu_utilization_data *data)
 	default:
 		break;
 	}
+}
+
+void mali_dev_restore(void)
+{
+	mali_dvfs_threshold_table * pdvfs = pmali_plat->dvfs_table;
+
+	//mali_perf_set_num_pp_cores(num_cores_enabled);
+	mali_clock_set(pdvfs[currentStep].freq_index);
 }

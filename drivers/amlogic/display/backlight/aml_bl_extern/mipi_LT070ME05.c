@@ -36,9 +36,13 @@ static struct bl_extern_config_t *bl_ext_config = NULL;
 static unsigned int bl_status = 1;
 static unsigned int bl_level = 0;
 
+//******************** mipi command ********************//
+//format:  data_type, num, data....
+//special: data_type=0xff, num<0xff means delay ms, num=0xff means ending.
+//******************************************************//
 static int bl_extern_set_level(unsigned int level)
 {
-    unsigned char payload[]={0x15,0x51,1,0xe6,0xff,0xff};
+    unsigned char payload[]={0x15,2,0x51,0xe6,0xff,0xff};
 
     bl_level = level;
 
@@ -61,7 +65,10 @@ static int bl_extern_set_level(unsigned int level)
 static int bl_extern_power_on(void)
 {
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 1);
+      if(bl_ext_config->gpio_on == 2)
+    			bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    	else		
+        	bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_on);
     }
 
     bl_status = 1;
@@ -74,7 +81,10 @@ static int bl_extern_power_on(void)
 static int bl_extern_power_off(void)
 {
     if (bl_ext_config->gpio_used > 0) {
-        bl_extern_gpio_direction_output(bl_ext_config->gpio, 0);
+      if(bl_ext_config->gpio_off == 2)
+    			bl_extern_gpio_direction_input(bl_ext_config->gpio);
+    	else
+        	bl_extern_gpio_direction_output(bl_ext_config->gpio, bl_ext_config->gpio_off);
     }
 
     printk("%s\n", __FUNCTION__);

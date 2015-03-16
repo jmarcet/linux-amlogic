@@ -102,8 +102,8 @@ static int vidio_set_fmt_ticks=0;
 
 extern int disable_sp2518;
 
-static int sp2518_h_active=1600;//800;
-static int sp2518_v_active=1198;//600;
+static int sp2518_h_active=1568;//800;
+static int sp2518_v_active=1176;//600;
 
 static int sp2518_have_open=0;
 static struct v4l2_fract sp2518_frmintervals_active = {
@@ -1260,7 +1260,7 @@ void SP2518_set_night_mode(struct sp2518_device *dev,enum  camera_night_mode_fli
 		{
 			i2c_put_byte_add8_new(client,0xfd,0x00);	//disable AE,add by sp_yjp,20120905
 			i2c_put_byte_add8_new(client,0x32,0x05);
-			printk("night mode 50hz\r\n");
+			printk("night mode 50hz\n");
 			#ifdef CLK24M_48M
 
 			//capture preview night 48M 50hz fix 6FPS maxgain 
@@ -1337,7 +1337,7 @@ void SP2518_set_night_mode(struct sp2518_device *dev,enum  camera_night_mode_fli
 		{
 			i2c_put_byte_add8_new(client,0xfd,0x00);	//disable AE,add by sp_yjp,20120905
 			i2c_put_byte_add8_new(client,0x32,0x05);
-			printk("night mode 60hz\r\n");
+			printk("night mode 60hz\n");
 
 			#ifdef CLK24M_48M
 
@@ -1423,7 +1423,7 @@ void SP2518_set_night_mode(struct sp2518_device *dev,enum  camera_night_mode_fli
 		{
 			i2c_put_byte_add8_new(client,0xfd,0x00);	//disable AE,add by sp_yjp,20120905
 			i2c_put_byte_add8_new(client,0x32,0x05);
-			printk("normal mode 50hz\r\n");	
+			printk("normal mode 50hz\n");	
 			#ifdef CLK24M_48M
 			//capture preview daylight 48M 50hz fix 9FPS maxgain  
 			i2c_put_byte_add8_new(client,0xfd,0x00);
@@ -1491,7 +1491,7 @@ void SP2518_set_night_mode(struct sp2518_device *dev,enum  camera_night_mode_fli
 		{
 			i2c_put_byte_add8_new(client,0xfd,0x00);	//disable AE,add by sp_yjp,20120905
 			i2c_put_byte_add8_new(client,0x32,0x05);
-			printk("normal mode 60hz\r\n");	
+			printk("normal mode 60hz\n");	
 			#ifdef CLK24M_48M
 			//capture preview daylight 48M 60Hz fix 9FPS maxgain   
 			i2c_put_byte_add8_new(client,0xfd,0x00);
@@ -1567,11 +1567,11 @@ void SP2518_set_param_banding(struct sp2518_device *dev,enum  camera_banding_fli
 	switch(banding) {
 	case CAM_BANDING_50HZ: 		
 		Antiflicker = DCAMERA_FLICKER_50HZ;
-		printk( " set_SP2518_anti_flicker  50hz \r\n" );
+		printk( " set_SP2518_anti_flicker  50hz\n" );
 		break;
 	case CAM_BANDING_60HZ:
 		Antiflicker = DCAMERA_FLICKER_60HZ;
-		printk( " set_SP2518_anti_flicker  60hz \r\n" );
+		printk( " set_SP2518_anti_flicker  60hz\n" );
 		break;
 	default:
 		break;
@@ -1690,8 +1690,8 @@ void SP2518_set_resolution(struct sp2518_device *dev,int height,int width)
 		mdelay(100);
                sp2518_frmintervals_active.denominator 	= 5;
                sp2518_frmintervals_active.numerator	= 1;
-		sp2518_h_active=1600;
-		sp2518_v_active=1198;//1200;
+		sp2518_h_active=1568;
+		sp2518_v_active=1176;//1200;
 		
 
 		}
@@ -2402,9 +2402,9 @@ static int vidioc_streamon(struct file *file, void *priv, enum v4l2_buf_type i)
 	para.hsync_phase = 0;
 	para.vsync_phase = 1;
 	para.hs_bp = 0;
-	para.vs_bp = 2;
+	para.vs_bp = 24;
 	para.cfmt = TVIN_YUV422;
-        para.dfmt = TVIN_NV21;
+        para.dfmt = TVIN_YUV422;
 	para.scan_mode = TVIN_SCAN_MODE_PROGRESSIVE;	
 	para.skip_count =  2; //skip_num
 
@@ -2698,8 +2698,8 @@ static int sp2518_close(struct file *file)
 	dprintk(dev, 1, "close called (dev=%s, users=%d)\n",
 		video_device_node_name(vdev), dev->users);
 #if 1
-	sp2518_h_active=1600;//800//zyy
-	sp2518_v_active=1198;//1200;//600
+	sp2518_h_active=1568;//800//zyy
+	sp2518_v_active=1176;//1200;//600
 	sp2518_qctrl[0].default_value=0;
 	sp2518_qctrl[1].default_value=4;
 	sp2518_qctrl[2].default_value=0;

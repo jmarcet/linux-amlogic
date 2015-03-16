@@ -20,6 +20,8 @@
 #include "mali_osk_profiling.h"
 #endif
 
+#include <mali_platform.h>
+
 /* Number of frame registers on Mali-200 */
 #define MALI_PP_MALI200_NUM_FRAME_REGISTERS ((0x04C/4)+1)
 /* Number of frame registers on Mali-300 and later */
@@ -148,6 +150,8 @@ _mali_osk_errcode_t mali_pp_stop_bus_wait(struct mali_pp_core *core)
 
 	if (MALI_REG_POLL_COUNT_FAST == i) {
 		MALI_PRINT_ERROR(("Mali PP: Failed to stop bus on %s. Status: 0x%08x\n", core->hw_core.description, mali_hw_core_register_read(&core->hw_core, MALI200_REG_ADDR_MGMT_STATUS)));
+		if (mali_gp_reset_fail < 65533)
+			mali_gp_reset_fail++;
 		return _MALI_OSK_ERR_FAULT;
 	}
 	return _MALI_OSK_ERR_OK;

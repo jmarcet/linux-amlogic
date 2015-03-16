@@ -60,8 +60,8 @@ static u32 mali_dvfs_clk_sample[] = {
 };
 
 static mali_dvfs_threshold_table mali_dvfs_table[]={
-		{ 0, 0, 3,  70, 180}, /* for 182.1  */
-		{ 1, 1, 3, 108, 205}, /* for 318.7  */
+		{ 0, 0, 3,  30,  80}, /* for 182.1  */
+		{ 1, 1, 3,  40, 205}, /* for 318.7  */
 		{ 2, 2, 3, 150, 215}, /* for 425.0  */
 		{ 3, 3, 3, 170, 253}, /* for 510.0  */
 		{ 4, 4, 3, 230, 255},  /* for 637.5  */
@@ -253,7 +253,7 @@ static int mali_cri_light_suspend(size_t param)
 	struct mali_pmu_core *pmu;
 
 	ret = 0;
-	mali_pm_statue = 0;
+	mali_pm_statue = 1;
 	device = (struct device *)param;
 	pmu = mali_pmu_get_global_pmu_core();
 
@@ -286,7 +286,7 @@ static int mali_cri_light_resume(size_t param)
 		/* Need to notify Mali driver about this event */
 		ret = device->driver->pm->runtime_resume(device);
 	}
-	mali_pm_statue = 1;
+	mali_pm_statue = 0;
 	return ret;
 }
 

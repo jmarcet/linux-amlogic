@@ -26,6 +26,8 @@ struct bl_extern_config_t {
 	Bl_Extern_Type_t type;
 	unsigned int gpio_used;
 	int gpio;
+	unsigned char gpio_on;
+	unsigned char gpio_off;
 	int i2c_addr;
 	int i2c_bus;
 	int spi_cs;

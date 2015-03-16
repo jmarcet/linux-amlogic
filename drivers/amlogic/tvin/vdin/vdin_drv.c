@@ -132,6 +132,19 @@ static unsigned int irq_cnt = 0;
 module_param(irq_cnt,uint,0664);
 MODULE_PARM_DESC(irq_cnt,"counter of irq");
 
+static unsigned int vdin_irq_flag = 0;
+module_param(vdin_irq_flag,uint,0664);
+MODULE_PARM_DESC(vdin_irq_flag,"vdin_irq_flag");
+
+/*1:support rdma;0:no support rdma*/
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+static unsigned int vdin_rdma_flag = 1;
+#else
+static unsigned int vdin_rdma_flag = 0;
+#endif
+module_param(vdin_rdma_flag,uint,0664);
+MODULE_PARM_DESC(vdin_rdma_flag,"vdin_rdma_flag");
+
 static int irq_max_count = 0;
 static void vdin_backup_histgram(struct vframe_s *vf, struct vdin_dev_s *devp);
 
@@ -227,6 +240,8 @@ int vdin_open_fe(enum tvin_port_e port, int index,  struct vdin_dev_s *devp)
 	devp->parm.info.fmt    = TVIN_SIG_FMT_NULL;
 	devp->parm.info.status = TVIN_SIG_STATUS_NULL;
 	devp->dec_enable = 1;  //enable decoder
+	memset(&devp->pre_prop, 0, sizeof(devp->pre_prop));  /* clear color para*/
+	memset(&devp->prop, 0, sizeof(devp->prop));  /* clear color para*/
 
 	vdin_set_default_regmap(devp->addr_offset);
 
@@ -282,12 +297,19 @@ static inline void vdin_set_source_type(struct vdin_dev_s *devp, struct vframe_s
 {
 	switch (devp->parm.port)
 	{
+		#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+		case TVIN_PORT_CVBS3:
+			vf->source_type= VFRAME_SOURCE_TYPE_TUNER;
+			break;
+		#endif
 		case TVIN_PORT_CVBS0:
 			vf->source_type= VFRAME_SOURCE_TYPE_TUNER;
 			break;
 		case TVIN_PORT_CVBS1:
 		case TVIN_PORT_CVBS2:
+		#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
 		case TVIN_PORT_CVBS3:
+		#endif
 		case TVIN_PORT_CVBS4:
 		case TVIN_PORT_CVBS5:
 		case TVIN_PORT_CVBS6:
@@ -584,9 +606,9 @@ void vdin_start_dec(struct vdin_dev_s *devp)
         devp->curr_field_type = vdin_get_curr_field_type(devp);
 	//pr_info("start clean_counter is %d\n",clean_counter);
 	/* configure regs and enable hw */
-	#if ((defined CONFIG_ARCH_MESON8)||(defined CONFIG_ARCH_MESON8B))
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_ON);
-	#endif
+#endif
 	vdin_hw_enable(devp->addr_offset);
 	vdin_set_all_regs(devp);
 
@@ -623,6 +645,7 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	timestamp_pcrscr_enable(1);
 	}
 	#endif
+	irq_cnt = 0;
 }
 
 /*
@@ -638,7 +661,6 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	/* avoid null pointer oops */
 	if (!devp || !devp->frontend)
 		return;
-
 	vf_unreg_provider(&devp->vprov);
 	if (!(devp->parm.flag & TVIN_PARM_FLAG_CAP) &&
 			devp->frontend->dec_ops && devp->frontend->dec_ops->stop)
@@ -648,7 +670,7 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	disable_irq_nosync(devp->irq);
 	/* reset default canvas  */
 	vdin_set_def_wr_canvas(devp);
-	#if ((defined CONFIG_ARCH_MESON8)||(defined CONFIG_ARCH_MESON8B))
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
 	#endif
 	memset(&devp->prop, 0, sizeof(struct tvin_sig_property_s));
@@ -736,7 +758,7 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 	vdin_start_dec(devp);
 	devp->flags |= VDIN_FLAG_DEC_OPENED;
 	devp->flags |= VDIN_FLAG_DEC_STARTED;
-	irq_cnt = 0;
+
 	return 0;
 }
 
@@ -910,7 +932,6 @@ static void vdin_vf_unreg(struct vdin_dev_s *devp)
 	vf_unreg_provider(&devp->vprov);
 }
 
-#ifdef CONFIG_POST_PROCESS_MANAGER_3D_PROCESS
 static inline void vdin_set_view(struct vdin_dev_s *devp, struct vframe_s *vf)
 {
 	struct vframe_view_s *left_eye, *right_eye;
@@ -1019,7 +1040,6 @@ static inline void vdin_set_view(struct vdin_dev_s *devp, struct vframe_s *vf)
 			break;
 	}
 }
-#endif
 irqreturn_t vdin_isr_simple(int irq, void *dev_id)
 {
 	struct vdin_dev_s *devp = (struct vdin_dev_s *)dev_id;
@@ -1065,7 +1085,11 @@ static void vdin_backup_histgram(struct vframe_s *vf, struct vdin_dev_s *devp)
  *3--it is better to shorter the time,
  */
 #define VDIN_MEAS_24M_1MS 24000
-
+#ifdef CONFIG_VSYNC_RDMA
+int RDMA2_WR_MPEG_REG(unsigned long adr, unsigned long val);
+int RDMA2_WR_MPEG_REG_BITS(unsigned long adr, unsigned long val, unsigned long start, unsigned long len);
+int rdma2_config(unsigned int trigger_signal);
+#endif
 irqreturn_t vdin_isr(int irq, void *dev_id)
 {
 	ulong flags;
@@ -1076,18 +1100,20 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	struct vf_entry *curr_wr_vfe = NULL;
 	struct vframe_s *curr_wr_vf = NULL;
 	unsigned int last_field_type;
-	signed short step = 0;
 	struct tvin_decoder_ops_s *decops;
 	unsigned int stamp = 0;
 	struct tvin_state_machine_ops_s *sm_ops;
 	//unsigned long long total_time;
 	//unsigned long long total_tmp;
+#ifdef TVAFE_VGA_SUPPORT
 	struct tvafe_vga_parm_s vga_parm = {0};
 	bool is_vga = false;
-
+	signed short step = 0;
+#endif
 	if (!devp) return IRQ_HANDLED;
 
-        isr_log(devp->vfp);
+	isr_log(devp->vfp);
+	irq_cnt++;
 	/* debug interrupt interval time
 	 *
 	 * this code about system time must be outside of spinlock.
@@ -1098,6 +1124,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 
 	/* avoid null pointer oops */
 	if (!devp || !devp->frontend) {
+		vdin_irq_flag = 1;
 		goto irq_handled;
 	}
 	//vdin_write_done_check(devp->addr_offset, devp);
@@ -1107,6 +1134,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	{
 		vdin_hw_disable(devp->addr_offset);
 		devp->flags &= ~VDIN_FLAG_DEC_STOP_ISR;
+		vdin_irq_flag = 2;
 		goto irq_handled;
 	}
 	stamp  = vdin_get_meas_vstamp(devp->addr_offset);
@@ -1114,21 +1142,30 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		devp->curr_wr_vfe = provider_vf_get(devp->vfp);
 		/*save the first field stamp*/
 		devp->stamp = stamp;
+		vdin_irq_flag = 3;
 		goto irq_handled;
 	}
+	if(devp->last_wr_vfe && (vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080)){
+		provider_vf_put(devp->last_wr_vfe, devp->vfp);
+		devp->last_wr_vfe = NULL;
+		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
+	}
 	/*check vs is valid base on the time during continuous vs*/
-	if(vdin_check_cycle(devp) && (!(isr_flag & VDIN_BYPASS_CYC_CHECK)))
+	if(vdin_check_cycle(devp) && (!(isr_flag & VDIN_BYPASS_CYC_CHECK))){
+		vdin_irq_flag = 4;
 		goto irq_handled;
+	}
 
 	devp->hcnt64 = vdin_get_meas_hcnt64(devp->addr_offset);
 
 	/* ignore invalid vs base on the continuous fields different cnt to void screen flicker */
 	if (vdin_check_vs(devp)&&(!(isr_flag & VDIN_BYPASS_VSYNC_CHECK)))
 	{
+		vdin_irq_flag = 5;
 		goto irq_handled;
 	}
 	sm_ops = devp->frontend->sm_ops;
-
+#ifdef TVAFE_VGA_SUPPORT
 	if ((devp->parm.port >= TVIN_PORT_VGA0) &&
 			(devp->parm.port <= TVIN_PORT_VGA7) &&
 			(devp->dec_enable))
@@ -1139,6 +1176,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	else{
 		is_vga = false;
 	}
+#endif
 	last_field_type = devp->curr_field_type;
 	devp->curr_field_type = vdin_get_curr_field_type(devp);
 
@@ -1146,6 +1184,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	state = tvin_get_sm_status(devp->index);
 	if (devp->parm.info.status != TVIN_SIG_STATUS_STABLE ||
 			state != TVIN_SM_STATUS_STABLE) {
+		vdin_irq_flag = 6;
 		goto irq_handled;
 	}
 
@@ -1155,6 +1194,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	    ((last_field_type & VIDTYPE_INTERLACE_BOTTOM) == VIDTYPE_INTERLACE_BOTTOM)
 	   )
 	{
+		vdin_irq_flag = 7;
 		goto irq_handled;
 	}
 	curr_wr_vfe = devp->curr_wr_vfe;
@@ -1162,10 +1202,12 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 
 	decops = devp->frontend->dec_ops;
 	if (decops->decode_isr(devp->frontend, devp->hcnt64) == TVIN_BUF_SKIP) {
+		vdin_irq_flag = 8;
 		goto irq_handled;
 	}
 	if(devp->parm.port >= TVIN_PORT_CVBS0 && devp->parm.port <= TVIN_PORT_CVBS7)
 		curr_wr_vf->phase = sm_ops->get_secam_phase(devp->frontend)? VFRAME_PHASE_DB : VFRAME_PHASE_DR;
+#ifdef TVAFE_VGA_SUPPORT
 	if (is_vga)
 		sm_ops->vga_get_param(&vga_parm, devp->frontend);
 	/* 4.csc=default wr=zoomed */
@@ -1180,6 +1222,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 			vdin_delay_line(1, devp->addr_offset);
 		else
 			vdin_delay_line(0, devp->addr_offset);
+		vdin_irq_flag = 9;
 
 		goto irq_handled;
 	}
@@ -1192,6 +1235,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		curr_wr_vf->vga_parm.hpos_step = vga_parm.hpos_step;
 		curr_wr_vf->vga_parm.vpos_step = vga_parm.vpos_step;
 		set_wr_ctrl(curr_wr_vf->vga_parm.hpos_step, curr_wr_vf->vga_parm.vpos_step,devp);
+		vdin_irq_flag = 10;
 
 		goto irq_handled;
 	}
@@ -1199,31 +1243,35 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	if ((curr_wr_vf->vga_parm.vga_in_clean == 3) && is_vga)
 	{
 		curr_wr_vf->vga_parm.vga_in_clean--;
+		vdin_irq_flag = 11;
 
 		goto irq_handled;
 	}
-
+#endif
 
 	if (ignore_frames < max_ignore_frames ) {
 		ignore_frames++;
+		vdin_irq_flag = 12;
 
 		goto irq_handled;
 	}
 
 	if (sm_ops->check_frame_skip && sm_ops->check_frame_skip(devp->frontend)) {
+		vdin_irq_flag = 13;
 		goto irq_handled;
 	}
 
 	next_wr_vfe = provider_vf_peek(devp->vfp);
 	if (!next_wr_vfe) {
+		vdin_irq_flag = 14;
 		goto irq_handled;
 	}
 	/*if vdin-nr,di must get vdin current field type which di pre will read*/
-        if(vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL))
+        if(vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL)){
 		curr_wr_vf->type = devp->curr_field_type;
-	else
+	}else{
 		curr_wr_vf->type = last_field_type;
-
+  }
 	/* for 2D->3D mode or hdmi 3d mode& interlaced format, fill-in as progressive format */
 	if (((devp->parm.flag & TVIN_PARM_FLAG_2D_TO_3D)||(curr_wr_vf->trans_fmt)) &&
 	    (last_field_type & VIDTYPE_INTERLACE)
@@ -1237,11 +1285,11 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	vdin_set_vframe_prop_info(curr_wr_vf, devp);
 	vdin_backup_histgram(curr_wr_vf, devp);
 
-#ifdef CONFIG_POST_PROCESS_MANAGER_3D_PROCESS
-	curr_wr_vf->trans_fmt = devp->parm.info.trans_fmt;
+	if((devp->parm.port >= TVIN_PORT_HDMI0)&&(devp->parm.port <= TVIN_PORT_HDMI7)){
+		curr_wr_vf->trans_fmt = devp->parm.info.trans_fmt;
 
-	vdin_set_view(devp, curr_wr_vf);
-#endif
+		vdin_set_view(devp, curr_wr_vf);
+	}
 	vdin_calculate_duration(devp);
 	/* put for receiver
 
@@ -1257,18 +1305,36 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	else
 		curr_wr_vf->height = devp->v_active;
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
-	provider_vf_put(curr_wr_vfe, devp->vfp);
+	if((vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080))
+		devp->last_wr_vfe = curr_wr_vfe;
+	else
+		provider_vf_put(curr_wr_vfe, devp->vfp);
 
 	/* prepare for next input data */
 	next_wr_vfe = provider_vf_get(devp->vfp);
+#ifdef CONFIG_VSYNC_RDMA
+	if((devp->h_active > 1920 || devp->v_active > 1080)&&(vdin_rdma_flag == 1)){
+                RDMA2_WR_MPEG_REG_BITS(VDIN_WR_CTRL, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);
+/* prepare for chroma canvas*/
+                if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
+                        RDMA2_WR_MPEG_REG_BITS(VDIN_WR_CTRL2,  (next_wr_vfe->vf.canvas0Addr>>8)&0xff, WRITE_CHROMA_CANVAS_ADDR_BIT,WRITE_CHROMA_CANVAS_ADDR_WID);
+        }else{
+      	        vdin_set_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff));
+                /* prepare for chroma canvas*/
+                if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
+                        vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
+        }
+#else
 	vdin_set_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff));
         /* prepare for chroma canvas*/
         if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
-
+#endif
         devp->curr_wr_vfe = next_wr_vfe;
-	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
+	if((vdin_rdma_flag == 0)||((devp->h_active <= 1920) && (devp->v_active <= 1080)))
+		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
+#ifdef TVAFE_VGA_SUPPORT
 	/* 1.csc=blank wr=default*/
 	if (is_vga &&
 			((vga_parm.hpos_step != next_wr_vfe->vf.vga_parm.hpos_step) ||
@@ -1294,9 +1360,12 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		if (devp->vga_clr_cnt > 0)
 			devp->vga_clr_cnt--;
 	}
+#endif
 irq_handled:
 	spin_unlock_irqrestore(&devp->isr_lock, flags);
-
+#ifdef CONFIG_VSYNC_RDMA
+        rdma2_config(1);//trigger by vdin0 vsync
+#endif
         isr_log(devp->vfp);
 	return IRQ_HANDLED;
 }
@@ -1333,7 +1402,8 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 		devp->stamp = stamp;
 		goto irq_handled;
 	}
-	if(devp->parm.port == TVIN_PORT_VIU){
+
+	if((devp->parm.port == TVIN_PORT_VIU)||(devp->parm.port == TVIN_PORT_CAMERA)){
 	        if(!vdin_write_done_check(devp->addr_offset, devp)){
 			if(vdin_dbg_en)
 				pr_info("[vdin.%u] write undone skiped.\n",devp->index);
@@ -1341,12 +1411,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	        }
 	}
 
-
 	if(devp->last_wr_vfe){
-		struct timeval ts;
-		do_gettimeofday(&ts);
-		devp->last_wr_vfe->vf.pts_us64 = ts.tv_sec;
-		devp->last_wr_vfe->vf.pts = ts.tv_usec;
 		provider_vf_put(devp->last_wr_vfe, devp->vfp);
 		devp->last_wr_vfe = NULL;
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);

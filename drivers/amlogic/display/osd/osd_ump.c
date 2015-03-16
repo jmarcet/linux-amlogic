@@ -33,8 +33,8 @@ static int _disp_get_ump_secure_id(struct fb_info *info, myfb_dev_t *g_fbi,
 	ump_secure_id secure_id;
 
 	if (!g_fbi->ump_wrapped_buffer[info->node][buf]) {
-		ump_dd_physical_block ump_memory_description;
 		printk("create_disp_get_ump_secure_id******%d\n", buf);
+		ump_dd_physical_block ump_memory_description;
 
 		ump_memory_description.addr = info->fix.smem_start;
 		ump_memory_description.size = info->fix.smem_len;

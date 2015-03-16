@@ -2631,7 +2631,7 @@ static int hdmitx_cntl(hdmitx_dev_t* hdmitx_device, unsigned cmd, unsigned argv)
     }
     else if(cmd == HDMITX_EARLY_SUSPEND_RESUME_CNTL) {
         if(argv == HDMITX_EARLY_SUSPEND) {
-            aml_set_reg32_bits(P_HHI_VID_PLL_CNTL, 0, 30, 1);
+            //aml_set_reg32_bits(P_HHI_VID_PLL_CNTL, 0, 30, 1);
             hdmi_phy_suspend();
         }
         if(argv == HDMITX_LATE_RESUME) {
@@ -3261,6 +3261,24 @@ static int hdmitx_cntl_misc(hdmitx_dev_t* hdmitx_device, unsigned cmd, unsigned 
         break;
     case MISC_VIID_IS_USING:
         return !!(aml_read_reg32(P_HHI_VID2_PLL_CNTL) & (1 << 30));     // bit30: enable
+        break;
+    case MISC_COMP_HPLL:
+        if (argv == COMP_HPLL_SET_OPTIMISE_HPLL1)
+            printk("TODO %s[%d]\n", __func__, __LINE__);
+        if (argv == COMP_HPLL_SET_OPTIMISE_HPLL2)
+            printk("TODO %s[%d]\n", __func__, __LINE__);
+        break;
+    case MISC_COMP_AUDIO:
+        if (argv == COMP_AUDIO_SET_N_6144x2) {
+			if(hdmitx_device->cur_audio_param.type == CT_PCM){
+				if( (hdmitx_device->cur_VIC == HDMI_480p60) || (hdmitx_device->cur_VIC == HDMI_480p60_16x9) ||
+					(hdmitx_device->cur_VIC == HDMI_480i60) || (hdmitx_device->cur_VIC == HDMI_480i60_16x9) )
+					hdmi_wr_reg(TX_SYS1_ACR_N_1, 0x30);
+			}
+        }
+        if (argv == COMP_AUDIO_SET_N_6144x3) {
+            hdmi_wr_reg(TX_SYS1_ACR_N_1, 0x48);
+        }
         break;
     default:
         hdmi_print(ERR, "misc: " "hdmitx: unknown cmd: 0x%x\n", cmd);

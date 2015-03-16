@@ -586,7 +586,7 @@
 #define CHROMA_DUALLOWPASS_MTN1_SEL_BIT        26
 #define CHROMA_DUALLOWPASS_MTN1_SEL_WID  2
 #define CHROMA_DUALLOWPASS_MTN_SEL_BIT          24
-#define CHROMA_DUALLOWPASS_MTN_SEL_WID    2    
+#define CHROMA_DUALLOWPASS_MTN_SEL_WID    2
 #define HXCR_MOT_FILT_SEL_BIT                               22
 #define HXCR_MOT_FILT_SEL_WID                         2
 #define HXCR_NOMOT_FILT_SEL_BIT                          20
@@ -594,7 +594,7 @@
 #define CDETECT_CHROMA_GAIN_MAX_DEC_TC_BIT         16
 #define CDETECT_CHROMA_GAIN_MAX_DEC_TC_WID      3
 #define CDETECT_CHROMA_GAIN_MAX_DEC_VALUE_BIT         8
-#define CDETECT_CHROMA_GAIN_MAX_DEC_VALUE_WID   8    
+#define CDETECT_CHROMA_GAIN_MAX_DEC_VALUE_WID   8
 #define CDETECT_CHROMA_ALLOWED_MAX_BIT          0
 #define CDETECT_CHROMA_ALLOWED_MAX_WID    8
 
@@ -609,7 +609,7 @@
 #define BRIGHTNESS_AML_WID               9
 
 #define ACD_REG_58                                          ((ACD_BASE_ADD+0x58)<<2)
-#define F01234_STILL_EN_BIT                             31        
+#define F01234_STILL_EN_BIT                             31
 #define F01234_STILL_EN_WID                       1
 #define MD2_MAIN_PATH_MTN_SHIFT_BIT         25
 #define MD2_MAIN_PATH_MTN_SHIFT_WID   3
@@ -701,9 +701,9 @@
 #define ACD_REG_66                                      ((ACD_BASE_ADD+0x66)<<2)
 #define AML_2DCOMB_EN_BIT                   31
 #define AML_2DCOMB_EN_WID             1
-#define NOTCH_VCOMB_YIN_SEL_BIT      10  
+#define NOTCH_VCOMB_YIN_SEL_BIT      10
 #define NOTCH_VCOMB_YIN_SEL_WID   2
-#define NOTCH_VCOMB_CIN_SEL_BIT         8  
+#define NOTCH_VCOMB_CIN_SEL_BIT         8
 #define NOTCH_VCOMB_CIN_SEL_WID   2
 #define HP_IP_ERR_MIN_BIT                       7
 #define HP_IP_ERR_MIN_WID                 1
@@ -1817,13 +1817,13 @@
 #define FREERUN_VSYNC_PRD_BIT                 16
 #define FREERUN_VSYNC_PRD_WID           16
 #define FREERUN_HSYNC_PRD_BIT                 0
-#define FREERUN_HSYNC_PRD_WID           16    
+#define FREERUN_HSYNC_PRD_WID           16
 
 #define TVFE_FREERUN_GEN_COAST                       ((TOP_BASE_ADD+0x13)<<2)
 #define FREERUN_VSYNC_ST_BIT                 16
 #define FREERUN_VSYNC_ST_WID           16
 #define FREERUN_HSYNC_ST_BIT                 0
-#define FREERUN_HSYNC_ST_WID           16  
+#define FREERUN_HSYNC_ST_WID           16
 
 #define TVFE_FREERUN_GEN_CTRL                          ((TOP_BASE_ADD+0x14)<<2)
 #define FREERUN_CTRL_ENABLE_BIT               0
@@ -2605,7 +2605,6 @@
 #define AAFILTER_Y_ALPHA0_WID     8
 #define AAFILTER_Y_ALPHA1_BIT           0
 #define AAFILTER_Y_ALPHA1_WID     8
-
 #define TVFE_AAFILTER_CTRL2                           ((TOP_BASE_ADD+0x92)<<2)
 #define AAFILTER_Y_ALPHA2_BIT           24
 #define AAFILTER_Y_ALPHA2_WID     8
@@ -2741,6 +2740,43 @@
 #define AFC_YC_ALHPA12_BIT                       0
 #define AFC_YC_ALHPA12_WID                 8
 
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#define TVFE_ATV_DMD_CLP_CTRL                                ((TOP_BASE_ADD+0xA8)<<2)
+#define ATV_DMD_IN_EN_BIT			24
+#define ATV_DMD_IN_EN_WID			1
+#define ATV_SIGNED_IN_ATV_DMD_BIT		21
+#define ATV_SIGNED_IN_ATV_DMD_WID		1
+#define ATV_DMD_IN_CLAMP_EN_BIT			20
+#define ATV_DMD_IN_CLAMP_EN_WID			1
+#define ATV_DMD_IN_CLAMP_STEP_BIT		0
+#define ATV_DMD_IN_CLAMP_STEP_WID		20	//u12.8
+
+#define TVFE_VAFE_CTRL0					     ((TOP_BASE_ADD+0xB0)<<2)
+#define VAFE_PGA_CPCAPSEL_BIT			22
+#define VAFE_PGA_CPCAPSEL_WID			2
+#define VAFE_FILTER_EN_BIT			19
+#define VAFE_FILTER_EN_WID			1
+#define VAFE_FILTER_BIAS_ADJ_BIT		17
+#define VAFE_FILTER_BIAS_ADJ_WID		2
+#define VAFE_TUNC_ADJ_BIT			12
+#define VAFE_TUNC_ADJ_WID			5
+#define VAFE_BW_SEL_BIT				8
+#define VAFE_BW_SEL_WID				4
+#define VAFE_FILTER_RESV_BIT			0
+#define VAFE_FILTER_RESV_WID			8
+
+#define TVFE_VAFE_CTRL1     				     ((TOP_BASE_ADD+0xB1)<<2)
+#define VAFE_IN_SEL_BIT				12
+#define VAFE_IN_SEL_WID				2
+#define VAFE_PGA_EN_BIT				8
+#define VAFE_PGA_EN_WID				1
+#define VAFE_PGA_GAIN_BIT			0
+#define VAFE_PGA_GAIN_WID			8
+
+#define TVFE_VAFE_CTRL2     				     ((TOP_BASE_ADD+0xB2)<<2)
+#define VAFE_PGA_RESV_BIT			0
+#define VAFE_PGA_RESV_WID			32
+#endif
 
 // **************************************************** *************************
 // ******** CVD2 REGISTERS ********
