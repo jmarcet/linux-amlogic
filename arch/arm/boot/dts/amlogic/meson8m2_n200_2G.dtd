@@ -1960,7 +1960,7 @@ sdio{
 /// ***************************************************************************************
 ///	-	Ethernet
         ethmac: ethernet@0xc9410000{
-                compatible = "amlogic,meson8m2-rmii-dwmac", "snps,dwmac";
+                compatible = "amlogic,meson8m2-rgmii-dwmac", "snps,dwmac";
                 reg = <0xc9410000 0x10000
                        0xc1108108 0x4>;
                 interrupts = <0 8 1>;
