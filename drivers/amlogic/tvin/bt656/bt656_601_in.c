@@ -768,13 +768,13 @@ static int __init amvdec_656in_init_module(void)
 {       
         int ret = 0;
         struct platform_device *pdev;
-        printk("amvdec_656in module: init.\n");
+        //printk("amvdec_656in module: init.\n");
         ret=alloc_chrdev_region(&am656in_devno, 0, BT656_MAX_DEVS, DEV_NAME);
         if(ret<0){
                 printk("%s:failed to alloc major number\n",__func__);
                 goto fail_alloc_cdev_region;
         }
-        printk("%s:major %d\n",__func__,MAJOR(am656in_devno));
+        //printk("%s:major %d\n",__func__,MAJOR(am656in_devno));
         am656in_clsp=class_create(THIS_MODULE,CLS_NAME);
         if(IS_ERR(am656in_clsp)){
                 ret=PTR_ERR(am656in_clsp);

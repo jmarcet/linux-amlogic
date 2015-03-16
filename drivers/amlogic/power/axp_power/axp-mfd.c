@@ -511,7 +511,7 @@ EXPORT_SYMBOL_GPL(axp_power_off);
 #ifdef CONFIG_OF
 #define DEBUG_TREE      0
 #define DEBUG_PARSE     0
-#define DBG(format, args...) printk("[AXP]%s, "format, __func__, ##args)
+#define DBG(format, args...)
 
 /*
  * must make sure value is 32 bit when use this macro

@@ -66,11 +66,13 @@ void aml_mmc_ver_msg_show (void)
 {
     static bool one_time_flag = false;
 
-    if (!one_time_flag) {
-        printk("mmc driver version: %d.%02d, %s\n", AML_MMC_MAJOR_VERSION, AML_MMC_MINOR_VERSION, AML_MMC_VER_MESSAGE);
+   /*
+    * if (!one_time_flag) {
+    *     printk("mmc driver version: %d.%02d, %s\n", AML_MMC_MAJOR_VERSION, AML_MMC_MINOR_VERSION, AML_MMC_VER_MESSAGE);
 
-        one_time_flag = true;
-    }
+    *     one_time_flag = true;
+    * }
+    */
 }
 
 static inline int card_proc_info (struct seq_file *m, char* dev_name, int i)
@@ -409,7 +411,7 @@ early_param("storage",get_storage_device);
 
 bool is_emmc_exist (struct amlsd_host* host) // is eMMC/tSD exist
 {
-    print_tmp("host->storage_flag=%d, POR_BOOT_VALUE=%d\n", host->storage_flag, POR_BOOT_VALUE);
+    //print_tmp("host->storage_flag=%d, POR_BOOT_VALUE=%d\n", host->storage_flag, POR_BOOT_VALUE);
     if ((host->storage_flag == EMMC_BOOT_FLAG) || (host->storage_flag == SPI_EMMC_FLAG)
             || (((host->storage_flag == 0)  || (host->storage_flag == -1)) && (POR_EMMC_BOOT() || POR_SPI_BOOT()))) {
         return true;
@@ -1335,7 +1337,7 @@ void aml_emmc_hw_reset(struct mmc_host *mmc)
         return;
     }
 
-    printk("%s %d\n", __func__, __LINE__);
+    //printk("%s %d\n", __func__, __LINE__);
 
 #if ((defined CONFIG_ARCH_MESON6) ||(defined CONFIG_ARCH_MESON8) || (defined CONFIG_ARCH_MESON8B))
     //boot_9 used as eMMC hw_rst pin here.

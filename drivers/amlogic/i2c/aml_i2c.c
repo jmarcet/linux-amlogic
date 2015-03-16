@@ -918,7 +918,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
 	plat = (struct aml_i2c_platform*)aml_i2c_property;
 
 	ret=of_property_read_string(pdev->dev.of_node,"pinctrl-names",&plat->master_state_name);
-	printk(KERN_DEBUG "plat->state_name:%s\n",plat->master_state_name);
+	//printk(KERN_DEBUG "plat->state_name:%s\n",plat->master_state_name);
 	
   i2c->ops = &aml_i2c_m1_ops;
   i2c->dev=&pdev->dev;
@@ -930,7 +930,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
   BUG_ON(!i2c->master_regs);
   BUG_ON(!plat);
 	aml_i2c_set_platform_data(i2c, plat);
-	printk(KERN_DEBUG "master_no = %d, master_regs=%p\n", i2c->master_no, i2c->master_regs);
+	//printk(KERN_DEBUG "master_no = %d, master_regs=%p\n", i2c->master_no, i2c->master_regs);
 	
 	i2c->p=devm_pinctrl_get_select(i2c->dev,i2c->master_state_name);
 	if(IS_ERR(i2c->p)){
@@ -976,16 +976,16 @@ static int aml_i2c_probe(struct platform_device *pdev)
           kzfree(i2c);
           return -1;
   }
-  dev_info(&pdev->dev, "add adapter %s(%p)\n", i2c->adap.name, &i2c->adap);
+  //dev_info(&pdev->dev, "add adapter %s(%p)\n", i2c->adap.name, &i2c->adap);
   of_i2c_register_devices(&i2c->adap);
-  dev_info(&pdev->dev, "aml i2c bus driver.\n");
+  //dev_info(&pdev->dev, "aml i2c bus driver.\n");
 
   	i2c->state = I2C_STATE_IDLE;
     init_completion(&i2c->aml_i2c_completion);
     if (i2c->mode == I2C_TIMER_POLLING_MODE) {
       hrtimer_init(&i2c->aml_i2c_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
       i2c->aml_i2c_hrtimer.function = aml_i2c_hrtimer_notify;
-       printk(KERN_DEBUG "master %d work in timer polling mode\n", device_id);
+       //printk(KERN_DEBUG "master %d work in timer polling mode\n", device_id);
     }
     else if (i2c->mode == I2C_INTERRUPT_MODE) {
       ret = request_irq(i2c->irq, aml_i2c_complete_isr, IRQF_DISABLED, "aml_i2c", i2c);
@@ -994,7 +994,7 @@ static int aml_i2c_probe(struct platform_device *pdev)
         i2c->mode = I2C_DELAY_MODE;
       }
       else {
-        printk(KERN_DEBUG "master %d work in interrupt mode(irq=%d)\n", device_id, i2c->irq);
+        //printk(KERN_DEBUG "master %d work in interrupt mode(irq=%d)\n", device_id, i2c->irq);
       }
     }
     /*setup class*/
@@ -1105,7 +1105,7 @@ static struct platform_driver aml_i2c_driver = {
 static int __init aml_i2c_init(void)
 {
     int ret;
-    printk(KERN_INFO "aml_i2c version: 20140813\n");
+    //printk(KERN_INFO "aml_i2c version: 20140813\n");
     ret = platform_driver_register(&aml_i2c_driver);
     return ret;
 }

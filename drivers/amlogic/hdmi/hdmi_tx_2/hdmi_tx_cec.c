@@ -729,7 +729,7 @@ static int cec_task(void *data)
 
     // Get logical address
 
-    hdmi_print(INF, CEC "CEC task process\n");
+    //hdmi_print(INF, CEC "CEC task process\n");
     if(hdmitx_device->cec_func_config & (1 << CEC_FUNC_MSAK)){
         msleep_interruptible(10000);
         
@@ -2023,7 +2023,7 @@ static int __init cec_init(void)
     hdmitx_device = get_hdmitx_device();
     //init_waitqueue_head(&hdmitx_device->cec_wait_rx);
     cec_key_init();
-    hdmi_print(INF, CEC "CEC init\n");
+    //hdmi_print(INF, CEC "CEC init\n");
     cec_global_info.cec_flag.cec_key_flag = 0; 
     cec_global_info.cec_flag.cec_fiq_flag = 0;
     cec_global_info.cec_flag.cec_init_flag = 0;
@@ -2104,7 +2104,7 @@ static int __init cec_init(void)
     }
 
     hdmitx_device->cec_init_ready = 1;
-    hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x", hdmitx_device->cec_init_ready);
+    hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x\n", hdmitx_device->cec_init_ready);
     return 0;
     out:unregister_chrdev_region(devno, 1);
     return ret;

@@ -722,15 +722,17 @@ static int __init tv_init_module(void)
 		return  ret ;
 	}
 	info->major=TV2_CONF_MAJOR;
-	amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"major number %d for disp\n",ret);
+	//amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"major number %d for disp\n",ret);
 	if(vout2_register_server(&tv_server))
 	{
 		amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"register tv module server fail\n");
 	}
+	/*
 	else
 	{
 		amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"register tv module server ok\n");
 	}
+	*/
 	create_tv_attr(info);
 	return 0;
 

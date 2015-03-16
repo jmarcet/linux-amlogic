@@ -108,7 +108,7 @@ static u32 error_watchdog_count;
 static u32 error_skip_nal_watchdog_count;
 static u32 error_system_watchdog_count;
 
-#define H265_DEBUG_BUFMGR                   0x01
+#define H265_DEBUG_BUFMGR                   0
 #define H265_DEBUG_BUFMGR_MORE              0x02
 #define H265_DEBUG_UCODE                    0x04
 #define H265_DEBUG_REG                      0x08
@@ -118,7 +118,7 @@ static u32 error_system_watchdog_count;
 #define H265_DEBUG_FORCE_CLK                0x80
 #define H265_DEBUG_SEND_PARAM_WITH_REG      0x100
 #define H265_DEBUG_NO_DISPLAY               0x200
-#define H265_DEBUG_DISCARD_NAL              0x400
+#define H265_DEBUG_DISCARD_NAL              0
 #define H265_DEBUG_OUT_PTS					0x800
 #define H265_DEBUG_DIS_LOC_ERROR_PROC       0x10000
 #define H265_DEBUG_DIS_SYS_ERROR_PROC   0x20000
@@ -3784,7 +3784,7 @@ static irqreturn_t vh265_isr(int irq, void *dev_id)
         error_watchdog_count = 0;
         if(hevc->pic_list_init_flag == 2){
             hevc->pic_list_init_flag = 3;
-            printk("set pic_list_init_flag to 3\n");
+            //printk("set pic_list_init_flag to 3\n");
         }
         else if(hevc->wait_buf == 0){
             u32 vui_time_scale;
@@ -4387,7 +4387,7 @@ static struct codec_profile_t amvdec_h265_profile = {
 
 static int __init amvdec_h265_driver_init_module(void)
 {
-    printk("amvdec_h265 module init\n");
+    //printk("amvdec_h265 module init\n");
 
     if (platform_driver_register(&amvdec_h265_driver)) {
         printk("failed to register amvdec_h265 driver\n");

@@ -280,7 +280,7 @@ static int ge2d_monitor_thread(void *data)
 	ge2d_manager_t*  manager = (  ge2d_manager_t*)data ;
         int ret;
 	
- 	amlog_level(LOG_LEVEL_HIGH,"ge2d workqueue monitor start\n");
+ 	//amlog_level(LOG_LEVEL_HIGH,"ge2d workqueue monitor start\n");
 	//setup current_wq here.
 	while(ge2d_manager.process_queue_state!=GE2D_PROCESS_QUEUE_STOP)
 	{
@@ -302,7 +302,7 @@ static  int ge2d_start_monitor(void )
 {
 	int ret =0;
 	
-	amlog_level(LOG_LEVEL_HIGH,"ge2d start monitor\n");
+	//amlog_level(LOG_LEVEL_HIGH,"ge2d start monitor\n");
 	ge2d_manager.process_queue_state=GE2D_PROCESS_QUEUE_START;
 	ge2d_manager.ge2d_thread=kthread_run(ge2d_monitor_thread,&ge2d_manager,"ge2d_monitor");
 	if (IS_ERR(ge2d_manager.ge2d_thread)) {

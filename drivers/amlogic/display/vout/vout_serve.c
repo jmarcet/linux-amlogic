@@ -434,7 +434,7 @@ static int
 	int ret =-1;
 	
 	vout_info.base_class=NULL;
-	amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"start init vout module\n");
+	//amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"start init vout module\n");
 #ifdef CONFIG_HAS_EARLYSUSPEND
     early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN;
     early_suspend.suspend = meson_vout_early_suspend;
@@ -447,11 +447,7 @@ static int
 	}
 
 	ret =create_vout_attr();
-	if(ret==0)
-	{
-		amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"create  vout attribute ok\n");
-	}
-	else
+	if(ret!=0)
 	{
 		amlog_mask_level(LOG_MASK_INIT,LOG_LEVEL_HIGH,"create  vout attribute fail\n");
 	}
@@ -501,7 +497,7 @@ static int __init vout_init_module(void)
 {
 	int ret =0;
     
-    printk("%s\n", __func__);
+    //printk("%s\n", __func__);
 	if (platform_driver_register(&vout_driver)) 
 	{
        		amlog_level(LOG_LEVEL_HIGH,"failed to register osd driver\n");

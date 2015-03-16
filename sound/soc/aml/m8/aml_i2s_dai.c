@@ -359,7 +359,7 @@ static int aml_i2s_dai_probe(struct platform_device *pdev)
 {
 	struct aml_i2s *i2s = NULL;
 	int ret = 0;
-	printk(KERN_DEBUG "enter %s\n", __func__);
+	//printk(KERN_DEBUG "enter %s\n", __func__);
 
 	i2s = kzalloc(sizeof(struct aml_i2s), GFP_KERNEL);
 	if (!i2s) {

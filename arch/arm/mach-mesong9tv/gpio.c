@@ -624,7 +624,7 @@ static int amlogic_gpio_probe(struct platform_device *pdev)
 
 	pullup_ops.meson_set_pullup = g9tv_set_pullup;
 
-	dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
+	//dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
 
 	return 0;
 }

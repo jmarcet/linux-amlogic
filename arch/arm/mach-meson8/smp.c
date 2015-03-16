@@ -127,7 +127,7 @@ int __cpuinit meson_boot_secondary(unsigned int cpu, struct task_struct *idle)
 	 * the holding pen - release it, then wait for it to flag
 	 * that it has been released by resetting pen_release.
 	 */
-	printk("write pen_release: %d\n",cpu_logical_map(cpu));
+	//printk("write pen_release: %d\n",cpu_logical_map(cpu));
 	write_pen_release(cpu_logical_map(cpu));
 
 #ifndef CONFIG_MESON_TRUSTZONE

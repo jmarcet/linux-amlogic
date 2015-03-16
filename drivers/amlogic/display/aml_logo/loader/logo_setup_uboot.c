@@ -100,7 +100,7 @@ static inline int install_logo_info(logo_object_t *plogo,char *para)
 			u32 group_end=para_info_pair[i].cur_group_end;
 			u32	prev=para_info_pair[group_start].prev_idx;
 			u32  next=para_info_pair[group_end].next_idx;
-			amlog_level(LOG_LEVEL_MAX,"%s:%d\n",para_info_pair[i].name,para_info_pair[i].info);
+			//amlog_level(LOG_LEVEL_MAX,"%s:%d\n",para_info_pair[i].name,para_info_pair[i].info);
 			switch(para_info_pair[i].cur_group_start)
 			{
 				case PARA_FIRST_GROUP_START:
@@ -113,7 +113,7 @@ static inline int install_logo_info(logo_object_t *plogo,char *para)
 				plogo->para.dis_mode=(logo_display_mode_t)para_info_pair[i].info;
 				break;
 				case PARA_FOURTH_GROUP_START:
-				amlog_level(LOG_LEVEL_MAX,"select debug mode\n");	
+				//amlog_level(LOG_LEVEL_MAX,"select debug mode\n");	
 				amlog_level_logo=AMLOG_DEFAULT_LEVEL;
 				amlog_mask_logo=AMLOG_DEFAULT_MASK;
 				break;
@@ -122,7 +122,7 @@ static inline int install_logo_info(logo_object_t *plogo,char *para)
 				break;	
 				case PARA_SIXTH_GROUP_START:
 				plogo->para.loaded=1;
-				amlog_level(LOG_LEVEL_MAX,"logo has been loaded\n");
+				//amlog_level(LOG_LEVEL_MAX,"logo has been loaded\n");
 				break;	
 			}
 			para_info_pair[prev].next_idx=next;

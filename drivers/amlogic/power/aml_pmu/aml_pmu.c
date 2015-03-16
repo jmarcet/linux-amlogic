@@ -58,7 +58,7 @@ MODULE_DEVICE_TABLE(i2c, aml_pmu_id_table);
 #ifdef CONFIG_OF
 #define DEBUG_TREE      0
 #define DEBUG_PARSE     0
-#define DBG(format, args...) printk("[AML_PMU]%s, "format, __func__, ##args)
+#define DBG(format, args...)
 
 /*
  * must make sure value is 32 bit when use this macro
@@ -451,7 +451,7 @@ static struct i2c_driver aml_pmu_driver = {
 
 static int __init aml_pmu_init(void)
 {
-    printk("%s, %d\n", __func__, __LINE__);
+	//printk("%s, %d\n", __func__, __LINE__);
 	return i2c_add_driver(&aml_pmu_driver);
 }
 arch_initcall(aml_pmu_init);

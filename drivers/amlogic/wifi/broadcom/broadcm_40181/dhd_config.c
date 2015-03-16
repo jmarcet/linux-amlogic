@@ -264,15 +264,15 @@ dhd_conf_set_fw_name_by_mac(dhd_pub_t *dhd, bcmsdh_info_t *sdh, char *fw_path)
 			FW_TYPE_APSTA : (strstr(mac_list[i].name, "_p2p") ?
 			FW_TYPE_P2P : FW_TYPE_STA)));
 		if (fw_type != fw_type_new) {
-			printf("%s: fw_typ=%d != fw_type_new=%d\n", __FUNCTION__, fw_type, fw_type_new);
+			//printf("%s: fw_typ=%d != fw_type_new=%d\n", __FUNCTION__, fw_type, fw_type_new);
 			continue;
 		}
 		for (j=0; j<mac_num; j++) {
 			if (oui == mac_range[j].oui) {
 				if (nic >= mac_range[j].nic_start && nic <= mac_range[j].nic_end) {
 					strcpy(pfw_name, mac_list[i].name);
-					printf("%s: matched oui=0x%06X, nic=0x%06X\n",
-						__FUNCTION__, oui, nic);
+					//printf("%s: matched oui=0x%06X, nic=0x%06X\n",
+					//	__FUNCTION__, oui, nic);
 					printf("%s: fw_path=%s\n", __FUNCTION__, fw_path);
 					return;
 				}
@@ -319,8 +319,8 @@ dhd_conf_set_nv_name_by_mac(dhd_pub_t *dhd, bcmsdh_info_t *sdh, char *nv_path)
 			if (oui == mac_range[j].oui) {
 				if (nic >= mac_range[j].nic_start && nic <= mac_range[j].nic_end) {
 					strcpy(pnv_name, mac_list[i].name);
-					printf("%s: matched oui=0x%06X, nic=0x%06X\n",
-						__FUNCTION__, oui, nic);
+					//printf("%s: matched oui=0x%06X, nic=0x%06X\n",
+					//	__FUNCTION__, oui, nic);
 					printf("%s: nv_path=%s\n", __FUNCTION__, nv_path);
 					return;
 				}
@@ -387,7 +387,7 @@ dhd_conf_set_nv_name_by_chip(dhd_pub_t *dhd, char *dst, char *src)
 					strcpy(&dst[i+1], nv_name[3]);
 						break;
 	}
-	printf("%s: nvram_path=%s\n", __FUNCTION__, dst);
+	//printf("%s: nvram_path=%s\n", __FUNCTION__, dst);
 }
 
 void
@@ -474,7 +474,7 @@ dhd_conf_set_fw_name_by_chip(dhd_pub_t *dhd, char *dst, char *src)
 			break;
 	}
 
-	printf("%s: firmware_path=%s\n", __FUNCTION__, dst);
+	//printf("%s: firmware_path=%s\n", __FUNCTION__, dst);
 }
 
 #if defined(HW_OOB)
@@ -519,7 +519,7 @@ dhd_conf_set_band(dhd_pub_t *dhd)
 {
 	int bcmerror = -1;
 
-	printf("%s: Set band %d\n", __FUNCTION__, dhd->conf->band);
+	//printf("%s: Set band %d\n", __FUNCTION__, dhd->conf->band);
 	if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_BAND, &dhd->conf->band,
 		sizeof(dhd->conf->band), TRUE, 0)) < 0)
 		CONFIG_ERROR(("%s: WLC_SET_BAND setting failed %d\n", __FUNCTION__, bcmerror));
@@ -547,12 +547,12 @@ dhd_conf_set_country(dhd_pub_t *dhd)
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
 
 	memset(&dhd->dhd_cspec, 0, sizeof(wl_country_t));
-	printf("%s: Set country %s, revision %d\n", __FUNCTION__,
-		dhd->conf->cspec.ccode, dhd->conf->cspec.rev);
+	//printf("%s: Set country %s, revision %d\n", __FUNCTION__,
+	//	dhd->conf->cspec.ccode, dhd->conf->cspec.rev);
 	bcm_mkiovar("country", (char *)&dhd->conf->cspec,
 		sizeof(wl_country_t), iovbuf, sizeof(iovbuf));
-	if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
-		printf("%s: country code setting failed %d\n", __FUNCTION__, bcmerror);
+	//if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
+	//	printf("%s: country code setting failed %d\n", __FUNCTION__, bcmerror);
 
 	return bcmerror;
 }
@@ -566,8 +566,8 @@ dhd_conf_get_country(dhd_pub_t *dhd, wl_country_t *cspec)
 	bcm_mkiovar("country", NULL, 0, (char*)cspec, sizeof(wl_country_t));
 	if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_GET_VAR, cspec, sizeof(wl_country_t), FALSE, 0)) < 0)
 		printf("%s: country code getting failed %d\n", __FUNCTION__, bcmerror);
-	else
-		printf("Country code: %s (%s/%d)\n", cspec->country_abbrev, cspec->ccode, cspec->rev);
+	//else
+	//	printf("Country code: %s (%s/%d)\n", cspec->country_abbrev, cspec->ccode, cspec->rev);
 
 	return bcmerror;
 }
@@ -635,28 +635,28 @@ dhd_conf_set_roam(dhd_pub_t *dhd)
 	int bcmerror = -1;
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
 
-	printf("%s: Set roam_off %d\n", __FUNCTION__, dhd->conf->roam_off);
+	//printf("%s: Set roam_off %d\n", __FUNCTION__, dhd->conf->roam_off);
 	dhd_roam_disable = dhd->conf->roam_off;
 	bcm_mkiovar("roam_off", (char *)&dhd->conf->roam_off, 4, iovbuf, sizeof(iovbuf));
 	dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
 
 	if (!dhd->conf->roam_off || !dhd->conf->roam_off_suspend) {
-		printf("%s: Set roam_trigger %d\n", __FUNCTION__, dhd->conf->roam_trigger[0]);
+		//printf("%s: Set roam_trigger %d\n", __FUNCTION__, dhd->conf->roam_trigger[0]);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_ROAM_TRIGGER, dhd->conf->roam_trigger,
 				sizeof(dhd->conf->roam_trigger), TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: roam trigger setting failed %d\n", __FUNCTION__, bcmerror));
 
-		printf("%s: Set roam_scan_period %d\n", __FUNCTION__, dhd->conf->roam_scan_period[0]);
+		//printf("%s: Set roam_scan_period %d\n", __FUNCTION__, dhd->conf->roam_scan_period[0]);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_ROAM_SCAN_PERIOD, dhd->conf->roam_scan_period,
 				sizeof(dhd->conf->roam_scan_period), TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: roam scan period setting failed %d\n", __FUNCTION__, bcmerror));
 
-		printf("%s: Set roam_delta %d\n", __FUNCTION__, dhd->conf->roam_delta[0]);
+		//printf("%s: Set roam_delta %d\n", __FUNCTION__, dhd->conf->roam_delta[0]);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_ROAM_DELTA, dhd->conf->roam_delta,
 				sizeof(dhd->conf->roam_delta), TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: roam delta setting failed %d\n", __FUNCTION__, bcmerror));
 
-		printf("%s: Set fullroamperiod %d\n", __FUNCTION__, dhd->conf->fullroamperiod);
+		//printf("%s: Set fullroamperiod %d\n", __FUNCTION__, dhd->conf->fullroamperiod);
 		bcm_mkiovar("fullroamperiod", (char *)&dhd->conf->fullroamperiod, 4, iovbuf, sizeof(iovbuf));
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: roam fullscan period setting failed %d\n", __FUNCTION__, bcmerror));
@@ -680,7 +680,7 @@ dhd_conf_set_mimo_bw_cap(dhd_pub_t *dhd)
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_DOWN, NULL, 0, TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: WLC_DOWN setting failed %d\n", __FUNCTION__, bcmerror));
 		/*  0:HT20 in ALL, 1:HT40 in ALL, 2: HT20 in 2G HT40 in 5G */
-		printf("%s: Set mimo_bw_cap %d\n", __FUNCTION__, mimo_bw_cap);
+		//printf("%s: Set mimo_bw_cap %d\n", __FUNCTION__, mimo_bw_cap);
 		bcm_mkiovar("mimo_bw_cap", (char *)&mimo_bw_cap, 4, iovbuf, sizeof(iovbuf));
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
 			CONFIG_ERROR(("%s: mimo_bw_cap setting failed %d\n", __FUNCTION__, bcmerror));
@@ -829,12 +829,12 @@ dhd_conf_set_stbc(dhd_pub_t *dhd)
 	if (dhd_bus_chip_id(dhd) == BCM4324_CHIP_ID) {
 		if (dhd->conf->stbc >= 0) {
 			stbc = (uint)dhd->conf->stbc;
-			printf("%s: set stbc_tx %d\n", __FUNCTION__, stbc);
+			//printf("%s: set stbc_tx %d\n", __FUNCTION__, stbc);
 			bcm_mkiovar("stbc_tx", (char *)&stbc, 4, iovbuf, sizeof(iovbuf));
 			if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
 				CONFIG_ERROR(("%s: stbc_tx setting failed %d\n", __FUNCTION__, bcmerror));
 
-			printf("%s: set stbc_rx %d\n", __FUNCTION__, stbc);
+			//printf("%s: set stbc_rx %d\n", __FUNCTION__, stbc);
 			bcm_mkiovar("stbc_rx", (char *)&stbc, 4, iovbuf, sizeof(iovbuf));
 			if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
 				CONFIG_ERROR(("%s: stbc_rx setting failed %d\n", __FUNCTION__, bcmerror));
@@ -852,7 +852,7 @@ dhd_conf_set_phyoclscdenable(dhd_pub_t *dhd)
 	if (dhd_bus_chip_id(dhd) == BCM4324_CHIP_ID) {
 		if (dhd->conf->phy_oclscdenable >= 0) {
 			phy_oclscdenable = (uint)dhd->conf->phy_oclscdenable;
-			printf("%s: set stbc_tx %d\n", __FUNCTION__, phy_oclscdenable);
+			//printf("%s: set stbc_tx %d\n", __FUNCTION__, phy_oclscdenable);
 			bcm_mkiovar("phy_oclscdenable", (char *)&phy_oclscdenable, 4, iovbuf, sizeof(iovbuf));
 			if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
 				CONFIG_ERROR(("%s: stbc_tx setting failed %d\n", __FUNCTION__, bcmerror));
@@ -872,7 +872,7 @@ dhd_conf_add_pkt_filter(dhd_pub_t *dhd)
 	*/
 	for(i=0; i<dhd->conf->pkt_filter_add.count; i++) {
 		dhd->pktfilter[i+dhd->pktfilter_count] = dhd->conf->pkt_filter_add.filter[i];
-		printf("%s: %s\n", __FUNCTION__, dhd->pktfilter[i+dhd->pktfilter_count]);
+		//printf("%s: %s\n", __FUNCTION__, dhd->pktfilter[i+dhd->pktfilter_count]);
 	}
 	dhd->pktfilter_count += i;
 }
@@ -884,7 +884,7 @@ dhd_conf_del_pkt_filter(dhd_pub_t *dhd, uint32 id)
 
 	for(i=0; i<dhd->conf->pkt_filter_del.count; i++) {
 		if (id == dhd->conf->pkt_filter_del.id[i]) {
-			printf("%s: %d\n", __FUNCTION__, dhd->conf->pkt_filter_del.id[i]);
+			//printf("%s: %d\n", __FUNCTION__, dhd->conf->pkt_filter_del.id[i]);
 			return true;
 		}
 	}
@@ -926,7 +926,7 @@ dhd_conf_set_srl(dhd_pub_t *dhd)
 
 	if (dhd->conf->srl >= 0) {
 		srl = (uint)dhd->conf->srl;
-		printf("%s: set srl %d\n", __FUNCTION__, srl);
+		//printf("%s: set srl %d\n", __FUNCTION__, srl);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_SRL, &srl , sizeof(srl), true, 0)) < 0)
 			CONFIG_ERROR(("%s: WLC_SET_SRL setting failed %d\n", __FUNCTION__, bcmerror));
 	}
@@ -940,7 +940,7 @@ dhd_conf_set_lrl(dhd_pub_t *dhd)
 
 	if (dhd->conf->lrl >= 0) {
 		lrl = (uint)dhd->conf->lrl;
-		printf("%s: set lrl %d\n", __FUNCTION__, lrl);
+		//printf("%s: set lrl %d\n", __FUNCTION__, lrl);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_LRL, &lrl , sizeof(lrl), true, 0)) < 0)
 			CONFIG_ERROR(("%s: WLC_SET_LRL setting failed %d\n", __FUNCTION__, bcmerror));
 	}
@@ -955,7 +955,7 @@ dhd_conf_set_glom(dhd_pub_t *dhd)
 
 	if (dhd->conf->bus_txglom) {
 		bus_txglom = (uint)dhd->conf->bus_txglom;
-		printf("%s: set bus:txglom %d\n", __FUNCTION__, bus_txglom);
+		//printf("%s: set bus:txglom %d\n", __FUNCTION__, bus_txglom);
 		bcm_mkiovar("bus:txglom", (char *)&bus_txglom, 4, iovbuf, sizeof(iovbuf));
 		dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
@@ -972,7 +972,7 @@ dhd_conf_set_ampdu_ba_wsize(dhd_pub_t *dhd)
 
 	/* Set ampdu ba wsize */
 	if (dhd_bus_chip_id(dhd) == BCM4339_CHIP_ID && ampdu_ba_wsize > 0) {
-		printf("%s: set ampdu_ba_wsize %d\n", __FUNCTION__, ampdu_ba_wsize);
+		//printf("%s: set ampdu_ba_wsize %d\n", __FUNCTION__, ampdu_ba_wsize);
 		bcm_mkiovar("ampdu_ba_wsize", (char *)&ampdu_ba_wsize, 4, iovbuf, sizeof(iovbuf));
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
 				sizeof(iovbuf), TRUE, 0)) < 0) {
@@ -990,7 +990,7 @@ dhd_conf_set_spect(dhd_pub_t *dhd)
 
 	if (dhd->conf->spect >= 0) {
 		spect = (uint)dhd->conf->spect;
-		printf("%s: set spect %d\n", __FUNCTION__, spect);
+		//printf("%s: set spect %d\n", __FUNCTION__, spect);
 		if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_SPECT_MANAGMENT, &spect , sizeof(spect), true, 0)) < 0)
 			CONFIG_ERROR(("%s: WLC_SET_SPECT_MANAGMENT setting failed %d\n", __FUNCTION__, bcmerror));
 	}
@@ -1065,28 +1065,28 @@ dhd_conf_read_log_level(dhd_pub_t *dhd, char *bufp, uint len)
 	len_val = process_config_vars(bufp, len, pick, "msglevel=");
 	if (len_val) {
 		dhd_msg_level = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: dhd_msg_level = 0x%X\n", __FUNCTION__, dhd_msg_level);
+		//printf("%s: dhd_msg_level = 0x%X\n", __FUNCTION__, dhd_msg_level);
 	}
 	/* Process sd_msglevel */
 	memset(pick, 0, MAXSZ_BUF);
 	len_val = process_config_vars(bufp, len, pick, "sd_msglevel=");
 	if (len_val) {
 		sd_msglevel = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: sd_msglevel = 0x%X\n", __FUNCTION__, sd_msglevel);
+		//printf("%s: sd_msglevel = 0x%X\n", __FUNCTION__, sd_msglevel);
 	}
 	/* Process android_msg_level */
 	memset(pick, 0, MAXSZ_BUF);
 	len_val = process_config_vars(bufp, len, pick, "android_msg_level=");
 	if (len_val) {
 		android_msg_level = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: android_msg_level = 0x%X\n", __FUNCTION__, android_msg_level);
+		//printf("%s: android_msg_level = 0x%X\n", __FUNCTION__, android_msg_level);
 	}
 	/* Process config_msg_level */
 	memset(pick, 0, MAXSZ_BUF);
 	len_val = process_config_vars(bufp, len, pick, "config_msg_level=");
 	if (len_val) {
 		config_msg_level = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: config_msg_level = 0x%X\n", __FUNCTION__, config_msg_level);
+		//printf("%s: config_msg_level = 0x%X\n", __FUNCTION__, config_msg_level);
 	}
 #ifdef WL_CFG80211
 	/* Process wl_dbg_level */
@@ -1094,7 +1094,7 @@ dhd_conf_read_log_level(dhd_pub_t *dhd, char *bufp, uint len)
 	len_val = process_config_vars(bufp, len, pick, "wl_dbg_level=");
 	if (len_val) {
 		wl_dbg_level = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: wl_dbg_level = 0x%X\n", __FUNCTION__, wl_dbg_level);
+		//printf("%s: wl_dbg_level = 0x%X\n", __FUNCTION__, wl_dbg_level);
 	}
 #endif
 #if defined(WL_WIRELESS_EXT)
@@ -1103,7 +1103,7 @@ dhd_conf_read_log_level(dhd_pub_t *dhd, char *bufp, uint len)
 	len_val = process_config_vars(bufp, len, pick, "iw_msg_level=");
 	if (len_val) {
 		iw_msg_level = (int)simple_strtol(pick, NULL, 0);
-		printf("%s: iw_msg_level = 0x%X\n", __FUNCTION__, iw_msg_level);
+		//printf("%s: iw_msg_level = 0x%X\n", __FUNCTION__, iw_msg_level);
 	}
 #endif
 }
@@ -1153,7 +1153,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 	if (conf_file_exists) {
 		image = dhd_os_open_image(pconf_path);
 		if (image == NULL) {
-			printk("%s: Ignore config file %s\n", __FUNCTION__, pconf_path);
+			//printk("%s: Ignore config file %s\n", __FUNCTION__, pconf_path);
 			goto err;
 		}
 	}
@@ -1187,15 +1187,15 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->fw_by_mac.count = 0;
 				CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
 			}
-			printf("%s: fw_count=%d\n", __FUNCTION__, dhd->conf->fw_by_mac.count);
+			//printf("%s: fw_count=%d\n", __FUNCTION__, dhd->conf->fw_by_mac.count);
 			dhd->conf->fw_by_mac.m_mac_list_head = mac_list;
 			for (i=0; i<dhd->conf->fw_by_mac.count; i++) {
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				strcpy(mac_list[i].name, pch);
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				mac_list[i].count = (uint32)simple_strtol(pch, NULL, 0);
-				printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
-					mac_list[i].name, mac_list[i].count);
+				//printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
+				//	mac_list[i].name, mac_list[i].count);
 				if (!(mac_range = kmalloc(sizeof(wl_mac_range_t)*mac_list[i].count, GFP_KERNEL))) {
 					mac_list[i].count = 0;
 					CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
@@ -1209,9 +1209,9 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 					mac_range[j].nic_start = (uint32)simple_strtol(pch, NULL, 0);
 					pch = bcmstrtok(&pick_tmp, " ", 0);
 					mac_range[j].nic_end = (uint32)simple_strtol(pch, NULL, 0);
-					printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
-						__FUNCTION__, mac_range[j].oui,
-						mac_range[j].nic_start, mac_range[j].nic_end);
+					//printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
+					//	__FUNCTION__, mac_range[j].oui,
+					//	mac_range[j].nic_start, mac_range[j].nic_end);
 				}
 			}
 		}
@@ -1227,15 +1227,15 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->nv_by_mac.count = 0;
 				CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
 			}
-			printf("%s: nv_count=%d\n", __FUNCTION__, dhd->conf->nv_by_mac.count);
+			//printf("%s: nv_count=%d\n", __FUNCTION__, dhd->conf->nv_by_mac.count);
 			dhd->conf->nv_by_mac.m_mac_list_head = mac_list;
 			for (i=0; i<dhd->conf->nv_by_mac.count; i++) {
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				strcpy(mac_list[i].name, pch);
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				mac_list[i].count = (uint32)simple_strtol(pch, NULL, 0);
-				printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
-					mac_list[i].name, mac_list[i].count);
+				//printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
+				//	mac_list[i].name, mac_list[i].count);
 				if (!(mac_range = kmalloc(sizeof(wl_mac_range_t)*mac_list[i].count, GFP_KERNEL))) {
 					mac_list[i].count = 0;
 					CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
@@ -1249,9 +1249,9 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 					mac_range[j].nic_start = (uint32)simple_strtol(pch, NULL, 0);
 					pch = bcmstrtok(&pick_tmp, " ", 0);
 					mac_range[j].nic_end = (uint32)simple_strtol(pch, NULL, 0);
-					printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
-						__FUNCTION__, mac_range[j].oui,
-						mac_range[j].nic_start, mac_range[j].nic_end);
+					//printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
+					//	__FUNCTION__, mac_range[j].oui,
+					//	mac_range[j].nic_start, mac_range[j].nic_end);
 				}
 			}
 		}
@@ -1261,7 +1261,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "fw_path=");
 		if (len_val) {
 			memcpy(dhd->conf->fw_path, pick, len_val);
-			printf("%s: fw_path = %s\n", __FUNCTION__, dhd->conf->fw_path);
+			//printf("%s: fw_path = %s\n", __FUNCTION__, dhd->conf->fw_path);
 		}
 
 		/* Process nvram path */
@@ -1269,7 +1269,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "nv_path=");
 		if (len_val) {
 			memcpy(dhd->conf->nv_path, pick, len_val);
-			printf("%s: nv_path = %s\n", __FUNCTION__, dhd->conf->nv_path);
+			//printf("%s: nv_path = %s\n", __FUNCTION__, dhd->conf->nv_path);
 		}
 
 		/* Process band */
@@ -1290,7 +1290,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "mimo_bw_cap=");
 		if (len_val) {
 			dhd->conf->mimo_bw_cap = (uint)simple_strtol(pick, NULL, 10);
-			printf("%s: mimo_bw_cap = %d\n", __FUNCTION__, dhd->conf->mimo_bw_cap);
+			//printf("%s: mimo_bw_cap = %d\n", __FUNCTION__, dhd->conf->mimo_bw_cap);
 		}
 
 		/* Process country code */
@@ -1319,10 +1319,10 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				i++;
 			}
 			dhd->conf->channels.count = i;
-			printf("%s: channels = ", __FUNCTION__);
-			for (i=0; i<dhd->conf->channels.count; i++)
-				printf("%d ", dhd->conf->channels.channel[i]);
-			printf("\n");
+			//printf("%s: channels = ", __FUNCTION__);
+			//for (i=0; i<dhd->conf->channels.count; i++)
+			//	printf("%d ", dhd->conf->channels.channel[i]);
+			//printf("\n");
 		}
 
 		/* Process roam */
@@ -1333,7 +1333,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->roam_off = 0;
 			else
 				dhd->conf->roam_off = 1;
-			printf("%s: roam_off = %d\n", __FUNCTION__, dhd->conf->roam_off);
+			//printf("%s: roam_off = %d\n", __FUNCTION__, dhd->conf->roam_off);
 		}
 
 		memset(pick, 0, MAXSZ_BUF);
@@ -1343,8 +1343,8 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->roam_off_suspend = 0;
 			else
 				dhd->conf->roam_off_suspend = 1;
-			printf("%s: roam_off_suspend = %d\n", __FUNCTION__,
-				dhd->conf->roam_off_suspend);
+			//printf("%s: roam_off_suspend = %d\n", __FUNCTION__,
+			//	dhd->conf->roam_off_suspend);
 		}
 
 		if (!dhd->conf->roam_off || !dhd->conf->roam_off_suspend) {
@@ -1352,28 +1352,28 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 			len_val = process_config_vars(bufp, len, pick, "roam_trigger=");
 			if (len_val)
 				dhd->conf->roam_trigger[0] = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: roam_trigger = %d\n", __FUNCTION__,
-				dhd->conf->roam_trigger[0]);
+			//printf("%s: roam_trigger = %d\n", __FUNCTION__,
+			//	dhd->conf->roam_trigger[0]);
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "roam_scan_period=");
 			if (len_val)
 				dhd->conf->roam_scan_period[0] = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: roam_scan_period = %d\n", __FUNCTION__,
-				dhd->conf->roam_scan_period[0]);
+			//printf("%s: roam_scan_period = %d\n", __FUNCTION__,
+			//	dhd->conf->roam_scan_period[0]);
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "roam_delta=");
 			if (len_val)
 				dhd->conf->roam_delta[0] = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: roam_delta = %d\n", __FUNCTION__, dhd->conf->roam_delta[0]);
+			//printf("%s: roam_delta = %d\n", __FUNCTION__, dhd->conf->roam_delta[0]);
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "fullroamperiod=");
 			if (len_val)
 				dhd->conf->fullroamperiod = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: fullroamperiod = %d\n", __FUNCTION__,
-				dhd->conf->fullroamperiod);
+			//printf("%s: fullroamperiod = %d\n", __FUNCTION__,
+			//	dhd->conf->fullroamperiod);
 		}
 
 		/* Process keep alive period */
@@ -1381,8 +1381,8 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "keep_alive_period=");
 		if (len_val) {
 			dhd->conf->keep_alive_period = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: keep_alive_period = %d\n", __FUNCTION__,
-				dhd->conf->keep_alive_period);
+			//printf("%s: keep_alive_period = %d\n", __FUNCTION__,
+			//	dhd->conf->keep_alive_period);
 		}
 
 		/* Process WMM parameters */
@@ -1390,7 +1390,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "force_wme_ac=");
 		if (len_val) {
 			dhd->conf->force_wme_ac = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: force_wme_ac = %d\n", __FUNCTION__, dhd->conf->force_wme_ac);
+			//printf("%s: force_wme_ac = %d\n", __FUNCTION__, dhd->conf->force_wme_ac);
 		}
 
 		if (dhd->conf->force_wme_ac) {
@@ -1398,84 +1398,84 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 			len_val = process_config_vars(bufp, len, pick, "bk_aifsn=");
 			if (len_val) {
 				dhd->conf->wme.aifsn[AC_BK] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BK aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_BK]);
+				//printf("%s: AC_BK aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_BK]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "bk_cwmin=");
 			if (len_val) {
 				dhd->conf->wme.cwmin[AC_BK] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BK cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_BK]);
+				//printf("%s: AC_BK cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_BK]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "bk_cwmax=");
 			if (len_val) {
 				dhd->conf->wme.cwmax[AC_BK] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BK cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_BK]);
+				//printf("%s: AC_BK cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_BK]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "be_aifsn=");
 			if (len_val) {
 				dhd->conf->wme.aifsn[AC_BE] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BE aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_BE]);
+				//printf("%s: AC_BE aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_BE]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "be_cwmin=");
 			if (len_val) {
 				dhd->conf->wme.cwmin[AC_BE] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BE cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_BE]);
+				//printf("%s: AC_BE cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_BE]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "be_cwmax=");
 			if (len_val) {
 				dhd->conf->wme.cwmax[AC_BE] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_BE cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_BE]);
+				//printf("%s: AC_BE cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_BE]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vi_aifsn=");
 			if (len_val) {
 				dhd->conf->wme.aifsn[AC_VI] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VI aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_VI]);
+				//printf("%s: AC_VI aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_VI]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vi_cwmin=");
 			if (len_val) {
 				dhd->conf->wme.cwmin[AC_VI] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VI cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_VI]);
+				//printf("%s: AC_VI cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_VI]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vi_cwmax=");
 			if (len_val) {
 				dhd->conf->wme.cwmax[AC_VI] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VI cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_VI]);
+				//printf("%s: AC_VI cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_VI]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vo_aifsn=");
 			if (len_val) {
 				dhd->conf->wme.aifsn[AC_VO] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VO aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_VO]);
+				//printf("%s: AC_VO aifsn = %d\n", __FUNCTION__, dhd->conf->wme.aifsn[AC_VO]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vo_cwmin=");
 			if (len_val) {
 				dhd->conf->wme.cwmin[AC_VO] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VO cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_VO]);
+				//printf("%s: AC_VO cwmin = %d\n", __FUNCTION__, dhd->conf->wme.cwmin[AC_VO]);
 			}
 
 			memset(pick, 0, MAXSZ_BUF);
 			len_val = process_config_vars(bufp, len, pick, "vo_cwmax=");
 			if (len_val) {
 				dhd->conf->wme.cwmax[AC_VO] = (int)simple_strtol(pick, NULL, 10);
-				printf("%s: AC_VO cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_VO]);
+				//printf("%s: AC_VO cwmax = %d\n", __FUNCTION__, dhd->conf->wme.cwmax[AC_VO]);
 			}
 		}
 
@@ -1484,7 +1484,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "stbc=");
 		if (len_val) {
 			dhd->conf->stbc = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: stbc = %d\n", __FUNCTION__, dhd->conf->stbc);
+			//printf("%s: stbc = %d\n", __FUNCTION__, dhd->conf->stbc);
 		}
 
 		/* Process phy_oclscdenable parameters */
@@ -1492,7 +1492,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "phy_oclscdenable=");
 		if (len_val) {
 			dhd->conf->phy_oclscdenable = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: phy_oclscdenable = %d\n", __FUNCTION__, dhd->conf->phy_oclscdenable);
+			//printf("%s: phy_oclscdenable = %d\n", __FUNCTION__, dhd->conf->phy_oclscdenable);
 		}
 
 		/* Process dhd_doflow parameters */
@@ -1503,7 +1503,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd_doflow = FALSE;
 			else
 				dhd_doflow = TRUE;
-			printf("%s: dhd_doflow = %d\n", __FUNCTION__, dhd_doflow);
+			//printf("%s: dhd_doflow = %d\n", __FUNCTION__, dhd_doflow);
 		}
 
 		/* Process dhd_master_mode parameters */
@@ -1514,7 +1514,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd_master_mode = FALSE;
 			else
 				dhd_master_mode = TRUE;
-			printf("%s: dhd_master_mode = %d\n", __FUNCTION__, dhd_master_mode);
+			//printf("%s: dhd_master_mode = %d\n", __FUNCTION__, dhd_master_mode);
 		}
 
 		/* Process pkt_filter_add */
@@ -1526,7 +1526,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 			i=0;
 			while (pch != NULL && i<DHD_CONF_FILTER_MAX) {
 				strcpy(&dhd->conf->pkt_filter_add.filter[i][0], pch);
-				printf("%s: pkt_filter_add[%d][] = %s\n", __FUNCTION__, i, &dhd->conf->pkt_filter_add.filter[i][0]);
+				//printf("%s: pkt_filter_add[%d][] = %s\n", __FUNCTION__, i, &dhd->conf->pkt_filter_add.filter[i][0]);
 				pch = bcmstrtok(&pick_tmp, ",.-", 0);
 				i++;
 			}
@@ -1546,10 +1546,10 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				i++;
 			}
 			dhd->conf->pkt_filter_del.count = i;
-			printf("%s: pkt_filter_del id = ", __FUNCTION__);
-			for (i=0; i<dhd->conf->pkt_filter_del.count; i++)
-				printf("%d ", dhd->conf->pkt_filter_del.id[i]);
-			printf("\n");
+			//printf("%s: pkt_filter_del id = ", __FUNCTION__);
+			//for (i=0; i<dhd->conf->pkt_filter_del.count; i++)
+			//	printf("%d ", dhd->conf->pkt_filter_del.id[i]);
+			//printf("\n");
 		}
 
 		/* Process srl parameters */
@@ -1557,7 +1557,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "srl=");
 		if (len_val) {
 			dhd->conf->srl = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: srl = %d\n", __FUNCTION__, dhd->conf->srl);
+			//printf("%s: srl = %d\n", __FUNCTION__, dhd->conf->srl);
 		}
 
 		/* Process lrl parameters */
@@ -1565,7 +1565,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "lrl=");
 		if (len_val) {
 			dhd->conf->lrl = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: lrl = %d\n", __FUNCTION__, dhd->conf->lrl);
+			//printf("%s: lrl = %d\n", __FUNCTION__, dhd->conf->lrl);
 		}
 
 		/* Process beacon timeout parameters */
@@ -1573,7 +1573,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "bcn_timeout=");
 		if (len_val) {
 			dhd->conf->bcn_timeout= (int)simple_strtol(pick, NULL, 10);
-			printf("%s: bcn_timeout = %d\n", __FUNCTION__, dhd->conf->bcn_timeout);
+			//printf("%s: bcn_timeout = %d\n", __FUNCTION__, dhd->conf->bcn_timeout);
 		}
 
 		/* Process bus_txglom */
@@ -1581,7 +1581,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "bus_txglom=");
 		if (len_val) {
 			dhd->conf->bus_txglom = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: bus_txglom = %d\n", __FUNCTION__, dhd->conf->bus_txglom);
+			//printf("%s: bus_txglom = %d\n", __FUNCTION__, dhd->conf->bus_txglom);
 		}
 
 		/* Process ampdu_ba_wsize parameters */
@@ -1589,7 +1589,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "ampdu_ba_wsize=");
 		if (len_val) {
 			dhd->conf->ampdu_ba_wsize = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: ampdu_ba_wsize = %d\n", __FUNCTION__, dhd->conf->ampdu_ba_wsize);
+			//printf("%s: ampdu_ba_wsize = %d\n", __FUNCTION__, dhd->conf->ampdu_ba_wsize);
 		}
 
 		/* Process kso parameters */
@@ -1600,7 +1600,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->kso_enable = FALSE;
 			else
 				dhd->conf->kso_enable = TRUE;
-			printf("%s: kso_enable = %d\n", __FUNCTION__, dhd->conf->kso_enable);
+			//printf("%s: kso_enable = %d\n", __FUNCTION__, dhd->conf->kso_enable);
 		}
 
 		/* Process spect parameters */
@@ -1608,7 +1608,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "spect=");
 		if (len_val) {
 			dhd->conf->spect = (int)simple_strtol(pick, NULL, 10);
-			printf("%s: spect = %d\n", __FUNCTION__, dhd->conf->spect);
+			//printf("%s: spect = %d\n", __FUNCTION__, dhd->conf->spect);
 		}
  
 		bcmerror = 0;

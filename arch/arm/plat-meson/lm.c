@@ -89,7 +89,7 @@ int lm_device_register(struct lm_device *dev)
     dev->dev.release = lm_device_release;
     dev->dev.bus = &lm_bustype;
 
-    printk( "register lm device %s\n", dev_name(&dev->dev));
+    //printk( "register lm device %s\n", dev_name(&dev->dev));
 
 //    dev_set_name(&dev->dev, "lm%d", dev->id);
     //dev->resource.name = dev_name(&dev->dev);

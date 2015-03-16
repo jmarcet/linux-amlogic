@@ -1139,7 +1139,7 @@ static inline bool vpts_expire(vframe_t *cur_vf, vframe_t *next_vf)
 
         if ((systime - pts) >= 0) {
             tsync_avevent_locked(VIDEO_TSTAMP_DISCONTINUITY, next_vf->pts);
-			printk("video discontinue, system=0x%x vpts=0x%x\n", systime, pts);
+            //printk("video discontinue, system=0x%x vpts=0x%x\n", systime, pts);
             return false;
         }
     }
@@ -2938,7 +2938,7 @@ static int __init video2_early_init(void)
 {
     logo_object_t  *init_logo_obj=NULL;
     init_logo_obj = NULL; //get_current_logo_obj();
-    printk("%s enter\n", __func__);
+    //printk("%s enter\n", __func__);
 
     if(NULL==init_logo_obj || !init_logo_obj->para.loaded)
     {
@@ -2960,7 +2960,7 @@ static int __init video2_early_init(void)
    	//WRITE_MPEG_REG_BITS(VPU_OSD3_MMC_CTRL, 1, 12, 2); //select vdisp_mmc_arb for VIU2_OSD1 request
 	aml_set_reg32_bits(P_VPU_OSD3_MMC_CTRL, 2, 12, 2); // select vdin_mmc_arb for VIU2_OSD1 request
 
-    printk("%s exit\n", __func__);
+    //printk("%s exit\n", __func__);
 
     return 0;
 }
@@ -3113,7 +3113,7 @@ video2_driver = {
 static int __init video2_init(void)
 {
     int ret =0;
-    printk("%s enter\n", __func__);
+    //printk("%s enter\n", __func__);
     if (platform_driver_register(&video2_driver))
     {
         printk("%s fail\n", __func__);

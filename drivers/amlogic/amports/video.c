@@ -307,9 +307,6 @@ static int video2_onoff_state = VIDEO_ENABLE_STATE_IDLE;
          VD1_MEM_POWER_OFF(); \
          PROT_MEM_POWER_OFF(); \
          video_prot.video_started = 0; \
-         if(debug_flag& DEBUG_FLAG_BLACKOUT){  \
-            printk("DisableVideoLayer()\n"); \
-         } \
     } while (0)
 
 #if  MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
@@ -317,9 +314,6 @@ static int video2_onoff_state = VIDEO_ENABLE_STATE_IDLE;
     do { \
          CLEAR_VCBUS_REG_MASK(VPP_MISC + cur_dev->vpp_off, \
            VPP_VD1_PREBLEND|VPP_VD2_PREBLEND|VPP_VD2_POSTBLEND|VPP_VD1_POSTBLEND); \
-         if(debug_flag& DEBUG_FLAG_BLACKOUT){  \
-            printk("DisableVideoLayer_NoDelay()\n"); \
-         } \
     } while (0)
 #else
 #define DisableVideoLayer_NoDelay() DisableVideoLayer()
@@ -342,9 +336,6 @@ static int video2_onoff_state = VIDEO_ENABLE_STATE_IDLE;
 #define DisableVideoLayer_PREBELEND() \
     do { CLEAR_VCBUS_REG_MASK(VPP_MISC + cur_dev->vpp_off, \
          VPP_VD1_PREBLEND|VPP_VD2_PREBLEND); \
-         if(debug_flag& DEBUG_FLAG_BLACKOUT){  \
-            printk("DisableVideoLayer_PREBELEND()\n"); \
-         } \
     } while (0)
 
 #ifndef CONFIG_AM_VIDEO2
@@ -750,7 +741,7 @@ static int ge2d_videotask_init(void)
             printk("create_ge2d_work_queue video task failed \n");
             return -1;
     }
-	 printk("create_ge2d_work_queue video task ok \n");
+	 //printk("create_ge2d_work_queue video task ok \n");
 
     return 0;
 }
@@ -1862,11 +1853,13 @@ static void vsync_toggle_frame(vframe_t *vf)
         first_picture = 1;
     }
 
+    /*
     if(debug_flag& DEBUG_FLAG_BLACKOUT){
         if(first_picture){
             printk("[video4osd] first %s picture {%d,%d} pts:%x, \n", (vf->source_type==VFRAME_SOURCE_TYPE_OSD)?"OSD":"", vf->width, vf->height, vf->pts);
         }
     }
+    */
     /* switch buffer */
     post_canvas = vf->canvas0Addr;
 
@@ -2535,7 +2528,7 @@ static inline bool vpts_expire(vframe_t *cur_vf, vframe_t *next_vf)
 		else
 			tsync_avevent_locked(VIDEO_TSTAMP_DISCONTINUITY, pts);
 
-    		printk(" discontinue, system=0x%x vpts=0x%x\n", systime, pts);
+    		//printk(" discontinue, system=0x%x vpts=0x%x\n", systime, pts);
 
 		if(systime>next_vf->pts || next_vf->pts==0){// pts==0 is a keep frame maybe.
             		return true;
@@ -3453,9 +3446,11 @@ exit:
 
             video_onoff_state = VIDEO_ENABLE_STATE_IDLE;
 
+	    /*
             if(debug_flag& DEBUG_FLAG_BLACKOUT){
                 printk("VsyncEnableVideoLayer\n");
             }
+	    */
         } else if (video_onoff_state == VIDEO_ENABLE_STATE_OFF_REQ) {
         #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
             CLEAR_VCBUS_REG_MASK(VPP_MISC + cur_dev->vpp_off, VPP_VD1_PREBLEND|VPP_VD2_PREBLEND|VPP_VD2_POSTBLEND|VPP_VD1_POSTBLEND);
@@ -3464,9 +3459,6 @@ exit:
         #endif
             video_onoff_state = VIDEO_ENABLE_STATE_IDLE;
 
-            if(debug_flag& DEBUG_FLAG_BLACKOUT){
-                printk("VsyncDisableVideoLayer\n");
-            }
         }
 
         spin_unlock_irqrestore(&video_onoff_lock, flags);
@@ -3577,7 +3569,7 @@ static int alloc_keep_buffer(void)
             amlog_mask(LOG_MASK_KEEPBUF, "%s: failed to alloc y addr\n", __FUNCTION__);
             goto err1;
         }
-        printk("alloc_keep_buffer keep_y_addr %x\n",(unsigned int)keep_y_addr);
+        //printk("alloc_keep_buffer keep_y_addr %x\n",(unsigned int)keep_y_addr);
 #ifndef CONFIG_GE2D_KEEP_FRAME
         keep_y_addr_remap = ioremap_nocache(virt_to_phys((u8 *)keep_y_addr), Y_BUFFER_SIZE);
         if (!keep_y_addr_remap) {
@@ -3593,7 +3585,7 @@ static int alloc_keep_buffer(void)
             amlog_mask(LOG_MASK_KEEPBUF, "%s: failed to alloc u addr\n", __FUNCTION__);
             goto err3;
         }
-        printk("alloc_keep_buffer keep_u_addr %x\n",(unsigned int)keep_u_addr);
+        //printk("alloc_keep_buffer keep_u_addr %x\n",(unsigned int)keep_u_addr);
 #ifndef CONFIG_GE2D_KEEP_FRAME
         keep_u_addr_remap = ioremap_nocache(virt_to_phys((u8 *)keep_u_addr), U_BUFFER_SIZE);
         if (!keep_u_addr_remap) {
@@ -3609,7 +3601,7 @@ static int alloc_keep_buffer(void)
             amlog_mask(LOG_MASK_KEEPBUF, "%s: failed to alloc v addr\n", __FUNCTION__);
             goto err5;
         }
-        printk("alloc_keep_buffer keep_v_addr %x\n",(unsigned int)keep_v_addr);
+        //printk("alloc_keep_buffer keep_v_addr %x\n",(unsigned int)keep_v_addr);
 #ifndef CONFIG_GE2D_KEEP_FRAME
         keep_v_addr_remap = ioremap_nocache(virt_to_phys((u8 *)keep_v_addr), U_BUFFER_SIZE);
         if (!keep_v_addr_remap) {
@@ -3618,7 +3610,7 @@ static int alloc_keep_buffer(void)
         }
 #endif
     }
-    printk("yaddr=%lx,u_addr=%lx,v_addr=%lx\n",keep_y_addr,keep_u_addr,keep_v_addr);
+    //printk("yaddr=%lx,u_addr=%lx,v_addr=%lx\n",keep_y_addr,keep_u_addr,keep_v_addr);
     return 0;
 
 #ifndef CONFIG_GE2D_KEEP_FRAME

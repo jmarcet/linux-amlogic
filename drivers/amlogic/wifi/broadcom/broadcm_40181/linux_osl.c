@@ -236,8 +236,8 @@ osl_attach(void *pdev, uint bustype, bool pkttag)
 			kfree(osh);
 			return NULL;
 		}
-		else
-			printk("alloc static buf at %x!\n", (unsigned int)bcm_static_buf);
+		/* else
+			printk("alloc static buf at %x!\n", (unsigned int)bcm_static_buf); */
 
 
 		sema_init(&bcm_static_buf->static_sem, 1);

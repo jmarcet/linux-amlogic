@@ -54,7 +54,7 @@ static struct snd_soc_dai_driver dit_stub_dai = {
 static unsigned int spdif_pinmux = 0;
 void aml_spdif_pinmux_init(struct device *dev)
 {
-    printk(KERN_INFO"aml_spdif_unmute \n");
+    //printk(KERN_INFO"aml_spdif_unmute \n");
     if(!spdif_pinmux){
         spdif_pinmux = 1;
         pin_spdif_ctl = devm_pinctrl_get_select(dev, "aml_audio_spdif");
@@ -67,7 +67,7 @@ void aml_spdif_pinmux_init(struct device *dev)
 
 void aml_spdif_pinmux_deinit(struct device *dev)
 {
-    printk(KERN_INFO"aml_spdif_mute \n");
+    //printk(KERN_INFO"aml_spdif_mute \n");
     if(spdif_pinmux){
         spdif_pinmux = 0;
         if(pin_spdif_ctl)
@@ -102,7 +102,7 @@ static DEVICE_ATTR(spdif_mute, 0660, spdif_mute_show, spdif_mute_set);
 static int spdif_dit_probe(struct platform_device *pdev)
 {
     int ret = device_create_file(&pdev->dev, &dev_attr_spdif_mute);
-	printk("enter spdif_dit_probe \n");
+    //printk("enter spdif_dit_probe \n");
     spdif_dev = &pdev->dev;
 
     aml_spdif_pinmux_init(&pdev->dev);

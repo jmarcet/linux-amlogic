@@ -509,15 +509,15 @@ int rtc_set_alarm_aml(struct device *dev, alarm_data_t *alarm_data) {
 
 	data |= alarm_data->alarm_sec - 1;
 	
-	printk("write alarm data: %u\n", data);
+	//printk("write alarm data: %u\n", data);
 	ser_access_write(RTC_GPO_COUNTER_ADDR, data);
 	rtc_wait_s_ready();
 	rtc_comm_delay();
 
 	data = ser_access_read(RTC_GPO_COUNTER_ADDR);
 
-	printk("read alarm data: %u\n", data);
-	printk("read alarm count: %u\n", ser_access_read(RTC_COUNTER_ADDR));
+	//printk("read alarm data: %u\n", data);
+	//printk("read alarm count: %u\n", ser_access_read(RTC_COUNTER_ADDR));
 
 	return 0;
 }

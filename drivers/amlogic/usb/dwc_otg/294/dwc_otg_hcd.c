@@ -2745,7 +2745,7 @@ int dwc_otg_hcd_hub_control(dwc_otg_hcd_t * dwc_otg_hcd,
 				if (!dwc_otg_hcd_is_b_host(dwc_otg_hcd)) {
 					hprt0.b.prtpwr = 1;
 					hprt0.b.prtrst = 1;
-					DWC_PRINTF("Indeed it is in host mode hprt0 = %08x\n",hprt0.d32);
+					//DWC_PRINTF("Indeed it is in host mode hprt0 = %08x\n",hprt0.d32);
 					DWC_WRITE_REG32(core_if->host_if->hprt0,
 							hprt0.d32);
 				}

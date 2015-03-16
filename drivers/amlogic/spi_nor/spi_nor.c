@@ -568,7 +568,7 @@ static int check_storage_device(void)
 		}else {
 			boot_device_flag = -1;
 		}
- 	printk("%s : spi boot_device_flag : %d\n",__func__,boot_device_flag);
+ 	//printk("%s : spi boot_device_flag : %d\n",__func__,boot_device_flag);
 
 	if((boot_device_flag == 0)){
 		return 0;
@@ -583,8 +583,8 @@ static int  __init get_storage_device(char *str)
 {
 	int value = -1;
 	value = simple_strtoul(str, NULL, 16);
-	printk("%s : get storage device: storage %s\n",__func__,str);
-	printk("%s : value=%d\n",__func__,value);
+	//printk("%s : get storage device: storage %s\n",__func__,str);
+	//printk("%s : value=%d\n",__func__,value);
 	boot_device_flag = value;
 	
 	return 0;
@@ -624,7 +624,7 @@ early_param("storage",get_storage_device);
 #endif
 	int flag = -1;
 	flag = check_storage_device();
-	printk("%s\n", __func__);
+	//printk("%s\n", __func__);
 	if(flag < 0){
 		printk("%s %d boot_device_flag %d : do not init spi\n",__func__,__LINE__,boot_device_flag);
 		return  -ENOMEM;
@@ -874,7 +874,7 @@ static struct spi_driver spi_nor_driver = {
 
 static int __init spi_nor_init(void)
 {
-	printk("%s\n", __func__);
+	//printk("%s\n", __func__);
 	return spi_register_driver(&spi_nor_driver);
 }
 

@@ -1607,9 +1607,9 @@ static int rn5t618_battery_probe(struct platform_device *pdev)
         supply->battery_info->voltage_min_design = charger->ocv_empty * 1000;
         supply->battery_info->use_for_apm        = 1;
         supply->battery_info->name               = rn5t618_battery->pmu_battery_name;
-    } else {
+    } /* else {
         RICOH_ERR(" NO BATTERY_PARAMETERS FOUND\n");
-    }
+    }  */
 
     charger->soft_limit_to99     = g_rn5t618_init->soft_limit_to99;
     charger->coulomb_type        = COULOMB_SINGLE_CHG_INC; 

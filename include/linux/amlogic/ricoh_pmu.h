@@ -16,12 +16,9 @@
 #define RN5T618_IRQ_NAME                    "rn5t618_irq"
 #define RN5T618_WORK_CYCLE                  2000
 
-#define RICOH_DBG(format,args...)                 \
-    if (1) printk(KERN_DEBUG "[RN5T618]"format,##args)
-#define RICOH_INFO(format,args...)                 \
-    if (1) printk(KERN_WARNING "[RN5T618]"format,##args)
-#define RICOH_ERR(format,args...)                 \
-    if (1) printk(KERN_ERR "[RN5T618]"format,##args)
+#define RICOH_DBG(format,args...)
+#define RICOH_INFO(format,args...)
+#define RICOH_ERR(format,args...)
 #define ABS(x)                  ((x) >0 ? (x) : -(x))
 
 /*

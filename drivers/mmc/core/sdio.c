@@ -1254,15 +1254,15 @@ int sdio_reset_comm(struct mmc_card *card)
 	u32 ocr;
 	int err;
 
-	printk("%s():\n", __func__);
+	//printk("%s():\n", __func__);
     if (host == NULL) {
-        printk("\033[0;47;33m %s(): Error----card->host=NULL \033[0m\n", __func__);
+        //printk("\033[0;47;33m %s(): Error----card->host=NULL \033[0m\n", __func__);
 		err = -EINVAL;
 		goto err;
     }
 
     if (host->alldev_claim == NULL) {
-        printk("\033[0;47;33m %s(): Error----mmc_host->alldev_claim=NULL \033[0m\n", __func__);
+        //printk("\033[0;47;33m %s(): Error----mmc_host->alldev_claim=NULL \033[0m\n", __func__);
 		err = -EINVAL;
 		goto err;
     }
@@ -1338,7 +1338,7 @@ void sdio_reinit (void)
             printk("\033[0;47;33m [%s] Error: sdio_host is NULL \033[0m\n", __func__);
         }
     }
-    printk("[%s] finish\n", __func__);
+    //printk("[%s] finish\n", __func__);
 }
 EXPORT_SYMBOL(sdio_reinit);
 

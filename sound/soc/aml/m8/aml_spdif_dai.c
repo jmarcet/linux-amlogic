@@ -29,12 +29,13 @@
 #include "aml_i2s.h"
 #include <linux/of.h>
 
-//#define DEBUG_ALSA_SPDIF_DAI
-#define ALSA_PRINT(fmt,args...)	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
+#undef DEBUG_ALSA_SPDIF_DAI
 #ifdef DEBUG_ALSA_SPDIF_DAI
+#define ALSA_PRINT(fmt,args...) 	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
 #define ALSA_DEBUG(fmt,args...) 	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
 #define ALSA_TRACE()     			printk("[aml-spdif-dai] enter func %s,line %d\n",__FUNCTION__,__LINE__)
 #else
+#define ALSA_PRINT(fmt,args...)
 #define ALSA_DEBUG(fmt,args...) 
 #define ALSA_TRACE()   
 #endif
@@ -153,7 +154,7 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
     struct snd_dma_buffer *buf = &substream->dma_buffer;    
     struct snd_pcm_runtime *runtime = substream->runtime;
     if(buf==NULL && runtime==NULL){
-        printk("buf/0x%x runtime/0x%x\n",(unsigned )buf,(unsigned )runtime);
+        //printk("buf/0x%x runtime/0x%x\n",(unsigned )buf,(unsigned )runtime);
         return;
     }
 
@@ -162,7 +163,7 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
 	memset((void*)(&set), 0, sizeof(set));
 	memset((void*)(&chstat), 0, sizeof(chstat));
 	set.chan_stat = &chstat;
-    printk("----aml_hw_iec958_init,runtime->rate=%d--\n",runtime->rate);
+    //printk("----aml_hw_iec958_init,runtime->rate=%d--\n",runtime->rate);
 	switch(runtime->rate){
 		case 192000:
 			sample_rate	=	AUDIO_CLK_FREQ_192;
@@ -212,7 +213,7 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
         last_iec_clock = sample_rate;
         audio_set_958_clk(sample_rate, AUDIO_CLK_256FS);
     }
-    printk("----aml_hw_iec958_init,runtime->rate=%d,sample_rate=%d--\n",runtime->rate,sample_rate);
+    //printk("----aml_hw_iec958_init,runtime->rate=%d,sample_rate=%d--\n",runtime->rate,sample_rate);
 	audio_util_set_dac_958_format(AUDIO_ALGOUT_DAC_FORMAT_DSP);
 
 	switch(runtime->format){
@@ -236,7 +237,7 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
 		}
 		else{ //ac3,use the same pcm mode as i2s configuration
 			iec958_mode = AIU_958_MODE_PCM_RAW;
-			printk("iec958 mode %s\n",(i2s_mode == AIU_I2S_MODE_PCM32)?"PCM32_RAW":((I2S_MODE == AIU_I2S_MODE_PCM24)?"PCM24_RAW":"PCM16_RAW"));
+			//printk("iec958 mode %s\n",(i2s_mode == AIU_I2S_MODE_PCM32)?"PCM32_RAW":((I2S_MODE == AIU_I2S_MODE_PCM24)?"PCM24_RAW":"PCM16_RAW"));
 		}
 	}
 	else{
@@ -246,7 +247,7 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
 				iec958_mode = AIU_958_MODE_PCM24;
 		else
 				iec958_mode = AIU_958_MODE_PCM16;
-		printk("iec958 mode %s\n",(i2s_mode == AIU_I2S_MODE_PCM32)?"PCM32":((i2s_mode == AIU_I2S_MODE_PCM24)?"PCM24":"PCM16"));
+		//printk("iec958 mode %s\n",(i2s_mode == AIU_I2S_MODE_PCM32)?"PCM32":((i2s_mode == AIU_I2S_MODE_PCM24)?"PCM24":"PCM16"));
 	}
 	if(iec958_mode == AIU_958_MODE_PCM16 || iec958_mode == AIU_958_MODE_PCM24 ||
 		iec958_mode == AIU_958_MODE_PCM32){
@@ -255,13 +256,13 @@ void aml_hw_iec958_init(struct snd_pcm_substream *substream)
 		set.chan_stat->chstat1_l = 0x200;
 		set.chan_stat->chstat1_r = 0x200;
         if(sample_rate==AUDIO_CLK_FREQ_882){
-            printk("----sample_rate==AUDIO_CLK_FREQ_882---\n");
+            //printk("----sample_rate==AUDIO_CLK_FREQ_882---\n");
             set.chan_stat->chstat1_l = 0x800;
             set.chan_stat->chstat1_r = 0x800;
         }
 
         if(sample_rate==AUDIO_CLK_FREQ_96){
-            printk("----sample_rate==AUDIO_CLK_FREQ_96---\n");
+            //printk("----sample_rate==AUDIO_CLK_FREQ_96---\n");
             set.chan_stat->chstat1_l = 0xa00;
             set.chan_stat->chstat1_r = 0xa00;
         }
@@ -402,7 +403,7 @@ static void aml_dai_spdif_shutdown(struct snd_pcm_substream *substream,
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
 		memset((void*)runtime->dma_area,0,snd_pcm_lib_buffer_bytes(substream));
         if(IEC958_mode_codec == 6){
-            printk("[%s %d]8chPCM output:disable aml_spdif_play()\n",__FUNCTION__,__LINE__);
+            //printk("[%s %d]8chPCM output:disable aml_spdif_play()\n",__FUNCTION__,__LINE__);
         }else{
             aml_spdif_play();
         }

@@ -11,8 +11,7 @@
 
 extern unsigned sdhc_debug;
 extern unsigned sdio_debug;
-#define DEBUG_SD_OF		1
-//#define DEBUG_SD_OF			0
+#define DEBUG_SD_OF		0
 
 #define MODULE_NAME		"amlsd"
 

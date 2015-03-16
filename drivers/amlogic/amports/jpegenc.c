@@ -1848,7 +1848,7 @@ static struct codec_profile_t jpegenc_profile = {
 };
 static int __init jpegenc_driver_init_module(void)
 {
-    debug_level(1, "jpegenc module init\n");
+    //debug_level(1, "jpegenc module init\n");
 
     if (platform_driver_register(&jpegenc_driver)) {
         debug_level(1, "failed to register jpegenc driver\n");

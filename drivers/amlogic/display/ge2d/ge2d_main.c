@@ -250,7 +250,7 @@ init_ge2d_device(void)
 	}
 	ge2d_device.major=ret;
 	ge2d_device.dbg_enable=0;
-	amlog_level(LOG_LEVEL_LOW,"ge2d_dev major:%d\n",ret);
+	//amlog_level(LOG_LEVEL_LOW,"ge2d_dev major:%d\n",ret);
 	ret = class_register(&ge2d_class);
 	if(ret<0 )
 	{
@@ -284,7 +284,7 @@ static int remove_ge2d_device(void)
 static int __init
 ge2d_init_module(void)
 {
-   	amlog_level(LOG_LEVEL_HIGH,"ge2d_init\n");
+   	//amlog_level(LOG_LEVEL_HIGH,"ge2d_init\n");
     	return init_ge2d_device();
     	
 }
@@ -293,7 +293,7 @@ static void __exit
 ge2d_remove_module(void)
 {
 	remove_ge2d_device();
-    	amlog_level(LOG_LEVEL_HIGH,"ge2d module removed.\n");
+    	//amlog_level(LOG_LEVEL_HIGH,"ge2d module removed.\n");
     
 }
 

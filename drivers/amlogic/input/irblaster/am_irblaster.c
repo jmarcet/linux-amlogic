@@ -218,7 +218,7 @@ static const struct file_operations aml_irblaster_fops = {
 static int  aml_irblaster_probe(struct platform_device *pdev)
 {
 	int r;
-	printk("irblaster probe\n");
+	//printk("irblaster probe\n");
 	irblaster = kmalloc(sizeof(struct aml_blaster),GFP_KERNEL);
         if(irblaster == NULL)
 		return -1;

@@ -1398,7 +1398,7 @@ static int __init tv_init_module(void)
 	int  ret ;
 
 	info=(disp_module_info_t*)kmalloc(sizeof(disp_module_info_t),GFP_KERNEL) ;
-    printk("%s\n", __func__);
+    //printk("%s\n", __func__);
 
 	if (!info)
 	{
@@ -1460,7 +1460,7 @@ static int __init vdac_config_bootargs_setup(char* line)
 {
     unsigned int cfg = 0x00;
 
-    printk("cvbs trimming line = %s\n", line);
+    //printk("cvbs trimming line = %s\n", line);
     cfg = simple_strtoul(line, NULL, 16);
 
     cvbs_config_vdac((cfg&0xff00)>>8, cfg&0xff);
@@ -1476,7 +1476,7 @@ static int __init cvbs_performance_setup(char* line)
 {
 	unsigned int cfg = 0x1;
 
-	printk("cvbs performance line = %s\n", line);
+	//printk("cvbs performance line = %s\n", line);
 	cfg = simple_strtoul(line, NULL, 10);
 
 	cvbs_performance_config(cfg);

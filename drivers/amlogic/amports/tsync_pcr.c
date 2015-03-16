@@ -399,11 +399,11 @@ void tsync_pcr_avevent_locked(avevent_t event, u32 param)
        if(param == 1){
       	 	timestamp_pcrscr_enable(0);
       	 	tsync_pcr_vpause_flag = 1;
-		printk("video pause!\n");
+		//printk("video pause!\n");
 	 }else{
 		timestamp_pcrscr_enable(1);
 		tsync_pcr_vpause_flag = 0;
-		printk("video resume\n");
+		//printk("video resume\n");
 	 }
         break;	
 
@@ -890,7 +890,7 @@ static int __init tsync_pcr_init(void)
     timestamp_vpts_set(0);
     timestamp_pcrscr_set(0);
 	wait_pcr_count = 0;
-    printk("[tsync_pcr_init]init success. \n");
+    //printk("[tsync_pcr_init]init success. \n");
     return (0);
 }
 

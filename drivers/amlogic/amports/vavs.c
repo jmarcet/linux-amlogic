@@ -911,7 +911,7 @@ static struct platform_driver amvdec_avs_driver = {
 
 static int __init amvdec_avs_driver_init_module(void)
 {
-        printk("amvdec_avs module init\n");
+        //printk("amvdec_avs module init\n");
 
         if (platform_driver_register(&amvdec_avs_driver))
         {

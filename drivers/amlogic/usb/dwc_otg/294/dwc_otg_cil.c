@@ -1402,14 +1402,7 @@ void dwc_otg_core_init(dwc_otg_core_if_t * core_if)
 		break;
 
 	}
-	if (core_if->dma_enable) {
-		if (core_if->dma_desc_enable) {
-			DWC_PRINTF("Using Descriptor DMA mode\n");
-		} else {
-			DWC_PRINTF("Using Buffer DMA mode\n");
-
-		}
-	} else {
+	if (!core_if->dma_enable) {
 		DWC_PRINTF("Using Slave mode\n");
 		core_if->dma_desc_enable = 0;
 	}
@@ -1510,8 +1503,8 @@ void dwc_otg_core_init(dwc_otg_core_if_t * core_if)
 				 gotgctl.d32);
 		/* Set OTG version supported */
 		core_if->otg_ver = core_if->core_params->otg_ver;
-		DWC_PRINTF("OTG VER PARAM: %d, OTG VER FLAG: %d\n",
-			   core_if->core_params->otg_ver, core_if->otg_ver);
+		//DWC_PRINTF("OTG VER PARAM: %d, OTG VER FLAG: %d\n",
+		//	   core_if->core_params->otg_ver, core_if->otg_ver);
 	}
 	
 
@@ -5350,7 +5343,7 @@ static int dwc_otg_setup_params(dwc_otg_core_if_t * core_if)
 	dwc_otg_set_uninitialized((int32_t *) core_if->core_params,
 				  sizeof(*core_if->core_params) /
 				  sizeof(int32_t));
-	DWC_PRINTF("Setting default values for core params\n");
+	//DWC_PRINTF("Setting default values for core params\n");
 	dwc_otg_set_param_otg_cap(core_if, dwc_param_otg_cap_default);
 	dwc_otg_set_param_dma_enable(core_if, dwc_param_dma_enable_default);
 	dwc_otg_set_param_dma_desc_enable(core_if,

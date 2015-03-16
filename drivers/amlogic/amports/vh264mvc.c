@@ -1403,7 +1403,7 @@ static struct codec_profile_t amvdec_hmvc_profile = {
 
 static int __init amvdec_h264mvc_driver_init_module(void)
 {
-    printk("amvdec_h264mvc module init\n");
+    //printk("amvdec_h264mvc module init\n");
 
     if (platform_driver_register(&amvdec_h264mvc_driver)) {
         printk("failed to register amvdec_h264mvc driver\n");

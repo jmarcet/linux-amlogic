@@ -46,7 +46,7 @@ static void hdmi_tx_construct_aud_packet(Hdmi_tx_audio_para_t* audio_param, unsi
 {
 #ifndef PCM_USE_INFOFRAME
     if(audio_param->type == CT_PCM){
-        hdmi_print(INF, AUD "Audio Type: PCM\n");
+        //hdmi_print(INF, AUD "Audio Type: PCM\n");
         if(AUD_DB){
 //Note: HDMI Spec V1.4 Page 154
             if((audio_param->channel_num == CC_2CH) || (audio_param->channel_num == CC_REFER_TO_STREAM))

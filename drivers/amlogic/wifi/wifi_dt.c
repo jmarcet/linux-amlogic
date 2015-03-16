@@ -53,21 +53,15 @@ static struct wifi_plat_info * wifi_get_driver_data(struct platform_device *pdev
 #define CHECK_PROP(ret, msg, value)	\
 {	\
 	if (ret) { \
-		printk("wifi_dt : no prop for %s\n", msg); 	\
 		return -1;	\
-	} else {	\
-		printk("wifi_dt : %s=%s\n", msg, value);	\
-	}	\
+	} \
 }	\
 
-#define CHECK_RET(ret) \
-	if (ret) \
-		printk("wifi_dt : gpio op failed(%d) at line %d\n", ret, __LINE__)
+#define CHECK_RET(ret)
 
 extern const char * amlogic_cat_gpio_owner(unsigned int pin);
 
-#define SHOW_PIN_OWN(pin_str, pin_num) 	\
-	printk("%s(%d) : %s\n", pin_str, pin_num, amlogic_cat_gpio_owner(pin_num))
+#define SHOW_PIN_OWN(pin_str, pin_num)
 
 static int wifi_dev_probe(struct platform_device *pdev)
 {
@@ -80,7 +74,7 @@ static int wifi_dev_probe(struct platform_device *pdev)
     struct wifi_plat_info *plat = (struct wifi_plat_info *)(pdev->dev.platform_data);
 #endif
 
-    printk("wifi_dev_probe\n");
+    //printk("wifi_dev_probe\n");
 
 #ifdef CONFIG_OF
 	if (pdev->dev.of_node) {
@@ -105,7 +99,7 @@ static int wifi_dev_probe(struct platform_device *pdev)
 		else if (strcmp(value, "GPIO_IRQ_FALLING") == 0)
 			plat->irq_trigger_type = GPIO_IRQ_FALLING;
 		else {
-			printk("wifi_dt : unknown irq trigger type - %s\n", value);
+			//printk("wifi_dt : unknown irq trigger type - %s\n", value);
 			return -1;
 		}
 		
@@ -135,12 +129,14 @@ static int wifi_dev_probe(struct platform_device *pdev)
 
 		plat->plat_info_valid = 1;
 		
-		printk("interrupt_pin=%d, irq_num=%d, irq_trigger_type=%d, "
-				"power_on_pin=%d,"
-				"clock_32k_pin=%d\n", 
-				plat->interrupt_pin, plat->irq_num, plat->irq_trigger_type, 
-				plat->power_on_pin,
-				plat->clock_32k_pin);
+		/*
+		 * printk("interrupt_pin=%d, irq_num=%d, irq_trigger_type=%d, "
+		 * 		"power_on_pin=%d,"
+		 * 		"clock_32k_pin=%d\n", 
+		 * 		plat->interrupt_pin, plat->irq_num, plat->irq_trigger_type, 
+		 * 		plat->power_on_pin,
+		 * 		plat->clock_32k_pin);
+		 */
 	}
 #endif
 
@@ -149,7 +145,7 @@ static int wifi_dev_probe(struct platform_device *pdev)
 
 static int wifi_dev_remove(struct platform_device *pdev)
 {
-    printk("wifi_dev_remove\n");
+    //printk("wifi_dev_remove\n");
     return 0;
 }
 
@@ -189,9 +185,9 @@ int wifi_setup_dt()
 	int ret;
 	uint flag;
 
-	printk("wifi_setup_dt\n");
+	//printk("wifi_setup_dt\n");
 	if (!wifi_info.plat_info_valid) {
-		printk("wifi_setup_dt : invalid device tree setting\n");
+		//printk("wifi_setup_dt : invalid device tree setting\n");
 		return -1;
 	}
 	
@@ -218,7 +214,7 @@ int wifi_setup_dt()
 		flag = AML_GPIO_IRQ(GPIO_IRQ5, FILTER_NUM5, wifi_info.irq_trigger_type);
 	}
 	else {
-		printk("wifi_dt : unsupported irq number - %d\n", wifi_info.irq_num);
+		//printk("wifi_dt : unsupported irq number - %d\n", wifi_info.irq_num);
 		return -1;
 	}
 	ret = amlogic_gpio_to_irq(wifi_info.interrupt_pin, OWNER_NAME, flag);
@@ -255,9 +251,9 @@ void wifi_teardown_dt()
 {
 	int ret = 0;
 	
-	printk("wifi_teardown_dt\n");
+	//printk("wifi_teardown_dt\n");
 	if (!wifi_info.plat_info_valid) {
-		printk("wifi_teardown_dt : invalid device tree setting\n");
+		//printk("wifi_teardown_dt : invalid device tree setting\n");
 		return;
 	}
 	
@@ -288,20 +284,20 @@ void wifi_request_32k_clk(int is_on, const char *requestor)
 //		return;
 //	}
     if(!wifi_info.clock_32k_pin) {
-        printk("wifi_request_32k_clk : no 32k pin");
+        //printk("wifi_request_32k_clk : no 32k pin");
         return;
     }
-	printk("wifi_request_32k_clk : %s-->%s for %s\n", 
-		clk_32k_on > 0 ? "ON" : "OFF", is_on ? "ON" : "OFF", requestor);
+	//printk("wifi_request_32k_clk : %s-->%s for %s\n", 
+	//	clk_32k_on > 0 ? "ON" : "OFF", is_on ? "ON" : "OFF", requestor);
 	
 	if (is_on) {
 		if (clk_32k_on == 0) {			
-			SHOW_PIN_OWN("clock_32k_pin", wifi_info.clock_32k_pin);
+			//SHOW_PIN_OWN("clock_32k_pin", wifi_info.clock_32k_pin);
 			ret = amlogic_gpio_request(wifi_info.clock_32k_pin, OWNER_NAME);
 			CHECK_RET(ret);
 			amlogic_gpio_direction_output(wifi_info.clock_32k_pin, 0, OWNER_NAME);
 			CHECK_RET(ret);
-			SHOW_PIN_OWN("clock_32k_pin", wifi_info.clock_32k_pin);
+			//SHOW_PIN_OWN("clock_32k_pin", wifi_info.clock_32k_pin);
 #if ((defined CONFIG_ARCH_MESON8) || (defined CONFIG_ARCH_MESON8B))
 			aml_set_reg32_mask(P_PERIPHS_PIN_MUX_3,0x1<<22);//set mode GPIOX_10-->CLK_OUT3
 #else
@@ -357,7 +353,7 @@ void extern_wifi_set_enable(int is_on)
 			ret = amlogic_gpio_direction_output(wifi_info.power_on_pin2, 1, OWNER_NAME);
 			CHECK_RET(ret);
 		}
-		printk("WIFI  Enable! %d\n", wifi_info.power_on_pin);
+		//printk("WIFI  Enable! %d\n", wifi_info.power_on_pin);
 	} else {
 		if(wifi_power_gpio){
 			if(wifi_info.power_on_pin_level)
@@ -371,7 +367,7 @@ void extern_wifi_set_enable(int is_on)
 			CHECK_RET(ret);
 		}
 		
-		printk("WIFI  Disable! %d\n", wifi_info.power_on_pin);
+		//printk("WIFI  Disable! %d\n", wifi_info.power_on_pin);
 	
 	}
 }

@@ -569,6 +569,7 @@ static ssize_t show_edid(struct device *dev, struct device_attribute *attr, char
 
 static ssize_t store_edid(struct device * dev, struct device_attribute *attr, const char * buf, size_t count)
 {
+    /*
     if(buf[0]=='h'){
         int i;
         hdmi_print(INF, EDID "EDID hash value:\n");
@@ -604,6 +605,7 @@ static ssize_t store_edid(struct device * dev, struct device_attribute *attr, co
             printk("\n");
         }
     }
+    */
     return 16;
 }
 
@@ -1017,11 +1019,11 @@ static audio_fs_t aud_samp_rate_map(unsigned int rate)
 
     for(i = 0; i < ARRAY_SIZE(map_fs); i++) {
         if(map_fs[i].rate == rate) {
-            hdmi_print(IMP, AUD "aout notify rate %d\n", rate);
+            //hdmi_print(IMP, AUD "aout notify rate %d\n", rate);
             return map_fs[i].fs;
         }
     }
-    hdmi_print(IMP, AUD "get FS_MAX\n");
+    //hdmi_print(IMP, AUD "get FS_MAX\n");
     return FS_MAX;
 }
 
@@ -1058,11 +1060,11 @@ static audio_sample_size_t aud_size_map(unsigned int bits)
 
     for(i = 0; i < ARRAY_SIZE(aud_size_map_ss); i ++) {
         if(bits == aud_size_map_ss[i].sample_bits) {
-            hdmi_print(IMP, AUD "aout notify size %d\n", bits);
+            //hdmi_print(IMP, AUD "aout notify size %d\n", bits);
             return aud_size_map_ss[i].ss;
         }
     }
-    hdmi_print(IMP, AUD "get SS_MAX\n");
+    //hdmi_print(IMP, AUD "get SS_MAX\n");
     return SS_MAX;
 }
 
@@ -1091,7 +1093,7 @@ static int hdmitx_notify_callback_a(struct notifier_block *block, unsigned long 
 
     if(audio_param->type != cmd) {
         audio_param->type = cmd;
-        hdmi_print(INF, AUD "aout notify format %s\n", aud_type_string[audio_param->type]);
+        //hdmi_print(INF, AUD "aout notify format %s\n", aud_type_string[audio_param->type]);
         hdmitx_device.audio_param_update_flag = 1;
     }
 
@@ -1105,7 +1107,7 @@ static int hdmitx_notify_callback_a(struct notifier_block *block, unsigned long 
         hdmitx_device.audio_param_update_flag = 1;
     }
     if(hdmitx_device.tx_aud_cfg == 2) {
-        hdmi_print(INF, AUD "auto mode\n");
+        //hdmi_print(INF, AUD "auto mode\n");
         // Detect whether Rx is support current audio format
         for(i = 0; i < pRXCap->AUD_count; i++){
             if(pRXCap->RxAudioCap[i].audio_format_code == cmd)
@@ -1118,7 +1120,7 @@ static int hdmitx_notify_callback_a(struct notifier_block *block, unsigned long 
         }
     }
     if(hdmitx_device.audio_param_update_flag == 0)
-        hdmi_print(INF, AUD "no update\n");
+        //hdmi_print(INF, AUD "no update\n");
     else
         hdmitx_device.audio_notify_flag = 1;
 
@@ -1134,7 +1136,7 @@ static int hdmitx_notify_callback_a(struct notifier_block *block, unsigned long 
 #endif
             }
             hdmitx_device.audio_param_update_flag = 0;
-            hdmi_print(INF, AUD "set audio param\n");
+            //hdmi_print(INF, AUD "set audio param\n");
         }
     }
 
@@ -1671,7 +1673,7 @@ static int  __init amhdmitx_init(void)
     if(init_flag&INIT_FLAG_NOT_LOAD)
         return 0;
 
-    hdmi_print(IMP, SYS "amhdmitx_init\n");
+    //hdmi_print(IMP, SYS "amhdmitx_init\n");
     hdmi_print(IMP, SYS "Ver: %s\n", HDMITX_VER);
 
     if (platform_driver_register(&amhdmitx_driver)) {
@@ -1686,7 +1688,7 @@ static int  __init amhdmitx_init(void)
 
 static void __exit amhdmitx_exit(void)
 {
-    hdmi_print(INF, SYS "amhdmitx_exit\n");
+    //hdmi_print(INF, SYS "amhdmitx_exit\n");
     platform_driver_unregister(&amhdmitx_driver);
 
     return ;

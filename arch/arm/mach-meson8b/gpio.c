@@ -645,8 +645,8 @@ static int amlogic_gpio_probe(struct platform_device *pdev)
 	amlogic_gpio_chip.ngpio=ARRAY_SIZE(amlogic_pins);
 	gpiochip_add(&amlogic_gpio_chip);
 	pullup_ops.meson_set_pullup=m8b_set_pullup;
-	dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
 #ifdef gpio_dump
+	dev_info(&pdev->dev, "Probed amlogic GPIO driver\n");
 	int gi;
 	for(gi=0;gi<GPIO_MAX;gi++)
 		printk("%s,amlogic_pins[%d]=%d,%d,out en reg=%x,bit=%d,out val reg=%x,bit=%d,input reg=%x,bit=%d\n",

@@ -615,8 +615,8 @@ struct sdhc_clk2{
 #define MMC_TIMEOUT						5000
 
 //#define printk(a...)
-#define DBG_LINE_INFO()  printk(KERN_WARNING "[%s] : %s\n",__func__,__FILE__);
-//#define DBG_LINE_INFO()
+//#define DBG_LINE_INFO()  printk(KERN_WARNING "[%s] : %s\n",__func__,__FILE__);
+#define DBG_LINE_INFO()
 // #define dev_err(a,s) printk(KERN_INFO s);
 
 

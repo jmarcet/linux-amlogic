@@ -667,8 +667,8 @@ static int dvb_dmxdev_filter_start(struct dmxdev_filter *filter)
 			ret = (*secfeed)->set(*secfeed, para->pid, 32768,
 					      (para->flags & DMX_CHECK_CRC) ? 1 : 0);
 			if (ret < 0) {
-				printk("DVB (%s): could not set feed\n",
-				       __func__);
+				//printk("DVB (%s): could not set feed\n",
+				//       __func__);
 				dvb_dmxdev_feed_restart(filter);
 				return ret;
 			}

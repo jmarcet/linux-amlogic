@@ -605,7 +605,7 @@ static int amlogic_spi_nor_probe(struct platform_device *pdev)
 	int			status = 0;
 	unsigned		num_chipselect = 1;
 
-	printk("%s:\n", __func__);
+	//printk("%s:\n", __func__);
 	master = spi_alloc_master(&pdev->dev, sizeof *amlogic_spi);
 	if (master == NULL) {
 		dev_dbg(&pdev->dev, "master allocation failed\n");
@@ -662,7 +662,7 @@ static int amlogic_spi_nor_probe(struct platform_device *pdev)
 	spi_hw_init(amlogic_spi);
 
 	status = spi_add_dev(amlogic_spi, master);
-	printk("%s over\n", __func__);
+	//printk("%s over\n", __func__);
 	return status;
 
 err1:

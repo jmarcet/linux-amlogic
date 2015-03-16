@@ -372,7 +372,7 @@ static struct meson_pm_config aml_pm_pdata = {
 
 static int __init meson_pm_probe(struct platform_device *pdev)
 {
-	printk(KERN_INFO "enter meson_pm_probe!\n");
+	//printk(KERN_INFO "enter meson_pm_probe!\n");
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
 	early_suspend.suspend = meson_system_early_suspend;
@@ -389,7 +389,7 @@ static int __init meson_pm_probe(struct platform_device *pdev)
 	
 	clk81 = clk_get_sys("clk81", NULL);
 	clkxtal = clk_get_sys("xtal", NULL);
-	printk(KERN_INFO "meson_pm_probe done !\n");
+	//printk(KERN_INFO "meson_pm_probe done !\n");
 	return 0;
 }
 
@@ -420,7 +420,7 @@ static struct platform_driver meson_pm_driver = {
 
 static int __init meson_pm_init(void)
 {
-	printk("enter %s\n",__func__);
+	//printk("enter %s\n",__func__);
 	return platform_driver_probe(&meson_pm_driver, meson_pm_probe);
 }
 late_initcall(meson_pm_init);

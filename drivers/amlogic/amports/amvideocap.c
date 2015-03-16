@@ -862,7 +862,7 @@ amvideocap_init_module(void)
 {
     int err;
 
-    printk("amvideocap_init_module\n");
+    //printk("amvideocap_init_module\n");
     if ((err = platform_driver_register(&amvideocap_drv))) {
         return err;
     }

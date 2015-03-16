@@ -25,17 +25,18 @@
 #define DEV_NAME "aml-pcm-dai"
 
 //static aml_dai_info_t dai_info[3] = {{0}};
-#define AML_DAI_DEBUG
+#undef AML_DAI_DEBUG
 
 
 
-#define ALSA_PRINT(fmt,args...)	printk(KERN_INFO "[aml-pcm-dai]" fmt,##args)
-#ifdef DEBUG_ALSA_SOC_DAI_SPDIF
+#ifdef AML_DAI_DEBUG
+#define ALSA_PRINT(fmt,args...) 	printk(KERN_INFO "[aml-pcm-dai]" fmt,##args)
 #define ALSA_DEBUG(fmt,args...) 	printk(KERN_INFO "[aml-pcm-dai]" fmt,##args)
 #define ALSA_TRACE()     			printk("[aml-pcm-dai] enter func %s,line %d\n",__FUNCTION__,__LINE__)
 #else
-#define ALSA_DEBUG(fmt,args...) 
-#define ALSA_TRACE()   
+#define ALSA_PRINT(fmt,args...)
+#define ALSA_DEBUG(fmt,args...)
+#define ALSA_TRACE()
 #endif
 
 
@@ -211,8 +212,8 @@ static const struct snd_soc_component_driver aml_component= {
 };
 static int aml_pcm_dai_probe(struct platform_device *pdev)
 {
-	printk(KERN_DEBUG "enter %s\n", __func__);
 #if 0
+	printk(KERN_DEBUG "enter %s\n", __func__);
 	BUG_ON(pdev->id < 0);
 	BUG_ON(pdev->id >= ARRAY_SIZE(aml_dai));
 	return snd_soc_register_dai(&pdev->dev, &aml_dai[pdev->id]);

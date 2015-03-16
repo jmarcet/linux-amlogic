@@ -1640,7 +1640,7 @@ osd_ext_driver = {
 static int __init
 osd_ext_init_module(void)
 {
-	amlog_level(LOG_LEVEL_HIGH, "osd_ext_init\n");
+	//amlog_level(LOG_LEVEL_HIGH, "osd_ext_init\n");
 #ifndef MODULE
 	{
 		char *option;

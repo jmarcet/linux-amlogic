@@ -137,9 +137,9 @@ static int  saradc_internal_cal(struct saradc *saradc)
 	saradc->ref_nominal = nominal[2];
 	saradc->coef = (nominal[3] - nominal[1]) << 12;
 	saradc->coef /= val[3] - val[1];
-	printk("saradc calibration: ref_val = %d\n", saradc->ref_val);
-	printk("saradc calibration: ref_nominal = %d\n", saradc->ref_nominal);
-	printk("saradc calibration: coef = %d\n", saradc->coef);
+	//printk("saradc calibration: ref_val = %d\n", saradc->ref_val);
+	//printk("saradc calibration: ref_nominal = %d\n", saradc->ref_nominal);
+	//printk("saradc calibration: coef = %d\n", saradc->coef);
 
 	return 0;
 }
@@ -448,7 +448,7 @@ static int saradc_probe(struct platform_device *pdev)
 	int err;
 	struct saradc *saradc;
 
-	printk("__%s__\n",__func__);
+	//printk("__%s__\n",__func__);
 	saradc = kzalloc(sizeof(struct saradc), GFP_KERNEL);
 	if (!saradc) {
 		err = -ENOMEM;
@@ -526,14 +526,14 @@ static struct platform_driver saradc_driver = {
 
 static int __init saradc_init(void)
 {
-	printk(KERN_INFO "SARADC Driver init.\n");
+	//printk(KERN_INFO "SARADC Driver init.\n");
 	class_register(&saradc_class);
 	return platform_driver_register(&saradc_driver);
 }
 
 static void __exit saradc_exit(void)
 {
-	printk(KERN_INFO "SARADC Driver exit.\n");
+	//printk(KERN_INFO "SARADC Driver exit.\n");
 	platform_driver_unregister(&saradc_driver);
 	class_unregister(&saradc_class);
 }

@@ -294,7 +294,7 @@ static int ge2d_canvas_dup(canvas_t *srcy ,canvas_t *srcu,canvas_t *des,
 {
 
     config_para_ex_t ge2d_config;
-    printk("ge2d_canvas_dupvh264 ADDR srcy[0x%lx] srcu[0x%lx] des[0x%lx]\n",srcy->addr,srcu->addr,des->addr);
+    //printk("ge2d_canvas_dupvh264 ADDR srcy[0x%lx] srcu[0x%lx] des[0x%lx]\n",srcy->addr,srcu->addr,des->addr);
     memset(&ge2d_config,0,sizeof(config_para_ex_t));
 
     ge2d_config.alu_const_color= 0;
@@ -533,7 +533,7 @@ static void vh264_ppmgr_reset(void)
 
     //vf_notify_receiver(PROVIDER_NAME,VFRAME_EVENT_PROVIDER_START,NULL);
 
-    printk("vh264dec: vf_ppmgr_reset\n");
+    //printk("vh264dec: vf_ppmgr_reset\n");
 }
 #endif
 
@@ -598,8 +598,10 @@ static int vh264_set_params(void)
             frame_height = frame_height - (4>>chroma444)*min(crop_bottom, (unsigned int)((8<<chroma444)-1));
             frame_width   = frame_width - (4>>chroma444)*min(crop_right, (unsigned int)((8<<chroma444)-1));			
         }
+	/*
         printk("frame_mbs_only_flag %d, crop_bottom %d,  frame_height %d, mb_height %d,crop_right %d, frame_width %d, mb_width %d\n",
             frame_mbs_only_flag, crop_bottom,frame_height, mb_height,crop_right,frame_width, mb_height);
+	*/
 
         if (frame_height == 1088) {
             frame_height = 1080;
@@ -611,7 +613,7 @@ static int vh264_set_params(void)
     mb_total = mb_width * mb_height;
 
     if(mb_total > 8160){//resolution exceed 1920x1088,
-        printk("mb_total %d, mb_width %d, mb_height %d\n",  mb_total, mb_width, mb_height);
+        //printk("mb_total %d, mb_width %d, mb_height %d\n",  mb_total, mb_width, mb_height);
         return -1;  
     }
 
@@ -822,9 +824,9 @@ static int vh264_set_params(void)
                 }
             }
         }
-    } else {
+    } /* else {
         printk("H.264: timing_info not present\n");
-    }
+    } */
 
     if (aspect_ratio_info_present_flag) {
         if (aspect_ratio_idc == EXTEND_SAR) {
@@ -1745,7 +1747,7 @@ static s32 vh264_init(void)
         return -ENOMEM;
     }
 
-    printk("264 ucode swap area: physical address 0x%x, cpu virtual addr %p\n", mc_dma_handle, mc_cpu_addr);
+    //printk("264 ucode swap area: physical address 0x%x, cpu virtual addr %p\n", mc_dma_handle, mc_cpu_addr);
 	/*while for easy break out, always  run once.*/
     while(debugfirmware){
 		int size;
@@ -2184,7 +2186,7 @@ static struct codec_profile_t amvdec_h264_profile = {
 
 static int __init amvdec_h264_driver_init_module(void)
 {
-    printk("amvdec_h264 module init\n");
+    //printk("amvdec_h264 module init\n");
 #ifdef CONFIG_GE2D_KEEP_FRAME	
     ge2d_videoh264task_init();
 #endif
@@ -2198,7 +2200,7 @@ static int __init amvdec_h264_driver_init_module(void)
 
 static void __exit amvdec_h264_driver_remove_module(void)
 {
-    printk("amvdec_h264 module remove.\n");
+    //printk("amvdec_h264 module remove.\n");
 
     platform_driver_unregister(&amvdec_h264_driver);
 #ifdef CONFIG_GE2D_KEEP_FRAME	

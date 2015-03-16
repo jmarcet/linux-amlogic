@@ -359,15 +359,15 @@ static int pts_checkin_offset_inline(u8 type, u32 offset, u32 val,u64 uS64)
         if (type == PTS_TYPE_VIDEO && pTable->first_checkin_pts == -1) {
             pTable->first_checkin_pts = val;
             timestamp_checkin_firstvpts_set(val);
-            //if(tsync_get_debug_pts_checkin() && tsync_get_debug_vpts()) {
+            if(tsync_get_debug_pts_checkin() && tsync_get_debug_vpts()) {
                 printk("first check in vpts <0x%x:0x%x> ok!\n", offset, val);
-            //}
+            }
         }
         if (type == PTS_TYPE_AUDIO && pTable->first_checkin_pts == -1) {
             pTable->first_checkin_pts = val;            
-            //if (tsync_get_debug_pts_checkin() && tsync_get_debug_apts()) {
+            if (tsync_get_debug_pts_checkin() && tsync_get_debug_apts()) {
                 printk("first check in apts <0x%x:0x%x> ok!\n", offset, val);
-            //}
+            }
         }
 
         if (tsync_get_debug_pts_checkin()) {

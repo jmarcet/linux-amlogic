@@ -106,7 +106,7 @@ int clk_enable_usb(struct clk *clk)
 	peri->config = config.d32;
 
 
-	printk(KERN_NOTICE"USB (%d) use clock source: %s\n",port_idx,clock_src_name[clk_sel]);
+	//printk(KERN_NOTICE"USB (%d) use clock source: %s\n",port_idx,clock_src_name[clk_sel]);
 
 	control.d32 = peri->ctrl;
 	control.b.fsel = 2;	/* PHY default is 24M (5), change to 12M (2) */

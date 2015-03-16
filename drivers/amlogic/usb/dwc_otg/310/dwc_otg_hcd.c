@@ -1120,10 +1120,12 @@ static void dwc_otg_hcd_reinit(dwc_otg_hcd_t * hcd)
 	dwc_hc_t *channel;
 	dwc_hc_t *channel_tmp;
 
-	if((!hcd->core_if->suspend_mode)&&(!hcd->core_if->not_clear_hcd_flag)){
-		//hcd->flags.d32 = 0;
-		printk("-------hcd->flags.d32 = %d\n",hcd->flags.d32);
-	}
+	/*
+	 * if((!hcd->core_if->suspend_mode)&&(!hcd->core_if->not_clear_hcd_flag)){
+	 * 	//hcd->flags.d32 = 0;
+	 * 	printk("-------hcd->flags.d32 = %d\n",hcd->flags.d32);
+	 * }
+	 */
 	
 	hcd->core_if->not_clear_hcd_flag=0;	
 
@@ -2811,7 +2813,7 @@ int dwc_otg_hcd_hub_control(dwc_otg_hcd_t * dwc_otg_hcd,
 				if (!dwc_otg_hcd_is_b_host(dwc_otg_hcd)) {
 					hprt0.b.prtpwr = 1;
 					hprt0.b.prtrst = 1;
-					DWC_PRINTF("Indeed it is in host mode hprt0 = %08x\n",hprt0.d32);
+					//DWC_PRINTF("Indeed it is in host mode hprt0 = %08x\n",hprt0.d32);
 					DWC_WRITE_REG32(core_if->host_if->hprt0,
 							hprt0.d32);
 				}

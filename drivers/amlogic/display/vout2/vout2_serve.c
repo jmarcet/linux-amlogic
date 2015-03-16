@@ -403,10 +403,10 @@ vout2_driver = {
 static int __init vout2_init_module(void)
 {
 	int ret =0;
-  printk("%s enter\n", __func__);
+	//printk("%s enter\n", __func__);
 	if (platform_driver_register(&vout2_driver)) 
 	{
-    printk("%s fail\n", __func__);
+		printk("%s fail\n", __func__);
        		amlog_level(LOG_LEVEL_HIGH,"failed to register vout2 driver\n");
         	ret= -ENODEV;
     	}

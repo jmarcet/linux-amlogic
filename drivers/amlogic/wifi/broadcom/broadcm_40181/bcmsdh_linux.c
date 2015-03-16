@@ -61,7 +61,7 @@ static bcmsdh_hc_t *sdhcinfo = NULL;
 static bcmsdh_driver_t drvinfo = {NULL, NULL};
 
 /* debugging macros */
-#define SDLX_MSG(x) printf x
+#define SDLX_MSG(x)
 
 /**
  * Checks to see if vendor and device IDs match a supported SDIO Host Controller.

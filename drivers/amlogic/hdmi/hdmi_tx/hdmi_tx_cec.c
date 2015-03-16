@@ -358,7 +358,7 @@ static int cec_task(void *data)
 
     // Get logical address
 
-    hdmi_print(INF, CEC "CEC task process\n");
+    //hdmi_print(INF, CEC "CEC task process\n");
     if(hdmitx_device->cec_func_config & (1 << CEC_FUNC_MSAK)){
         msleep_interruptible(15000);
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
@@ -664,7 +664,7 @@ static irqreturn_t cec_isr_handler(int irq, void *dev_instance)
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
     unsigned int intr_stat = 0;
     intr_stat = aml_read_reg32(P_AO_CEC_INTR_STAT);
-    hdmi_print(INF, CEC "aocec irq %x\n", intr_stat);
+    //hdmi_print(INF, CEC "aocec irq %x\n", intr_stat);
 
     if(intr_stat & (1<<1)) { // aocec tx intr
         tx_irq_handle();
@@ -1573,7 +1573,7 @@ static int __init cec_init(void)
     hdmitx_device = get_hdmitx_device();
     init_waitqueue_head(&hdmitx_device->cec_wait_rx);
     cec_key_init();
-    hdmi_print(INF, CEC "CEC init\n");
+    //hdmi_print(INF, CEC "CEC init\n");
     memset(&cec_global_info, 0, sizeof(cec_global_info_t));
     
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
@@ -1626,7 +1626,7 @@ static int __init cec_init(void)
     }
 
     hdmitx_device->cec_init_ready = 1;
-    hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x", hdmitx_device->cec_init_ready);
+    hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x\n", hdmitx_device->cec_init_ready);
     return 0;
 }
 

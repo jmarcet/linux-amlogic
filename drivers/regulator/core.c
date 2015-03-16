@@ -37,16 +37,11 @@
 
 #include "dummy.h"
 
-#define rdev_crit(rdev, fmt, ...)					\
-	pr_crit("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_err(rdev, fmt, ...)					\
-	pr_err("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_warn(rdev, fmt, ...)					\
-	pr_warn("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_info(rdev, fmt, ...)					\
-	pr_info("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_dbg(rdev, fmt, ...)					\
-	pr_debug("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
+#define rdev_crit(rdev, fmt, ...)
+#define rdev_err(rdev, fmt, ...)
+#define rdev_warn(rdev, fmt, ...)
+#define rdev_info(rdev, fmt, ...)
+#define rdev_dbg(rdev, fmt, ...)
 
 static DEFINE_MUTEX(regulator_list_mutex);
 static LIST_HEAD(regulator_list);
@@ -820,8 +815,8 @@ static void print_constraints(struct regulator_dev *rdev)
 	if (constraints->valid_modes_mask & REGULATOR_MODE_STANDBY)
 		count += sprintf(buf + count, "standby");
 
-	if (!count)
-		sprintf(buf, "no parameters");
+	//if (!count)
+	//	sprintf(buf, "no parameters");
 
 	rdev_info(rdev, "%s\n", buf);
 

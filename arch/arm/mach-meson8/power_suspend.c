@@ -66,7 +66,7 @@ unsigned int arc_serial_disable;
 #ifdef CONFIG_HARDWARE_WATCHDOG
 void disable_watchdog(void)
 {
-	printk(KERN_INFO "** disable watchdog\n");
+	//printk(KERN_INFO "** disable watchdog\n");
     aml_write_reg32(P_WATCHDOG_RESET, 0);
     aml_clr_reg32_mask(P_WATCHDOG_TC,(1 << WATCHDOG_ENABLE_BIT));
 }

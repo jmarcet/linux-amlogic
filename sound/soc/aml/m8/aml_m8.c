@@ -299,7 +299,7 @@ static int aml_m8_set_spk(struct snd_kcontrol *kcontrol,
     struct snd_ctl_elem_value *ucontrol)
 {
     aml_m8_spk_enabled = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_m8_set_spk: aml_m8_spk_enabled=%d\n",aml_m8_spk_enabled);
+    //printk(KERN_INFO "aml_m8_set_spk: aml_m8_spk_enabled=%d\n",aml_m8_spk_enabled);
 
     msleep_interruptible(10);
     amlogic_set_value(p_audio->gpio_mute, aml_m8_spk_enabled, "mute_spk");
@@ -322,7 +322,7 @@ static int aml_audio_set_i2s_mute(struct snd_kcontrol *kcontrol,
     struct snd_ctl_elem_value *ucontrol)
 {
     aml_audio_i2s_mute_flag = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_audio_i2s_mute_flag: flag=%d\n",aml_audio_i2s_mute_flag);
+    //printk(KERN_INFO "aml_audio_i2s_mute_flag: flag=%d\n",aml_audio_i2s_mute_flag);
     if(aml_audio_i2s_mute_flag){
         aml_audio_i2s_mute();
     }else{
@@ -345,7 +345,7 @@ static int aml_audio_set_spdif_mute(struct snd_kcontrol *kcontrol,
 {
     
     aml_audio_spdif_mute_flag = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_audio_set_spdif_mute: flag=%d\n",aml_audio_spdif_mute_flag);
+    //printk(KERN_INFO "aml_audio_set_spdif_mute: flag=%d\n",aml_audio_spdif_mute_flag);
     if(aml_audio_spdif_mute_flag){
         aml_spdif_pinmux_deinit(spdif_dev);
     }else{
@@ -367,7 +367,7 @@ static int aml_set_bias_level(struct snd_soc_card *card,
     struct aml_audio_private_data * p_aml_audio;
     int hp_state;
 
-    printk(KERN_DEBUG "enter %s level: %d\n", __func__, level);
+    //printk(KERN_DEBUG "enter %s level: %d\n", __func__, level);
     p_aml_audio = snd_soc_card_get_drvdata(card);
 	hp_state = p_aml_audio->detect_flag;
 
@@ -670,7 +670,7 @@ static int aml_asoc_init(struct snd_soc_pcm_runtime *rtd)
     int ret = 0;
     int hp_paraments[5];
 	
-    printk(KERN_DEBUG "enter %s \n", __func__);
+    //printk(KERN_DEBUG "enter %s \n", __func__);
 	p_aml_audio = snd_soc_card_get_drvdata(card);
     ret = snd_soc_add_card_controls(codec->card, aml_m8_controls,
                 ARRAY_SIZE(aml_m8_controls));
@@ -683,7 +683,7 @@ static int aml_asoc_init(struct snd_soc_pcm_runtime *rtd)
 
     p_aml_audio->hp_disable = of_property_read_bool(card->dev->of_node,"hp_disable");
 
-    printk(KERN_INFO "p_aml_audio->hp_disable=%d\n",p_aml_audio->hp_disable);
+    //printk(KERN_INFO "p_aml_audio->hp_disable=%d\n",p_aml_audio->hp_disable);
 
     if(!p_aml_audio->hp_disable){
 
@@ -747,9 +747,9 @@ static int aml_asoc_init(struct snd_soc_pcm_runtime *rtd)
 #endif
 
     ret = of_property_read_u32(card->dev->of_node, "sleep_time", &p_aml_audio->sleep_time);
-    if(ret)
-        printk("falied to get spk event delay time paraments from dts file\n");
-    printk(KERN_INFO "spk_event delay_time = %d\n",p_aml_audio->sleep_time);
+    //if(ret)
+    //    printk("falied to get spk event delay time paraments from dts file\n");
+    //printk(KERN_INFO "spk_event delay_time = %d\n",p_aml_audio->sleep_time);
 
     return 0;
 }
@@ -761,7 +761,7 @@ static struct snd_soc_dai_link aml_codec_dai_link[] = {
         .cpu_dai_name = "aml-i2s-dai.0",
         .init = aml_asoc_init,
         .platform_name = "aml-i2s.0",
-        //.codec_name = "aml_m8_codec.0",
+        .codec_name = "aml_m8_codec.0",
         .ops = &aml_asoc_ops,
     },
 #ifdef CONFIG_SND_SOC_PCM2BT
@@ -811,7 +811,7 @@ static void aml_m8_pinmux_init(struct snd_soc_card *card)
     p_aml_audio->pin_ctl = devm_pinctrl_get_select(card->dev, "aml_snd_m8");
     
     p_audio = p_aml_audio;
-    printk("-----ext_codec=%d---\n",ext_codec);
+    //printk("-----ext_codec=%d---\n",ext_codec);
 //#if USE_EXTERNAL_DAC
     if(ext_codec){
 #ifndef CONFIG_MESON_TRUSTZONE
@@ -834,7 +834,7 @@ static void aml_m8_pinmux_init(struct snd_soc_card *card)
 		amlogic_set_value(p_aml_audio->gpio_mute, 0, "mute_spk");
 	}
 
-	printk("=%s==,aml_m8_pinmux_init done,---%d\n",__func__,p_aml_audio->det_pol_inv);
+	//printk("=%s==,aml_m8_pinmux_init done,---%d\n",__func__,p_aml_audio->det_pol_inv);
 }
 
 static void aml_m8_pinmux_deinit(struct snd_soc_card *card)
@@ -884,7 +884,7 @@ static int aml_m8_audio_probe(struct platform_device *pdev)
     if (ret)
         goto err;
 
-	printk("codec_name = %s\n", codec_info.name_bus);
+	//printk("codec_name = %s\n", codec_info.name_bus);
 
 	aml_codec_dai_link[0].codec_name = codec_info.name_bus;
 

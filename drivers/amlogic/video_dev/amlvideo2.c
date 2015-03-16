@@ -3291,7 +3291,7 @@ static int amlvideo2_open(struct file *file)
 	node->input = 0;    //default input is miracast
 	node->sub_recv = vf_get_receiver(DEVICE_NAME);
 	if(node->sub_recv){
-		printk("node->sub_recv->name=%s\n", node->sub_recv->name);
+		//printk("node->sub_recv->name=%s\n", node->sub_recv->name);
 		node->provider = vf_get_provider(DEVICE_NAME);
 		if(NULL == node->provider){
 			printk("node->provider=%p", node->provider);
@@ -3303,7 +3303,7 @@ static int amlvideo2_open(struct file *file)
 		printk("node->r_type=%d\n", node->r_type);
 		node->r_type = get_sub_receiver_type(node->sub_recv->name);
 	}else{
-		printk("as an end receiver\n");
+		//printk("as an end receiver\n");
 		node->p_type = AML_PROVIDE_MIRROCAST_VDIN1;
 		node->provider = vf_get_provider(DEVICE_NAME);
 		if (NULL == node->provider) {

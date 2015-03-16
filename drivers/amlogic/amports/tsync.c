@@ -730,11 +730,11 @@ void tsync_avevent_locked(avevent_t event, u32 param)
         }
 		if(param == 1){
         	timestamp_pcrscr_enable(0);
-			amlog_level(LOG_LEVEL_INFO, "video pause!\n");
+			//amlog_level(LOG_LEVEL_INFO, "video pause!\n");
 		}else{
 		       if ((!apause_flag) || (!tsync_enable)) {
 			timestamp_pcrscr_enable(1);
-			amlog_level(LOG_LEVEL_INFO, "video resume\n");
+			//amlog_level(LOG_LEVEL_INFO, "video resume\n");
                       }
 		}
         break;	
@@ -769,8 +769,8 @@ void tsync_avevent(avevent_t event, u32 param)
 {
     ulong flags;
     ulong fiq_flag;
-    amlog_level(LOG_LEVEL_INFO, "[%s]event:%d, param %d\n",
-                __FUNCTION__, event, param);
+    //amlog_level(LOG_LEVEL_INFO, "[%s]event:%d, param %d\n",
+    //            __FUNCTION__, event, param);
     spin_lock_irqsave(&lock, flags);
 
     raw_local_save_flags(fiq_flag);

@@ -311,13 +311,13 @@ static int sdio_read_cis(struct mmc_card *card, struct sdio_func *func)
 			*prev = this;
 			prev = &this->next;
 
-			if (ret == -ENOENT) {
-				/* warn about unknown tuples */
-				pr_warn_ratelimited("%s: queuing unknown"
-				       " CIS tuple 0x%02x (%u bytes)\n",
-				       mmc_hostname(card->host),
-				       tpl_code, tpl_link);
-			}
+			// if (ret == -ENOENT) {
+			// 	/* warn about unknown tuples */
+			// 	pr_warn_ratelimited("%s: queuing unknown"
+			// 	       " CIS tuple 0x%02x (%u bytes)\n",
+			// 	       mmc_hostname(card->host),
+			// 	       tpl_code, tpl_link);
+			// }
 
 			/* keep on analyzing tuples */
 			ret = 0;

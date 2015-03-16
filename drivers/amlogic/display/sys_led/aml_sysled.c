@@ -314,7 +314,7 @@ static int __init aml_sysled_init(void)
 {
 	int ret = -1;
   
-	printk(KERN_INFO "enter aml_sysled_init\n");
+	//printk(KERN_INFO "enter aml_sysled_init\n");
 	ret = platform_driver_register(&aml_sysled_driver);
   
 	if (ret != 0) {
