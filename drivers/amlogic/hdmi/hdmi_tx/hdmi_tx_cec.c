@@ -224,8 +224,11 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
         return ;
 
     // To correctly resume from CEC standby.
-    cec_hw_reset();
-    cec_active_source_smp();
+    if(hdmitx_device->hpd_event) {
+        hdmi_print(INF, CEC "waking up from standby\n");
+        cec_hw_reset();
+        cec_active_source_smp();
+    }
 
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
     aml_set_reg32_bits(P_PERIPHS_PIN_MUX_1, 1, 25, 1);
