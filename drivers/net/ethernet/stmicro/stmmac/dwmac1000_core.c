@@ -42,7 +42,7 @@ static void dwmac1000_core_init(void __iomem *ioaddr)
 	//writel(0x207, ioaddr + GMAC_INT_MASK);
 /*close mmc interrupts this funtion is s812  chip bug*/
 	 if (IS_MESON_M8M2_CPU){
-	 	printk("mask interrupts MMC\n");
+	 	//printk("mask interrupts MMC\n");
 		writel(0xffffffff, ioaddr + ETH_MMC_ipc_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_tx);

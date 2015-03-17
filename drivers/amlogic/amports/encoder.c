@@ -2554,7 +2554,7 @@ static int encode_wq_init(void)
     int i = 0;
     encode_queue_item_t *pitem = NULL;
 
-    encode_debug_level(LOG_LEVEL_DEBUG, "encode_wq_init.\n");    
+    //encode_debug_level(LOG_LEVEL_DEBUG, "encode_wq_init.\n");    
     encode_manager.irq_num = -1;
 
     spin_lock_init(&encode_manager.event.sem_lock);

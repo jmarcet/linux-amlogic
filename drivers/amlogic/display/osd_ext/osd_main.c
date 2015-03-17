@@ -1457,7 +1457,7 @@ osd_ext_probe(struct platform_device *pdev)
 			mydef_var[index].xres_virtual = init_logo_obj->dev->vinfo->width;
 			mydef_var[index].yres_virtual = init_logo_obj->dev->vinfo->height << 1; //logo always use double buffer
 			mydef_var[index].bits_per_pixel = bpp ;
-			amlog_level(LOG_LEVEL_HIGH, "init fbdev bpp is :%d\n", mydef_var[index].bits_per_pixel);
+			//amlog_level(LOG_LEVEL_HIGH, "init fbdev bpp is :%d\n", mydef_var[index].bits_per_pixel);
 
 			if (mydef_var[index].bits_per_pixel > 32) {
 				mydef_var[index].bits_per_pixel = 32;
@@ -1476,7 +1476,7 @@ osd_ext_probe(struct platform_device *pdev)
 					mydef_var[index].yres_virtual=var_screeninfo[3];//logo always use double buffer
 					mydef_var[index].bits_per_pixel=bpp;
 
-					amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
+					//amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
 					if(mydef_var[index].bits_per_pixel>32)
 					{
 						mydef_var[index].bits_per_pixel=32;
@@ -1484,7 +1484,7 @@ osd_ext_probe(struct platform_device *pdev)
 				}
 			}
 #if 0 //avoid clearing the mem of uboot osd1 logo
-			amlog_level(LOG_LEVEL_HIGH, "---------------clear framebuffer%d memory\n", index + 2);
+			//amlog_level(LOG_LEVEL_HIGH, "---------------clear framebuffer%d memory\n", index + 2);
 			memset((char*)fbdev->fb_mem_vaddr, 0x80, fbdev->fb_len);
 #endif
 		}

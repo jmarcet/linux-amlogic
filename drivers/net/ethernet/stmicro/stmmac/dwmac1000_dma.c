@@ -49,7 +49,7 @@ static int dwmac1000_dma_init(void __iomem *ioaddr, int pbl, int fb, int mb,
 		return -EBUSY;
 /*close mmc interrupts this funtion is s812  chip bug*/
 	 if (IS_MESON_M8M2_CPU){
-	 	printk("mask interrupts MMC\n");
+	 	//printk("mask interrupts MMC\n");
 		writel(0xffffffff, ioaddr + ETH_MMC_ipc_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_tx);
@@ -86,7 +86,7 @@ static int dwmac1000_dma_init(void __iomem *ioaddr, int pbl, int fb, int mb,
 	writel(value, ioaddr + DMA_BUS_MODE);
 /*close mmc interrupts this funtion is s812  chip bug*/
 	 if (IS_MESON_M8M2_CPU){
-	 	printk("mask interrupts MMC\n");
+	 	//printk("mask interrupts MMC\n");
 		writel(0xffffffff, ioaddr + ETH_MMC_ipc_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_rx);
 		writel(0xffffffff, ioaddr + ETH_MMC_intr_mask_tx);

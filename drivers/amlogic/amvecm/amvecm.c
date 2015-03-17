@@ -1236,7 +1236,7 @@ static int __init amvecm_init(void)
 	int i = 0;
 	struct amvecm_dev_s *devp = &amvecm_dev;
 	memset(devp, 0, (sizeof(struct amvecm_dev_s)));
-	printk("\n\n VECM init \n\n");
+	printk("VECM init\n");
 	ret = alloc_chrdev_region(&devp->devno, 0, 1, AMVECM_NAME);
 	if (ret < 0){
 		goto fail_alloc_region;

@@ -1297,7 +1297,7 @@ int hdmitx_edid_parse(hdmitx_dev_t* hdmitx_device)
 
     if(hdmitx_edid_search_IEEEOUI(&EDID_buf[128])) {
         pRXCap->IEEEOUI = 0x0c03;
-        printk("hdmitx: edid: find IEEEOUT\n");
+        //printk("hdmitx: edid: find IEEEOUT\n");
     }
     else {
         pRXCap->IEEEOUI = 0x0;
@@ -1539,10 +1539,10 @@ static unsigned int hdmitx_edid_check_valid_blocks(unsigned char *buf)
         if(tmp_chksum !=0) {
             valid_blk_no ++;
             if((tmp_chksum & 0xff) == 0) {
-                hdmi_print(INF, EDID "check sum valid\n");
+                hdmi_print(INF, EDID "block %d check sum valid\n", j);
             }
             else {
-                hdmi_print(INF, EDID "check sum invalid\n");
+                hdmi_print(INF, EDID "block %d check sum invalid\n", j);
             }
         }
         tmp_chksum = 0;
@@ -1577,11 +1577,13 @@ void hdmitx_edid_buf_compare_print(hdmitx_dev_t* hdmitx_device)
         if(valid_blk_no == 0) {
             hdmi_print(ERR, EDID "raw data are all zeroes\n");
         }
+#if 0
         else {
             for(blk_idx = 0; blk_idx < valid_blk_no; blk_idx++) {
                 hdmitx_edid_blk_print(&buf0[blk_idx*128], blk_idx);
             }
         }
+#endif
     }
     else {
         hdmi_print(ERR, EDID "%d errors between two reading\n", err_no);

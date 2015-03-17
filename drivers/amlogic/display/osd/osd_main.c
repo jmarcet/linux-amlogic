@@ -1834,7 +1834,7 @@ osd_probe(struct platform_device *pdev)
 			mydef_var[index].yres_virtual=init_logo_obj->dev->vinfo->height<<1;//logo always use double buffer
 			mydef_var[index].bits_per_pixel=bpp;
 			
-			amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
+			//amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
 			if(mydef_var[index].bits_per_pixel>32){
 				mydef_var[index].bits_per_pixel=32;
 			}
@@ -1852,14 +1852,14 @@ osd_probe(struct platform_device *pdev)
 					mydef_var[index].yres_virtual=var_screeninfo[3];//logo always use double buffer
 					mydef_var[index].bits_per_pixel=bpp;
 				
-					amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
+					//amlog_level(LOG_LEVEL_HIGH,"init fbdev bpp is :%d\n",mydef_var[index].bits_per_pixel);
 					if(mydef_var[index].bits_per_pixel>32) 
 					{
 						mydef_var[index].bits_per_pixel=32;
 					}
 				}
 			}
-			amlog_level(LOG_LEVEL_HIGH,"---------------clear framebuffer%d memory\n",index);
+			//amlog_level(LOG_LEVEL_HIGH,"---------------clear framebuffer%d memory\n",index);
 			memset((char*)fbdev->fb_mem_vaddr, 0x00, fbdev->fb_len);
 		}
 
@@ -1941,7 +1941,7 @@ osd_probe(struct platform_device *pdev)
 	}else{
 		osddev_set_osd_reverse(osd_info.index, osd_info.osd_reverse);
 	}
-	amlog_level(LOG_LEVEL_HIGH,"osd probe ok\n");
+	//amlog_level(LOG_LEVEL_HIGH,"osd probe ok\n");
 	return 0;
 
 failed2:

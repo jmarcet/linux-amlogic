@@ -1143,7 +1143,7 @@ static int hdmitx_notify_callback_a(struct notifier_block *block, unsigned long 
 
     if(audio_param->type != cmd) {
         audio_param->type = cmd;
-        //hdmi_print(INF, AUD "aout notify format %s\n", aud_type_string[audio_param->type]);
+        hdmi_print(INF, AUD "aout notify format %s\n", aud_type_string[audio_param->type]);
         hdmitx_device.audio_param_update_flag = 1;
     }
 
@@ -1291,7 +1291,7 @@ wait:
             else {
 edid_op:
                 hdmitx_device->HWOp.CntlDDC(hdmitx_device, DDC_EDID_GET_DATA, 1);   // save edid raw data to EDID_buf1[]
-                hdmi_print(IMP, EDID "edid ready\n");
+                //hdmi_print(IMP, EDID "edid ready\n");
                 // read edid again
                 hdmitx_device->cur_edid_block=0;
                 hdmitx_device->cur_phy_block_ptr=0;
@@ -1300,7 +1300,7 @@ edid_op:
                 msleep(200);
                 if(hdmitx_device->HWOp.CntlDDC(hdmitx_device, DDC_IS_EDID_DATA_READY, 0)) {
                     hdmitx_device->HWOp.CntlDDC(hdmitx_device, DDC_EDID_GET_DATA, 0);   // save edid raw data to EDID_buf[]
-                    hdmi_print(IMP, EDID "edid ready\n");
+                    //hdmi_print(IMP, EDID "edid ready\n");
                 }
                 else {
                     hdmi_print(ERR, EDID "edid failed\n");

@@ -257,9 +257,9 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
 
     
     for(i = 0; i < 3; i++){ 
-	    hdmi_print(INF, CEC "CEC: start poll dev\n");
+	    //hdmi_print(INF, CEC "CEC: start poll dev\n");
         cec_polling_online_dev(player_dev[i], &bool);
-        hdmi_print(INF, CEC "player_dev[%d]:0x%x\n", i, player_dev[i]);
+        //hdmi_print(INF, CEC "player_dev[%d]:0x%x\n", i, player_dev[i]);
         if(bool == 0){  // 0 means that no any respond
             // If VSDB is not valid,use last or default physical address.  
             if(hdmitx_device->hdmi_info.vsdb_phy_addr.valid == 0) {
@@ -273,7 +273,7 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
             }else{
                 aml_write_reg32(P_AO_DEBUG_REG1, cec_phy_addr);
             } 
-            hdmi_print(INF, CEC "physical address:0x%x\n", aml_read_reg32(P_AO_DEBUG_REG1));
+            //hdmi_print(INF, CEC "physical address:0x%x\n", aml_read_reg32(P_AO_DEBUG_REG1));
             
             cec_global_info.cec_node_info[cec_global_info.my_node_index].power_status = TRANS_STANDBY_TO_ON;
             cec_global_info.my_node_index = player_dev[i];
@@ -1092,9 +1092,11 @@ void cec_set_menu_language(cec_rx_message_t* pcec_message)
 
         switch_set_state(&lang_dev, cec_global_info.cec_node_info[index].menu_lang);
         cec_global_info.cec_node_info[index].real_info_mask |= INFO_MASK_MENU_LANGUAGE;
+	/*
         hdmi_print(INF, CEC "cec_set_menu_language:%c.%c.%c\n", (cec_global_info.cec_node_info[index].menu_lang >>16) & 0xff,
                                                                 (cec_global_info.cec_node_info[index].menu_lang >> 8) & 0xff,
                                                                 (cec_global_info.cec_node_info[index].menu_lang >> 0) & 0xff);
+	*/
     }
 }
 
@@ -1630,7 +1632,7 @@ static int __init cec_init(void)
     }
 
     hdmitx_device->cec_init_ready = 1;
-    hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x\n", hdmitx_device->cec_init_ready);
+    //hdmi_print(INF, CEC "hdmitx_device->cec_init_ready:0x%x\n", hdmitx_device->cec_init_ready);
     return 0;
 }
 

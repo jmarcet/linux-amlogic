@@ -184,7 +184,7 @@ static int stmmac_probe_config_dt(struct platform_device *pdev,
 #if defined (CONFIG_AML_NAND_KEY) || defined (CONFIG_SECURITYKEY)
 	ret = get_aml_key_kernel("mac", print_buff, 0);
 	extenal_api_key_set_version("auto");
-	printk("ret = %d\nprint_buff=%s\n", ret, print_buff);
+	//printk("ret = %d\nprint_buff=%s\n", ret, print_buff);
 	if (ret >= 0) {
 		strcpy(addr, print_buff);
 		*mac = addr;

@@ -781,7 +781,7 @@ static struct platform_device* viuin_device = NULL;
 
 static int __init viuin_init_module(void)
 {
-	printk("[viuin..]%s viuin module init\n",__func__);
+	//printk("[viuin..]%s viuin module init\n",__func__);
 	viuin_device = platform_device_alloc(DEVICE_NAME,0);
 	if (!viuin_device) {
 		printk("[viuin..]%s failed to alloc viuin_device.\n",__func__);
