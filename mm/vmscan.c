@@ -2815,8 +2815,10 @@ loop_again:
 				zone_clear_flag(zone, ZONE_CONGESTED);
 			}
 		}
+		/*
 		printk(KERN_DEBUG"%s end zone=%d, pgdat_is_balanced=%d\n", __func__,
 			   end_zone, pgdat_is_balanced);
+		*/
 		if (i < 0) {
 			pgdat_is_balanced = true;
 			goto out;
@@ -2916,7 +2918,7 @@ loop_again:
 				 */
 				zone_clear_flag(zone, ZONE_CONGESTED);
 		}
-		printk(KERN_DEBUG"%s, nr_reclaimed=%lu\n",__func__, sc.nr_reclaimed);
+		//printk(KERN_DEBUG"%s, nr_reclaimed=%lu\n",__func__, sc.nr_reclaimed);
 		/*
 		 * If the low watermark is met there is no need for processes
 		 * to be throttled on pfmemalloc_wait as they should not be
