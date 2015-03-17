@@ -2,7 +2,10 @@
 
 BOOTIMG=x8hp-boot.img
 CPUS=$(( `cat /proc/cpuinfo | egrep 'processor\s+:' | tail -1 | cut -d':' -f2` + 1 ))
-DTDFILES=meson8m2
+DTDFILE=meson8m2_n200_2G
+grep -q ARM /proc/cpuinfo \
+    && EXT='.arm' \
+    || CROSSARCH="ARCH=arm CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-"
 
 function die() {
     echo $1
@@ -10,6 +13,13 @@ function die() {
 }
 
 function native_install() {
+    echo "Creating ${BOOTIMG}..."
+    [ -e "${BOOTIMG}" ] && rm -f ${BOOTIMG}
+    [ -e ./arch/arm/boot/uImage ] || die "Missing ./arch/arm/boot/uImage"
+    [ -e ./rootfs.cpio ]          || die "Missing ./rootfs.cpio"
+    ./mkbootimg${EXT} --kernel ./arch/arm/boot/uImage --ramdisk ./rootfs.cpio \
+        --second ./arch/arm/boot/dts/amlogic/${DTDFILE}.dtb \
+        --output ./${BOOTIMG} || die "mkbootimg"
     echo "Installing modules natively..."
     make modules_install            || die "modules_install"
     echo "Writing kernel to nand..."
@@ -24,42 +34,30 @@ if [ "$1" == "install" ]; then
     exit 1
 fi
 
-grep -q ARM /proc/cpuinfo || CROSSARCH="ARCH=arm CROSS_COMPILE=armv7a-hardfloat-linux-gnueabi-"
+#make ${CROSSARCH} -j${CPUS} uImage  || die "uImage"
+#make ${CROSSARCH} -j${CPUS} modules || die "modules"
 
-#DTDFILE=meson8m2_n200_2G
-#make ${DTDFILE}.dtd                || die "${DTDFILE}.dtd"
-#make ${DTDFILE}.dtb                || die "${DTDFILE}.dtb"
-#    --second ./arch/arm/boot/dts/amlogic/${DTDFILE}.dtb
+make -j4 uImage      || die "uImage"
+make -j4 modules     || die "modules"
 
-make ${CROSSARCH} -j${CPUS} uImage  || die "uImage"
+make ${DTDFILE}.dtd  || die "${DTDFILE}.dtd"
+make ${DTDFILE}.dtb  || die "${DTDFILE}.dtb"
 
-make ${CROSSARCH} -j${CPUS} modules || die "modules"
+#DTDFILES=meson8m2
+#for dtd in `ls arch/arm/boot/dts/amlogic/ | grep ${DTDFILES}`; do
+#    echo "Compiling $dtd"
+#    make ${CROSSARCH} ${dtd}                 || die ${dtd}
+#    make ${CROSSARCH} ${dtd/.dtd/.dtb}  || die ${dtd/.dtd/.dtb}
+#    echo
+#done
+#if [ ! -e dt.img ]; then
+#    ./dtbTool${EXT} -o dt.img -p scripts/dtc/ arch/arm/boot/dts/amlogic/ || die "dtbTool"
+#fi
 
-for dtd in `ls arch/arm/boot/dts/amlogic/ | grep ${DTDFILES}`; do
-    echo "Compiling $dtd"
-    make ${CROSSARCH} ${dtd}                 || die ${dtd}
-    make ${CROSSARCH} ${dtd/.dtd/.dtb}  || die ${dtd/.dtd/.dtb}
-    echo
-done
-
-if [ ! -e dt.img ]; then
-    grep -q ARM /proc/cpuinfo && die "dtbTool needs an x86"
-    ./dtbTool -o dt.img -p scripts/dtc/ arch/arm/boot/dts/amlogic/ || die "dtbTool"
-fi
-
-echo
-
-[ -e "${BOOTIMG}" ] && rm -f ${BOOTIMG}
-./mkbootimg --kernel ./arch/arm/boot/uImage --ramdisk ./rootfs.cpio \
-    --second dt.img --output ./${BOOTIMG} || die "mkbootimg"
-
+exit
 grep -q ARM /proc/cpuinfo && native_install
 
 ls -Al ./${BOOTIMG}
-
-#./mkbootimg --kernel ./arch/arm/boot/uImage --ramdisk ./rootfs.cpio --second ./arch/arm/boot/dts/amlogic/meson8m2_n200_2G.dtb --output ./x8hp-boot.img
-#dd if=/dev/zero     of=/dev/boot
-#dd if=x8hp-boot.img of=/dev/boot
 
 echo
 echo "${BOOTIMG} done"
