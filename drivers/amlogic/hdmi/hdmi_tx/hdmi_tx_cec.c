@@ -223,6 +223,10 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
     if(!(hdmitx_device->cec_func_config & (1 << CEC_FUNC_MSAK)))
         return ;
 
+    // To correctly resume from CEC standby.
+    cec_hw_reset();
+    cec_active_source_smp();
+
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
     aml_set_reg32_bits(P_PERIPHS_PIN_MUX_1, 1, 25, 1);
     // Clear CEC Int. state and set CEC Int. mask
