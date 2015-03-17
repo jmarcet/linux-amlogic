@@ -1509,6 +1509,7 @@ void hdmitx_edid_clear(hdmitx_dev_t* hdmitx_device)
     memset(&hdmitx_device->EDID_hash[0], 0, sizeof(hdmitx_device->EDID_hash));
 }
 
+#if 0
 /*
  * print one block data of edid
  */
@@ -1523,6 +1524,7 @@ static void hdmitx_edid_blk_print(unsigned char *blk, unsigned int blk_idx)
     }
     printk("\n");
 }
+#endif
 
 /*
  * check EDID buf contains valid block numbers
@@ -1577,14 +1579,13 @@ void hdmitx_edid_buf_compare_print(hdmitx_dev_t* hdmitx_device)
         if(valid_blk_no == 0) {
             hdmi_print(ERR, EDID "raw data are all zeroes\n");
         }
+    }
 #if 0
         else {
             for(blk_idx = 0; blk_idx < valid_blk_no; blk_idx++) {
                 hdmitx_edid_blk_print(&buf0[blk_idx*128], blk_idx);
             }
         }
-#endif
-    }
     else {
         hdmi_print(ERR, EDID "%d errors between two reading\n", err_no);
         valid_blk_no = hdmitx_edid_check_valid_blocks(buf0);
@@ -1597,6 +1598,7 @@ void hdmitx_edid_buf_compare_print(hdmitx_dev_t* hdmitx_device)
             hdmitx_edid_blk_print(&buf1[blk_idx*128], blk_idx);
         }
     }
+#endif
 }
 
 int hdmitx_edid_dump(hdmitx_dev_t* hdmitx_device, char* buffer, int buffer_len)

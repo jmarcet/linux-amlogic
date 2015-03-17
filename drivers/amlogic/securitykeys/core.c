@@ -1017,8 +1017,10 @@ int32_t aml_keys_set_version(struct device *dev, uint8_t version, int storer)
             || key_schematic[version]->init(key_schematic[version], keyfile[keyfile_index])
                     < 0) ///@todo Platform Data
     {
+	/*
         printk(KERN_ERR KEYS_DEVICE_NAME ": version %d can not be init %p\n",
                keys_version, key_schematic[version]);
+	*/
         return -EINVAL;
     }
     keys_version = version;
