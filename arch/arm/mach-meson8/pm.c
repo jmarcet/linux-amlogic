@@ -261,6 +261,7 @@ static void meson_pm_suspend(void)
 	aml_clr_reg32_mask(P_HHI_SYS_CPU_CLK_CNTL, 1 << 7);
 	aml_clr_reg32_mask(P_HHI_SYS_PLL_CNTL, 1 << 30);//disable sys pll
 
+#ifdef CONFIG_AML_GPIO_KEY
 	if(det_pwr_key())//get pwr key and wakeup im
 	{
 		clr_pwr_key();
@@ -271,7 +272,7 @@ static void meson_pm_suspend(void)
 		meson_suspend_firmware();
 #else
 		meson_power_suspend();
-#endif
+#endif /* CONFIG_MESON_TRUSTZONE */
 #else
 #if 0
 		//k101 power key
@@ -281,8 +282,10 @@ static void meson_pm_suspend(void)
 			udelay(1000);
 		}while((aml_read_reg32(P_AO_GPIO_I)&(1<<3)));
 #endif
-#endif
+#endif /* CONFIG_MESON_SUSPEND */
 	}
+#endif /* CONFIG_AML_GPIO_KEY */
+
 	aml_set_reg32_mask(P_HHI_SYS_PLL_CNTL, (1 << 30)); //enable sys pll
 	printk(KERN_INFO "... wake up\n");
 #if 1
