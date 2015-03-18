@@ -4,8 +4,8 @@
 #    otherwise please remove it.
 DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER                \
 	-DBCMDONGLEHOST -DUNRELEASEDCHIP -DBCMDMA32 -DWLBTAMP -DBCMFILEIMAGE  \
-	-DDHDTHREAD -DDHD_DEBUG -DSDTEST -DBDC -DTOE                          \
-	-DDHD_BCMEVENTS -DSHOW_EVENTS -DBCMDBG                                \
+	-DDHDTHREAD -DSDTEST -DBDC -DTOE                                      \
+	-DDHD_BCMEVENTS -DSHOW_EVENTS                                         \
 	-DMMC_SDIO_ABORT -DBCMSDIO -DBCMLXSDMMC -DBCMPLATFORM_BUS             \
 	-DWIFI_ACT_FRAME -DARP_OFFLOAD_SUPPORT                                \
 	-DKEEP_ALIVE -DPKT_FILTER_SUPPORT                                     \
