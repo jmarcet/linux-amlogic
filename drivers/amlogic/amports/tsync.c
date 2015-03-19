@@ -116,7 +116,7 @@ static int apause_flag = 0;
 static bool dobly_avsync_test = false;
 extern bool disable_slow_sync;
 static int slowsync_enable = 0;
-static int startsync_mode = 2; // used to set player start sync mode, 0-none; 1-smoothsync; 2-droppcm;  default drop pcm
+static int startsync_mode = 1; // used to set player start sync mode, 0-none; 1-smoothsync; 2-droppcm;  default drop pcm
 
 /*
                   threshold_min              threshold_max
