@@ -245,7 +245,9 @@ static int bcmsdh_sdmmc_resume(struct device *pdev)
 	struct sdio_func *func = dev_to_sdio_func(pdev);
 #endif
 	printk("%s Enter\n", __FUNCTION__);
+#ifdef POWER_OFF_IN_SUSPEND
 	dhd_mmc_suspend = FALSE;
+#endif
 	
 #ifdef POWER_OFF_IN_SUSPEND
 	gInstance->func[func->num] = func;
@@ -260,7 +262,9 @@ static int bcmsdh_sdmmc_resume(struct device *pdev)
 }
 
 static const struct dev_pm_ops bcmsdh_sdmmc_pm_ops = {
+#ifdef POWER_OFF_IN_SUSPEND
 	.suspend	= bcmsdh_sdmmc_suspend,
+#endif 
 	.resume		= bcmsdh_sdmmc_resume,
 };
 #endif  /* (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)) && defined(CONFIG_PM) */

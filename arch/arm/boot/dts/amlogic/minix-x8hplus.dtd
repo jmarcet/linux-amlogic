@@ -1203,6 +1203,12 @@ sdio{
 
         mute_gpio = "GPIO_BSD_EN";
         hp_disable;
+//        mute_gpio = "GPIOY_15";
+//        sleep_time = <50>;
+//        I2S_MCLK = "GPIOAO_8";
+//        I2S_SCLK = "GPIOAO_9";
+//        I2S_LRCLK = "GPIOAO_10";
+//        I2S_ODAT = "GPIOAO_11";
         hp_paraments = <800 300 0 5 1>;
         pinctrl-names = "aml_snd_m8";
         pinctrl-0 = <&audio_pins>;
@@ -1381,10 +1387,10 @@ sdio{
 //$$ L2 PROP_STR = "product_desc"
 //$$ L2 PROP_STR = "cec_osd_string"
         vend_data: vend_data{
-            vendor_name = "Amlogic";           /* Max Chars: 8     */
+            vendor_name = "MINIX";           /* Max Chars: 8     */
             vendor_id = <0x000000>;                 /* Refer to http://standards.ieee.org/develop/regauth/oui/oui.txt   */
-            product_desc = "M8 MBox SKTv1";        /* Max Chars: 16    */
-            cec_osd_string = "Amlogic MBox";        /* Max Chars: 14    */
+            product_desc = "MINIX X8-H Plus";        /* Max Chars: 16    */
+            cec_osd_string = "MINIX X8-H +";        /* Max Chars: 14    */
         };
 
 //$$ MATCH "HDMI_pwr-ctrl_match" = <&pwr_ctrl>

@@ -91,7 +91,7 @@
 #include <linux/nmi.h>
 #endif
 
-#ifdef CONFIG_MESON_SUSPEND
+#ifdef CONFIG_PLAT_MESON
 #include <mach/cpu.h>
 #endif
 
