@@ -186,6 +186,7 @@ struct usb_interface {
 	struct device *usb_dev;
 	atomic_t pm_usage_cnt;		/* usage counter for autosuspend */
 	struct work_struct reset_ws;	/* for resets in atomic context */
+	int auto_suspend;
 };
 #define	to_usb_interface(d) container_of(d, struct usb_interface, dev)
 
@@ -569,6 +570,9 @@ struct usb_device {
 	struct usb3_lpm_parameters u1_params;
 	struct usb3_lpm_parameters u2_params;
 	unsigned lpm_disable_count;
+#ifdef  CONFIG_AMLOGIC_USB_3
+	unsigned aml_flag;
+#endif
 };
 #define	to_usb_device(d) container_of(d, struct usb_device, dev)
 

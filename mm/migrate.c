@@ -36,6 +36,7 @@
 #include <linux/hugetlb_cgroup.h>
 #include <linux/gfp.h>
 #include <linux/balloon_compaction.h>
+#include <linux/page-isolation.h>
 
 #include <asm/tlbflush.h>
 
@@ -44,6 +45,13 @@
 
 #include "internal.h"
 
+#ifdef CONFIG_CMA
+extern struct mutex migrate_wait;
+extern int migrate_status;
+extern int mutex_status;
+extern int migrate_refcount;
+extern wait_queue_head_t migrate_wq;
+#endif
 /*
  * migrate_prep() needs to be called before we start compiling a list of pages
  * to be migrated using isolate_lru_page(). If scheduling work on other CPUs is
@@ -851,6 +859,25 @@ uncharge:
 				 (rc == MIGRATEPAGE_SUCCESS ||
 				  rc == MIGRATEPAGE_BALLOON_SUCCESS));
 	unlock_page(page);
+#ifdef CONFIG_CMA
+	if ((force && rc == -EAGAIN) && (mode == MIGRATE_SYNC)) {
+		DECLARE_WAITQUEUE(wait, current);
+		if (migrate_status == MIGRATE_CMA_HOLD ||
+		   migrate_status == MIGRATE_CMA_ALLOC) {
+			mutex_lock(&migrate_wait);
+			migrate_status = MIGRATE_CMA_ALLOC;
+			init_waitqueue_head(&migrate_wq);
+			add_wait_queue(&migrate_wq, &wait);
+			mutex_unlock(&migrate_wait);
+
+			schedule_timeout_interruptible(20);
+
+			mutex_lock(&migrate_wait);
+			remove_wait_queue(&migrate_wq, &wait);
+			mutex_unlock(&migrate_wait);
+		}
+	}
+#endif
 out:
 	return rc;
 }
@@ -1468,7 +1495,7 @@ static bool migrate_balanced_pgdat(struct pglist_data *pgdat,
 		if (!populated_zone(zone))
 			continue;
 
-		if (zone->all_unreclaimable)
+		if (!zone_reclaimable(zone))
 			continue;
 
 		/* Avoid waking kswapd by allocating pages_to_migrate pages. */
@@ -1549,7 +1576,7 @@ bool numamigrate_update_ratelimit(pg_data_t *pgdat, unsigned long nr_pages)
 	else
 		pgdat->numabalancing_migrate_nr_pages += nr_pages;
 	spin_unlock(&pgdat->numabalancing_migrate_lock);
-	
+
 	return rate_limited;
 }
 

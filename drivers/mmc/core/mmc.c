@@ -293,7 +293,7 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	}
 
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
-	if (card->ext_csd.rev > 6) {
+	if (card->ext_csd.rev > 8) { // add to support samsung emmc 5.0
 		pr_err("%s: unrecognised EXT_CSD revision %d\n",
 			mmc_hostname(card->host), card->ext_csd.rev);
 		err = -EINVAL;
@@ -353,7 +353,7 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 				part_size = ext_csd[EXT_CSD_BOOT_MULT] << 17;
 				mmc_part_add(card, part_size,
 					EXT_CSD_PART_CONFIG_ACC_BOOT0 + idx,
-					"boot%d", idx, true,
+					"boot%d", idx, false,
 					MMC_BLK_DATA_AREA_BOOT);
 			}
 		}
@@ -492,6 +492,26 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 
 		card->ext_csd.rel_param = ext_csd[EXT_CSD_WR_REL_PARAM];
 		card->ext_csd.rst_n_function = ext_csd[EXT_CSD_RST_N_FUNCTION];
+        
+        if ((card->ext_csd.rst_n_function & EXT_CSD_RST_N_EN_MASK) != EXT_CSD_RST_N_ENABLED){
+
+            pr_err("Enable hw reset function here, only once, rst_n_function:%d\n", card->ext_csd.rst_n_function);
+            //add enable hw reset function here, only run once for eMMC            
+            err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_RST_N_FUNCTION,
+                    EXT_CSD_RST_N_ENABLED,
+                    10);
+            if (err){
+                pr_err("Enable hw reset function ERROR here, ret:%d\n", err);
+                //return 0;
+            }
+            else{
+                card->ext_csd.rst_n_function |= EXT_CSD_RST_N_ENABLED;
+            }
+        }
+        else{
+            pr_err("###check hw reset function is already enabled here\n");          
+
+        }
 
 		/*
 		 * RPMB regions are defined in multiples of 128K.
@@ -839,14 +859,14 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	struct mmc_card *oldcard)
 {
 	struct mmc_card *card;
-	int err, ddr = 0;
+	int err, ddr = 0,flag = 0;
 	u32 cid[4];
 	unsigned int max_dtr;
 	u32 rocr;
 	u8 *ext_csd = NULL;
 
 	BUG_ON(!host);
-	WARN_ON(!host->claimed);
+	WARN_ON(!host->alldev_claim->claimed);
 
 	/* Set correct bus mode for MMC before attempting init */
 	if (!mmc_host_is_spi(host))
@@ -1036,32 +1056,40 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	/*
 	 * Activate high speed (if supported)
 	 */
+	printk("Activate high speed\n");
 	if (card->ext_csd.hs_max_dtr != 0) {
 		err = 0;
 		if (card->ext_csd.hs_max_dtr > 52000000 &&
-		    host->caps2 & MMC_CAP2_HS200)
+		    host->caps2 & MMC_CAP2_HS200){
 			err = mmc_select_hs200(card);
-		else if	(host->caps & MMC_CAP_MMC_HIGHSPEED)
+			//printk("mmc_select_card err=%d\n",err);
+			//err = -EBADMSG;
+			if (err && err != -EBADMSG)
+				goto free_card;
+			if (err){
+				pr_warning("%s: switch to hS200 failed\n",mmc_hostname(card->host));
+				err = 0;
+				flag=1;
+			}else{
+				mmc_card_set_hs200(card);
+				mmc_set_timing(card->host,MMC_TIMING_MMC_HS200);
+			}
+		}else
+			flag=1;
+		
+		if(flag && host->caps & MMC_CAP_MMC_HIGHSPEED){
 			err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
 					 EXT_CSD_HS_TIMING, 1,
 					 card->ext_csd.generic_cmd6_time);
-
-		if (err && err != -EBADMSG)
-			goto free_card;
-
-		if (err) {
-			pr_warning("%s: switch to highspeed failed\n",
-			       mmc_hostname(card->host));
-			err = 0;
-		} else {
-			if (card->ext_csd.hs_max_dtr > 52000000 &&
-			    host->caps2 & MMC_CAP2_HS200) {
-				mmc_card_set_hs200(card);
-				mmc_set_timing(card->host,
-					       MMC_TIMING_MMC_HS200);
-			} else {
-				mmc_card_set_highspeed(card);
-				mmc_set_timing(card->host, MMC_TIMING_MMC_HS);
+			if (err && err != -EBADMSG)
+				goto free_card;
+			if (err) {
+				pr_warning("%s: switch to highspeed failed\n",
+				       mmc_hostname(card->host));
+				err = 0;
+			} else{
+					mmc_card_set_highspeed(card);
+					mmc_set_timing(card->host, MMC_TIMING_MMC_HS);
 			}
 		}
 	}
@@ -1532,7 +1560,7 @@ int mmc_attach_mmc(struct mmc_host *host)
 	u32 ocr;
 
 	BUG_ON(!host);
-	WARN_ON(!host->claimed);
+	WARN_ON(!host->alldev_claim->claimed);
 
 	/* Set correct bus mode for MMC before attempting attach */
 	if (!mmc_host_is_spi(host))
@@ -1579,6 +1607,7 @@ int mmc_attach_mmc(struct mmc_host *host)
 	/*
 	 * Detect and init the card.
 	 */
+	printk("mmc_init_card\n");
 	err = mmc_init_card(host, host->ocr, NULL);
 	if (err)
 		goto err;
