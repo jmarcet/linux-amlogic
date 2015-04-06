@@ -114,7 +114,7 @@ config FB_OSD1_DEFAULT_HEIGHT_VIRTUAL
 config FB_AMLOGIC_UMP
    bool "amlogic ump"
    default y
-   depends on  FB_AM
+   depends on  FB_AM && UMP
    help
                 enable osd ump when we use mali for x11
 

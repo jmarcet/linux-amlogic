@@ -212,7 +212,7 @@ config ATMB_DEMOD
 
 endif
 
-isource "../hardware/dvb/altobeam/drivers/atbm887x/Kconfig"
+#source "drivers/amlogic/dvb_tv/atbm887x/Kconfig"
 
 config AM_SI2157
 	tristate "SI2157 tuner"

@@ -2,7 +2,7 @@
 #include <mach/am_regs.h>
 #include <mach/power_gate.h>
 #include <linux/amlogic/tvin/tvin_v4l2.h>
-#include "../../../../../../../../../hardware/tvin/tvin_frontend.h"
+#include "../../../../../../drivers/amlogic/tvin/tvin_frontend.h"
 #include "mhl_linuxdrv.h"
 #include "../../driver/cra_drv/si_cra.h"
 #include "sii5293_interface.h"

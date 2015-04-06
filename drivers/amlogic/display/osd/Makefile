@@ -16,9 +16,6 @@ obj-$(CONFIG_VSYNC_RDMA) += osd_rdma.o
 EXTRA_CFLAGS += -Iinclude/linux/amlogic/osd/ -Idrivers/staging/android/
 ifeq ($(CONFIG_FB_AMLOGIC_UMP),y)
 fb-objs += osd_ump.o
-endif
-
-ifeq ($(CONFIG_FB_AMLOGIC_UMP),y)
-EXTRA_CFLAGS += -I../hardware/arm/gpu/ump/include/
+EXTRA_CFLAGS += -Idrivers/amlogic/gpu/ump/include/
 endif
 

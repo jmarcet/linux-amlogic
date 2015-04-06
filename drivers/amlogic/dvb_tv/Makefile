@@ -14,48 +14,26 @@ obj-$(CONFIG_AM_DTVDEMOD) += amldemod/
 
 obj-$(CONFIG_AM_ATVDEMOD) += amlatvdemod/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/altobeam/drivers/atbm887x),)
-	obj-$(CONFIG_AM_ATBM8869) += ../../../../hardware/dvb/altobeam/drivers/atbm887x/
-endif
+obj-$(CONFIG_AM_ATBM8869) += atbm887x/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/silabs/drivers/si2157),)
-	obj-$(CONFIG_AM_SI2157) += ../../../../hardware/dvb/silabs/drivers/si2157/
-endif
+obj-$(CONFIG_AM_SI2157) += si2157/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/silabs/drivers/si2177),)
-	obj-$(CONFIG_AM_SI2177) += ../../../../hardware/dvb/silabs/drivers/si2177/
-endif
+obj-$(CONFIG_AM_SI2177) += si2177/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/silabs/drivers/si2168),)
-	obj-$(CONFIG_AM_SI2168) += ../../../../hardware/dvb/silabs/drivers/si2168/
-endif
+obj-$(CONFIG_AM_SI2168) += si2168/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/availink/drivers/avl6211),)
-	obj-$(CONFIG_AM_AVL6211) += ../../../../hardware/dvb/availink/drivers/avl6211/
-endif
+obj-$(CONFIG_AM_AVL6211) += avl6211/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/availink/drivers/avl68xx),)
-	obj-$(CONFIG_AM_AVL68xx) += ../../../../hardware/dvb/availink/drivers/avl68xx/
-endif
+obj-$(CONFIG_AM_AVL68xx) += avl68xx/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/maxlinear/drivers/mxl101),)
-	obj-$(CONFIG_AM_MXL101) += ../../../../hardware/dvb/maxlinear/drivers/mxl101/
-endif
+obj-$(CONFIG_AM_MXL101) += mxl101/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/maxlinear/drivers/mxl241),)
-	obj-$(CONFIG_AM_MXL241_FE) += ../../../../hardware/dvb/maxlinear/drivers/mxl241/
-endif
+obj-$(CONFIG_AM_MXL241_FE) += mxl241/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/maxlinear/drivers/mxl683),)
-	obj-$(CONFIG_AM_MXL683_FE) += ../../../../hardware/dvb/maxlinear/drivers/mxl683/
-endif
+obj-$(CONFIG_AM_MXL683_FE) += mxl683/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/rafael/drivers/r840),)
-	obj-$(CONFIG_AM_R840) += ../../../../hardware/dvb/rafael/drivers/r840/
-endif
+obj-$(CONFIG_AM_R840) += r840/
 
-ifneq ($(wildcard $(srctree)/../hardware/dvb/silabs/drivers/si2151),)
-	obj-$(CONFIG_AM_SI2151) += ../../../../hardware/dvb/silabs/drivers/si2151/
-endif
+obj-$(CONFIG_AM_SI2151) += si2151/
 
 EXTRA_CFLAGS += -I.

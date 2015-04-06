@@ -23,11 +23,11 @@ aml_fe-objs	+= aml_demod.o
 ##endif
 
 ifeq ($(CONFIG_AM_SI2177), y)
-EXTRA_CFLAGS += -Idrivers/../../hardware/dvb/silabs/drivers/si2177/
+EXTRA_CFLAGS += -Idrivers/amlogic/dvb_tv/si2177/
 endif
 
 ifeq ($(CONFIG_AM_SI2157), y)
-EXTRA_CFLAGS += -Idrivers/../../hardware/dvb/silabs/drivers/si2157/
+EXTRA_CFLAGS += -Idrivers/amlogic/dvb_tv/si2157/
 endif
 
 EXTRA_CFLAGS += -I.
