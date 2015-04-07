@@ -56,6 +56,11 @@
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
+
+// This is not in osd_hw.h private or public header
+void osd_wait_vsync_hw(void);
+
+
 static struct early_suspend early_suspend;
 static int early_suspend_flag = 0;
 #endif
@@ -391,6 +396,14 @@ osd_ioctl(struct fb_info *info, unsigned int cmd,
 			ret = osddev_copy_data_tocursor(fbdev, &para);
 		}
 		break;
+		
+		case FBIO_WAITFORVSYNC:
+		{
+        		osd_wait_vsync_hw();
+         		ret = 0;
+      		}
+      		break;
+
 		default :
 			amlog_mask_level(LOG_MASK_IOCTL,LOG_LEVEL_HIGH,"command not supported\n ");
 			return -1;
