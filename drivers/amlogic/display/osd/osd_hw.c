@@ -1769,7 +1769,12 @@ void osd_pan_display_hw(unsigned int xoffset, unsigned int yoffset, int index)
 		osd_hw.pandata[index].x_end   += diff_x;
 		osd_hw.pandata[index].y_start += diff_y;
 		osd_hw.pandata[index].y_end   += diff_y;
-		add_to_update_list(index, DISP_GEOMETRY);
+
+		add_to_update_list(index,DISP_GEOMETRY);
+
+#ifdef CONFIG_AM_FB_EXT
+		osd_ext_clone_pan(index);
+#endif
 		osd_wait_vsync_hw();
 	}
 #ifdef CONFIG_AM_FB_EXT
