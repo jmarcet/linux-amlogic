@@ -57,9 +57,6 @@
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 
-// This is not in osd_hw.h private or public header
-void osd_wait_vsync_hw(void);
-
 
 static struct early_suspend early_suspend;
 static int early_suspend_flag = 0;
@@ -67,6 +64,9 @@ static int early_suspend_flag = 0;
 #ifdef CONFIG_SCREEN_ON_EARLY
 static int early_resume_flag = 0;
 #endif
+
+// This is not in osd_hw.h private or public header
+void osd_wait_vsync_hw(void);
 
 osd_info_t  osd_info={
 	.index = 0,
@@ -327,7 +327,6 @@ osd_ioctl(struct fb_info *info, unsigned int cmd,
 			ret=copy_from_user(&sync_request,argp,sizeof(fb_sync_request_t));
 			//printk("osd_mai request offset:%d\n", sync_request.offset);
 			break;
-		case FBIO_WAITFORVSYNC:
 		case FBIOGET_OSD_SCALE_AXIS:
 		case FBIOPUT_OSD_ORDER:
 		case FBIOGET_OSD_ORDER:
