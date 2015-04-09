@@ -457,7 +457,7 @@ int add_ntd_blktrans_dev(struct ntd_blktrans_dev *new)
     blk_queue_logical_block_size(new->rq, tr->blksize);
 
     //if (tr->discard) {
-		printk("Enable QUEUE_FLAG_DISCARD for NFTL\n");
+		//printk("Enable QUEUE_FLAG_DISCARD for NFTL\n");
         queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, new->rq);
         new->rq->limits.max_discard_sectors = UINT_MAX;
     //}
