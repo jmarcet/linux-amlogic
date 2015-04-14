@@ -754,7 +754,7 @@ void demod_power_switch(int pwr_cntl)
 	int i,j;
 	i=0;
 	j=0;
-	pr_dbg("P_AO_RTI_GEN_PWR_SLEEP0 is %x,HHI_DEMOD_MEM_PD_REG is %x,P_RESET0_LEVEL is %x,P_AO_RTI_GEN_PWR_ISO0 is %x\n",P_AO_RTI_GEN_PWR_SLEEP0,P_HHI_DEMOD_MEM_PD_REG,P_RESET0_LEVEL,P_AO_RTI_GEN_PWR_ISO0);
+	//pr_dbg("P_AO_RTI_GEN_PWR_SLEEP0 is %x,HHI_DEMOD_MEM_PD_REG is %x,P_RESET0_LEVEL is %x,P_AO_RTI_GEN_PWR_ISO0 is %x\n",P_AO_RTI_GEN_PWR_SLEEP0,P_HHI_DEMOD_MEM_PD_REG,P_RESET0_LEVEL,P_AO_RTI_GEN_PWR_ISO0);
 	 if(pwr_cntl == PWR_ON) {
 	 	pr_dbg("[PWR]: Power on demod_comp\n");
 	// Powerup demod_comb
