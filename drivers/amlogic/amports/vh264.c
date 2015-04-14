@@ -1443,16 +1443,14 @@ static void vh264_isr(void)
             WRITE_VREG(0x31b, laddr);
             printk("mem 0x%x data 0x%x\n", laddr, READ_VREG(0x31c) & 0xffff);
         }
-        #endif
-        #if 0
         for (ltemp=0; ltemp<sei_itu35_wp; ltemp++) {
             daddr = (unsigned char *)phys_to_virt(sei_data_buffer_phys+ ltemp);
             //daddr = (unsigned char *)(sei_data_buffer_remap + ltemp);
             printk("0x%x\n", *daddr);
         }
-        #endif
         printk("pocinfo 0x%x, top poc %d, wp 0x%x, length %d\n",
             READ_VREG(AV_SCRATCH_L), READ_VREG(AV_SCRATCH_M), sei_itu35_wp, sei_itu35_data_length);
+        #endif
         user_data_poc.poc_info = READ_VREG(AV_SCRATCH_L);
         user_data_poc.poc_number = READ_VREG(AV_SCRATCH_M);
         set_userdata_poc(user_data_poc);
