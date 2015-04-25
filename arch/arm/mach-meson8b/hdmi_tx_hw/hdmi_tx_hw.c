@@ -1726,6 +1726,7 @@ static void hdmitx_config_tvenc_reg(int vic, unsigned reg, unsigned val)
     }
 }
 
+extern const vinfo_t *get_current_vinfo(void);
 #ifdef CONFIG_AML_VOUT_FRAMERATE_AUTOMATION
 //
 // func: hdmitx_set_pll_fr_auto
@@ -1738,7 +1739,6 @@ static void hdmitx_config_tvenc_reg(int vic, unsigned reg, unsigned val)
 //		special vmode has same hdmi vic with normal mode, such as 1080p59hz - 1080p60hz
 //	so pll should not only be set according hdmi vic.
 //
-extern const vinfo_t *get_current_vinfo(void);
 static int hdmitx_set_pll_fr_auto(void)
 {
 	int ret = 0;
