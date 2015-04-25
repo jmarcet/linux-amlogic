@@ -7,7 +7,6 @@
 $(obj)/thermal_clean:
 	$(call cmd,clean)
 
-CONFIG_AMLOGIC_THERMAL=m
 obj-$(CONFIG_AMLOGIC_THERMAL)+= aml_thermal.o
 
 $(obj)/amlogic_thermal.o: $(obj)/thermal_clean FORCE
