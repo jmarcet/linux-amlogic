@@ -611,13 +611,22 @@
 		status = "okay";
 	};
 
-	meson-remote {
-		compatible = "amlogic,aml_remote";
-		dev_name = "meson-remote";
-		status = "ok";
-		ao_baseaddr = <0xf3100480>;
+//$$ DEVICE="adc_keypad"
+//$$ L2 PROP_STR = "status"
+//$$ L2 PROP_STR = "key_name"
+//$$ L2 PROP_U32 = "key_num"
+//$$ L2 PROP_U32 2 = "key_code"
+//$$ L2 PROP_U32 2 = "key_chan"
+//$$ L2 PROP_U32 2 = "key_val"
+//$$ L2 PROP_U32 2 = "key_tolerance"
+	meson-ir {
+		compatible = "amlogic,meson6-ir";
+		reg = <0xc8100580 0x20>;
+		interrupts = <0 15 1>;
 		pinctrl-names = "default";
-		pinctrl-0 = <0x19>;
+		pinctrl-0 = <&remote_pins>;
+		pulse-inverted;
+		status = "ok";
 	};
 
 	meson-vfd {
@@ -1065,7 +1074,7 @@
 			phandle = <0x14>;
 		};
 
-		remote_pin {
+		remote_pins:remote_pin {
 			amlogic,setmask = <0xa 0x1>;
 			amlogic,pins = "GPIOAO_7";
 			linux,phandle = <0x19>;
