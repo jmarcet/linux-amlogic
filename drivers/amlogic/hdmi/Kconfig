@@ -22,6 +22,12 @@ config AML_HDMI_TX_HDCP
         default n
         help
                 hdmitx hdcp enable, it should be enalbe if board burned hdmitx hdcp keys
+
+config AML_HDMI_TX_CEC_RAW
+        bool "HDMI CEC Raw Interface"
+        default n
+        help
+                HDMI Raw CEC device should be exposed.
 endif
 
 endmenu
