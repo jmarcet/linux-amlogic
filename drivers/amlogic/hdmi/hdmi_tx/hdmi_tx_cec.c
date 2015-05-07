@@ -513,8 +513,8 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
             misc_reg = 1;
             hdmi_print(INF, CEC "Registered Misc Device\n");
 
-            if(!(hdmitx_device->cec_func_config & (1 << CEC_FUNC_MSAK)))
-                return ;
+            // Only change TV status from CEC raw device
+            return;
 #endif
 
             cec_global_info.cec_node_info[cec_global_info.my_node_index].power_status = TRANS_STANDBY_TO_ON;
