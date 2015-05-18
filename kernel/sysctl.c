@@ -91,9 +91,7 @@
 #include <linux/nmi.h>
 #endif
 
-#ifdef CONFIG_MESON_SUSPEND
 #include <mach/cpu.h>
-#endif
 
 #if defined(CONFIG_SYSCTL)
 
