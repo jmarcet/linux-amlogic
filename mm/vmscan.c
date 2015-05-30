@@ -155,9 +155,11 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 	nr = zone_page_state(zone, NR_ACTIVE_FILE) +
 	     zone_page_state(zone, NR_INACTIVE_FILE);
 
+#ifdef CONFIG_SWAP
 	if (get_nr_swap_pages() > 0)
 		nr += zone_page_state(zone, NR_ACTIVE_ANON) +
 		      zone_page_state(zone, NR_INACTIVE_ANON);
+#endif
 
 	return nr;
 }
@@ -1768,10 +1770,14 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 		force_scan = true;
 
 	/* If we have no swap space, do not bother scanning anon pages. */
+#ifdef CONFIG_SWAP
 	if (!sc->may_swap || (get_nr_swap_pages() <= 0)) {
+#endif
 		scan_balance = SCAN_FILE;
 		goto out;
+#ifdef CONFIG_SWAP
 	}
+#endif
 
 	/*
 	 * Global reclaim will swap to prevent OOM even with no
@@ -1831,9 +1837,11 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	 * This scanning priority is essentially the inverse of IO cost.
 	 */
 	anon_prio = vmscan_swappiness(sc);
+#ifdef CONFIG_SWAP
 	if(atomic_long_read(&nr_swap_pages) * 3 < total_swap_pages){
 		anon_prio >>= 1;
 	}
+#endif
 	file_prio = 200 - anon_prio;
 
 	/*
@@ -2021,8 +2029,10 @@ static inline bool should_continue_reclaim(struct zone *zone,
 	 */
 	pages_for_compaction = (2UL << sc->order);
 	inactive_lru_pages = zone_page_state(zone, NR_INACTIVE_FILE);
+#ifdef CONFIG_SWAP
 	if (get_nr_swap_pages() > 0)
 		inactive_lru_pages += zone_page_state(zone, NR_INACTIVE_ANON);
+#endif
 	if (sc->nr_reclaimed < pages_for_compaction &&
 			inactive_lru_pages > pages_for_compaction)
 		return true;
