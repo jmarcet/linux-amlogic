@@ -70,7 +70,7 @@
 
 		region@0 {
 			region_name = "cma_0";
-			reg = <0x0 0x1200000>;
+			reg = <0x0 0x2a00000>;
 			linux,contiguous-region;
 			linux,phandle = <0x2>;
 			phandle = <0x2>;
@@ -103,7 +103,7 @@
 		vmode = <0x0>;
 		scale_mode = <0x1>;
 		4k2k_fb = <0x0>;
-		display_size_default = <1280 720 1280 1440 32>;
+		display_size_default = <1920 1080 1920 3240 32>;
 	};
 
 	deinterlace {
