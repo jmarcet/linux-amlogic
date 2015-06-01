@@ -78,20 +78,11 @@ void cec_send_event(cec_rx_message_t* pcec_message)
     for (i = 0; i < operand_num; i++)
     {
        operands[i] = pcec_message->content.msg.operands[i];
-       hdmi_print(INF, CEC  ":operands[%d]:%u\n", i, operands[i]);
+       //hdmi_print(INF, CEC  ":operands[%d]:%u\n", i, operands[i]);
     }
-    if (cec_global_info.cec_flag.cec_key_flag)
-    {
-        input_event(cec_global_info.remote_cec_dev, EV_KEY, cec_key_map[operands[0]], 1);
-        input_sync(cec_global_info.remote_cec_dev);
-        hdmi_print(INF, CEC  ":key map:%d\n",cec_key_map[operands[0]]);
-    }
-    else
-    {
-        input_event(cec_global_info.remote_cec_dev, EV_KEY, cec_key_map[operands[0]], 0);
-        input_sync(cec_global_info.remote_cec_dev);
-        hdmi_print(INF, CEC  ":key map:%d\n",cec_key_map[operands[0]]);
-    }
+    input_event(cec_global_info.remote_cec_dev, EV_KEY, cec_key_map[operands[0]], cec_global_info.cec_flag.cec_key_flag);
+    input_sync(cec_global_info.remote_cec_dev);
+    //hdmi_print(INF, CEC  ":key map:%d\n",cec_key_map[operands[0]]);
 }
 
 
@@ -105,7 +96,7 @@ void cec_send_event_irq(void)
     for (i = 0; i < operand_num_irq; i++ )
     {
         operands_irq[i] = cec_global_info.cec_rx_msg_buf.cec_rx_message[cec_global_info.cec_rx_msg_buf.rx_write_pos].content.msg.operands[i]; 
-        hdmi_print(INF, CEC  ":operands_irq[%d]:0x%x\n", i, operands_irq[i]);
+        //hdmi_print(INF, CEC  ":operands_irq[%d]:0x%x\n", i, operands_irq[i]);
     }
 
     switch (cec_global_info.cec_rx_msg_buf.cec_rx_message[cec_global_info.cec_rx_msg_buf.rx_write_pos].content.msg.operands[0])
@@ -124,30 +115,30 @@ void cec_send_event_irq(void)
     input_sync(cec_global_info.remote_cec_dev);
     input_event(cec_global_info.remote_cec_dev, EV_KEY, cec_key_map[operands_irq[0]], 0);
     input_sync(cec_global_info.remote_cec_dev);
-    hdmi_print(INF, CEC  ":key map:%d\n",cec_key_map[operands_irq[0]]);
+    //hdmi_print(INF, CEC  ":key map:%d\n",cec_key_map[operands_irq[0]]);
 }
 
 void cec_user_control_pressed_irq(void)
 {
-    hdmi_print(INF, CEC  ": Key pressed \n");
+    //hdmi_print(INF, CEC  ": Key pressed \n");
     cec_send_event_irq();
 }
 
 void cec_user_control_released_irq(void)
 {
-    hdmi_print(INF, CEC  ": Key released \n");
+    //hdmi_print(INF, CEC  ": Key released \n");
 } 
 
 void cec_user_control_pressed(cec_rx_message_t* pcec_message)
 {
-    hdmi_print(INF, CEC  ": Key pressed \n");
+    //hdmi_print(INF, CEC  ": Key pressed \n");
     cec_global_info.cec_flag.cec_key_flag = 1;
     cec_send_event(pcec_message);
 }
 
 void cec_user_control_released(cec_rx_message_t* pcec_message)  
 {
-    hdmi_print(INF, CEC  ": Key released \n");
+    //hdmi_print(INF, CEC  ": Key released \n");
     cec_global_info.cec_flag.cec_key_flag = 1;
     cec_send_event(pcec_message);
 }
