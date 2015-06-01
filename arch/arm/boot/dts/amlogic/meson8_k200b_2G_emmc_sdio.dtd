@@ -1356,11 +1356,15 @@ sdio{
 //$$ L2 PROP_U32 = "vendor_id"
 //$$ L2 PROP_STR = "product_desc"
 //$$ L2 PROP_STR = "cec_osd_string"        
+//$$ L2 PROP_U32 = "cec_config"
+//$$ L2 PROP_U32 = "ao_cec"
         vend_data: vend_data{
             vendor_name = "Amlogic";           /* Max Chars: 8     */
             vendor_id = <0x000000>;                 /* Refer to http://standards.ieee.org/develop/regauth/oui/oui.txt   */
             product_desc = "M8 MBox SKTv1";        /* Max Chars: 16    */
             cec_osd_string = "Amlogic MBox";        /* Max Chars: 14    */
+            cec_config = <0x00000f>;
+            ao_cec = <0x000001>;
         };
         
 //$$ MATCH "HDMI_pwr-ctrl_match" = <&pwr_ctrl>
