@@ -331,7 +331,7 @@ void cec_polling_online_dev(int log_addr, int *bool)
     {
         aocec_wr_reg(CEC_LOGICAL_ADDR0, (0x1 << 4) | log_addr);
     }
-    hdmi_print(INF, CEC "CEC: poll online logic device: 0x%x BOOL: %d\n", log_addr, *bool);
+    //hdmi_print(INF, CEC "CEC: poll online logic device: 0x%x BOOL: %d\n", log_addr, *bool);
 
 }
 

@@ -60,7 +60,7 @@ void pwm_e_config(void){
 void pwm_out_rtc_32k(void){
     gpiox_10_pin_mux_mask(); //enable PWM_E pin mux
     pwm_e_config();  //PWM E config   
-    hdmi_print(INF, CEC "Set PWM_E out put RTC 32K!\n");
+    //hdmi_print(INF, CEC "Set PWM_E out put RTC 32K!\n");
 }
 
 void cec_hw_reset(void)
@@ -356,7 +356,7 @@ void cec_polling_online_dev(int log_addr, int *bool)
     {
         aocec_wr_reg(CEC_LOGICAL_ADDR0, (0x1 << 4) | log_addr);
     }
-    hdmi_print(INF, CEC "CEC: poll online logic device: 0x%x BOOL: %d\n", log_addr, *bool);
+    //hdmi_print(INF, CEC "CEC: poll online logic device: 0x%x BOOL: %d\n", log_addr, *bool);
 
 }
 
