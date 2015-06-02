@@ -790,7 +790,7 @@ static void dvfs_vcck_pwm_init(struct device * dev) {
     if (IS_ERR(devm_pinctrl_get_select_default(dev))) {
 		printk("did not get pins for pwm--------\n");
 	} else {
-	    printk("get pin for pwm--------\n");
+	    //printk("get pin for pwm--------\n");
     }
 }
 
@@ -837,10 +837,12 @@ static int meson_cs_dvfs_probe(struct platform_device *pdev)
         printk("%s, failed to read 'cs_voltage_table', ret:%d\n", __func__, ret);
         goto out;
     }
+    /*
     printk("%s, table count:%d, use_pwm:%d, pwm controller:%d\n", __func__, g_table_cnt, use_pwm, pwm_ctrl);
     for (i = 0; i < g_table_cnt; i++) {
         printk("%2d, %08x, %7d\n", i, g_table[i].pwm_value, g_table[i].voltage);    
     }
+    */
 
     if (use_pwm) {
         dvfs_vcck_pwm_init(&pdev->dev);
