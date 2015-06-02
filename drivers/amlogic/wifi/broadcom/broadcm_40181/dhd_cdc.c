@@ -187,8 +187,8 @@ dhdcdc_set_ioctl(dhd_pub_t *dhd, int ifidx, uint cmd, void *buf, uint len, uint8
 	int ret = 0;
 	uint32 flags, id;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
-	DHD_CTL(("%s: cmd %d len %d\n", __FUNCTION__, cmd, len));
+	//DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	//DHD_CTL(("%s: cmd %d len %d\n", __FUNCTION__, cmd, len));
 
 	if (dhd->busstate == DHD_BUS_DOWN) {
 		DHD_ERROR(("%s : bus is down. we have nothing to do\n", __FUNCTION__));
@@ -240,7 +240,7 @@ dhdcdc_set_ioctl(dhd_pub_t *dhd, int ifidx, uint cmd, void *buf, uint len, uint8
 	/* Check the ERROR flag */
 	if (flags & CDCF_IOC_ERROR)
 	{
-	    DHD_ERROR(("%s: msg->status:%x\n", __FUNCTION__, msg->status));
+	    //DHD_ERROR(("%s: msg->status:%x\n", __FUNCTION__, msg->status));
 		ret = ltoh32(msg->status);
 		/* Cache error from dongle */
 		dhd->dongle_error = ret;

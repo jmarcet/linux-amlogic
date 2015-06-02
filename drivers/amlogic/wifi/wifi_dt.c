@@ -55,9 +55,7 @@ static struct wifi_plat_info * wifi_get_driver_data(struct platform_device *pdev
 	if (ret) { \
 		printk("wifi_dt : no prop for %s\n", msg); 	\
 		return -1;	\
-	} else {	\
-		printk("wifi_dt : %s=%s\n", msg, value);	\
-	}	\
+	} \
 }	\
 
 #define CHECK_RET(ret) \
@@ -66,8 +64,8 @@ static struct wifi_plat_info * wifi_get_driver_data(struct platform_device *pdev
 
 extern const char * amlogic_cat_gpio_owner(unsigned int pin);
 
-#define SHOW_PIN_OWN(pin_str, pin_num) 	\
-	printk("%s(%d) : %s\n", pin_str, pin_num, amlogic_cat_gpio_owner(pin_num))
+#define SHOW_PIN_OWN(pin_str, pin_num)
+	//printk("%s(%d) : %s\n", pin_str, pin_num, amlogic_cat_gpio_owner(pin_num))
 
 static int wifi_dev_probe(struct platform_device *pdev)
 {
@@ -80,7 +78,7 @@ static int wifi_dev_probe(struct platform_device *pdev)
     struct wifi_plat_info *plat = (struct wifi_plat_info *)(pdev->dev.platform_data);
 #endif
 
-    printk("wifi_dev_probe\n");
+    //printk("wifi_dev_probe\n");
 
 #ifdef CONFIG_OF
 	if (pdev->dev.of_node) {
@@ -135,12 +133,14 @@ static int wifi_dev_probe(struct platform_device *pdev)
 
 		plat->plat_info_valid = 1;
 		
+        /*
 		printk("interrupt_pin=%d, irq_num=%d, irq_trigger_type=%d, "
 				"power_on_pin=%d,"
 				"clock_32k_pin=%d\n", 
 				plat->interrupt_pin, plat->irq_num, plat->irq_trigger_type, 
 				plat->power_on_pin,
 				plat->clock_32k_pin);
+        */
 	}
 #endif
 

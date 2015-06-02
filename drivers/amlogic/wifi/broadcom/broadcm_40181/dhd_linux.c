@@ -3038,7 +3038,7 @@ exit:
 #endif
 #endif /* MULTIPLE_SUPPLICANT */
 
-	printk("%s: Exit ret=%d\n", __FUNCTION__, ret);
+	//printk("%s: Exit ret=%d\n", __FUNCTION__, ret);
 	return ret;
 }
 
@@ -4110,7 +4110,7 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 	bcm_mkiovar("buf_key_b4_m4", (char *)&buf_key_b4_m4, 4, iovbuf, sizeof(iovbuf));
 	if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
 		sizeof(iovbuf), TRUE, 0)) < 0) {
-		DHD_ERROR(("%s buf_key_b4_m4 set failed %d\n", __FUNCTION__, ret));
+		//DHD_ERROR(("%s buf_key_b4_m4 set failed %d\n", __FUNCTION__, ret));
 	}
 
 	/* Read event_msgs mask */

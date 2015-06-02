@@ -316,7 +316,7 @@ sdioh_disable_func_intr(void)
 extern SDIOH_API_RC
 sdioh_interrupt_register(sdioh_info_t *sd, sdioh_cb_fn_t fn, void *argh)
 {
-	sd_trace(("%s: Entering\n", __FUNCTION__));
+	//sd_trace(("%s: Entering\n", __FUNCTION__));
 	if (fn == NULL) {
 		sd_err(("%s: interrupt handler is NULL, not registering\n", __FUNCTION__));
 		return SDIOH_API_RC_FAIL;
@@ -348,7 +348,7 @@ sdioh_interrupt_register(sdioh_info_t *sd, sdioh_cb_fn_t fn, void *argh)
 extern SDIOH_API_RC
 sdioh_interrupt_deregister(sdioh_info_t *sd)
 {
-	sd_trace(("%s: Entering\n", __FUNCTION__));
+	//sd_trace(("%s: Entering\n", __FUNCTION__));
 
 #if !defined(OOB_INTR_ONLY)
 	if (gInstance->func[1]) {
@@ -379,7 +379,7 @@ sdioh_interrupt_deregister(sdioh_info_t *sd)
 extern SDIOH_API_RC
 sdioh_interrupt_query(sdioh_info_t *sd, bool *onoff)
 {
-	sd_trace(("%s: Entering\n", __FUNCTION__));
+	//sd_trace(("%s: Entering\n", __FUNCTION__));
 	*onoff = sd->client_intr_enabled;
 	return SDIOH_API_RC_SUCCESS;
 }
@@ -455,7 +455,7 @@ sdioh_iovar_op(sdioh_info_t *si, const char *name,
 	ASSERT(set || (arg && len));
 	ASSERT(!set || (!params && !plen));
 
-	sd_trace(("%s: Enter (%s %s)\n", __FUNCTION__, (set ? "set" : "get"), name));
+	//sd_trace(("%s: Enter (%s %s)\n", __FUNCTION__, (set ? "set" : "get"), name));
 
 	if ((vi = bcm_iovar_lookup(sdioh_iovars, name)) == NULL) {
 		bcmerror = BCME_UNSUPPORTED;
@@ -769,7 +769,7 @@ sdioh_cis_read(sdioh_info_t *sd, uint func, uint8 *cisd, uint32 length)
 	uint32 foo;
 	uint8 *cis = cisd;
 
-	sd_trace(("%s: Func = %d\n", __FUNCTION__, func));
+	//sd_trace(("%s: Func = %d\n", __FUNCTION__, func));
 
 	if (!sd->func_cis_ptr[func]) {
 		bzero(cis, length);
@@ -777,7 +777,7 @@ sdioh_cis_read(sdioh_info_t *sd, uint func, uint8 *cisd, uint32 length)
 		return SDIOH_API_RC_FAIL;
 	}
 
-	sd_err(("%s: func_cis_ptr[%d]=0x%04x\n", __FUNCTION__, func, sd->func_cis_ptr[func]));
+	//sd_err(("%s: func_cis_ptr[%d]=0x%04x\n", __FUNCTION__, func, sd->func_cis_ptr[func]));
 
 	for (count = 0; count < length; count++) {
 		offset =  sd->func_cis_ptr[func] + count;
@@ -1078,7 +1078,7 @@ sdioh_request_packet(sdioh_info_t *sd, uint fix_inc, uint write, uint func,
 		(sd->glom_info.glom_pkt_head != sd->glom_info.glom_pkt_tail);
 #endif /* BCMSDIOH_TXGLOM */
 
-	sd_trace(("%s: Enter\n", __FUNCTION__));
+	//sd_trace(("%s: Enter\n", __FUNCTION__));
 
 	ASSERT(pkt);
 	DHD_PM_RESUME_WAIT(sdioh_request_packet_wait);
@@ -1324,7 +1324,7 @@ sdioh_request_buffer(sdioh_info_t *sd, uint pio_dma, uint fix_inc, uint write, u
 	void *orig_buf = NULL;
 	uint copylen = 0;
 
-	sd_trace(("%s: Enter\n", __FUNCTION__));
+	//sd_trace(("%s: Enter\n", __FUNCTION__));
 
 	DHD_PM_RESUME_WAIT(sdioh_request_buffer_wait);
 	DHD_PM_RESUME_RETURN_ERROR(SDIOH_API_RC_FAIL);
@@ -1374,7 +1374,7 @@ sdioh_abort(sdioh_info_t *sd, uint func)
 #if defined(MMC_SDIO_ABORT)
 	char t_func = (char) func;
 #endif /* defined(MMC_SDIO_ABORT) */
-	sd_trace(("%s: Enter\n", __FUNCTION__));
+	//sd_trace(("%s: Enter\n", __FUNCTION__));
 
 #if defined(MMC_SDIO_ABORT)
 	/* issue abort cmd52 command through F1 */
@@ -1388,8 +1388,8 @@ sdioh_abort(sdioh_info_t *sd, uint func)
 /* Reset and re-initialize the device */
 int sdioh_sdio_reset(sdioh_info_t *si)
 {
-	sd_trace(("%s: Enter\n", __FUNCTION__));
-	sd_trace(("%s: Exit\n", __FUNCTION__));
+	//sd_trace(("%s: Enter\n", __FUNCTION__));
+	//sd_trace(("%s: Exit\n", __FUNCTION__));
 	return SDIOH_API_RC_SUCCESS;
 }
 

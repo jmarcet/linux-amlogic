@@ -257,7 +257,7 @@ dhd_conf_set_fw_name_by_mac(dhd_pub_t *dhd, bcmsdh_info_t *sdh, char *fw_path)
 			FW_TYPE_APSTA : (strstr(mac_list[i].name, "_p2p") ?
 			FW_TYPE_P2P : FW_TYPE_STA)));
 		if (fw_type != fw_type_new) {
-			printf("%s: fw_typ=%d != fw_type_new=%d\n", __FUNCTION__, fw_type, fw_type_new);
+			//printf("%s: fw_typ=%d != fw_type_new=%d\n", __FUNCTION__, fw_type, fw_type_new);
 			continue;
 		}
 		for (j=0; j<mac_num; j++) {
@@ -406,7 +406,7 @@ dhd_conf_set_fw_name_by_chip(dhd_pub_t *dhd, char *dst, char *src)
 			break;
 	}
 
-	printf("%s: firmware_path=%s\n", __FUNCTION__, dst);
+	//printf("%s: firmware_path=%s\n", __FUNCTION__, dst);
 }
 
 #if defined(HW_OOB)
@@ -451,7 +451,7 @@ dhd_conf_set_band(dhd_pub_t *dhd)
 {
 	int bcmerror = -1;
 
-	printf("%s: Set band %d\n", __FUNCTION__, dhd->conf->band);
+	//printf("%s: Set band %d\n", __FUNCTION__, dhd->conf->band);
 	if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_BAND, &dhd->conf->band,
 		sizeof(dhd->conf->band), TRUE, 0)) < 0)
 		CONFIG_ERROR(("%s: WLC_SET_BAND setting failed %d\n", __FUNCTION__, bcmerror));
@@ -479,12 +479,14 @@ dhd_conf_set_country(dhd_pub_t *dhd)
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
 
 	memset(&dhd->dhd_cspec, 0, sizeof(wl_country_t));
+    /*
 	printf("%s: Set country %s, revision %d\n", __FUNCTION__,
 		dhd->conf->cspec.ccode, dhd->conf->cspec.rev);
+    */
 	bcm_mkiovar("country", (char *)&dhd->conf->cspec,
 		sizeof(wl_country_t), iovbuf, sizeof(iovbuf));
-	if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
-		printf("%s: country code setting failed %d\n", __FUNCTION__, bcmerror);
+	//if ((bcmerror = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
+	//	printf("%s: country code setting failed %d\n", __FUNCTION__, bcmerror);
 
 	return bcmerror;
 }
@@ -567,7 +569,7 @@ dhd_conf_set_roam(dhd_pub_t *dhd)
 	int bcmerror = -1;
 	char iovbuf[WL_EVENTING_MASK_LEN + 12];	/*  Room for "event_msgs" + '\0' + bitvec  */
 
-	printf("%s: Set roam_off %d\n", __FUNCTION__, dhd->conf->roam_off);
+	//printf("%s: Set roam_off %d\n", __FUNCTION__, dhd->conf->roam_off);
 	dhd_roam_disable = dhd->conf->roam_off;
 	bcm_mkiovar("roam_off", (char *)&dhd->conf->roam_off, 4, iovbuf, sizeof(iovbuf));
 	dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
@@ -1119,15 +1121,17 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->fw_by_mac.count = 0;
 				CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
 			}
-			printf("%s: fw_count=%d\n", __FUNCTION__, dhd->conf->fw_by_mac.count);
+			//printf("%s: fw_count=%d\n", __FUNCTION__, dhd->conf->fw_by_mac.count);
 			dhd->conf->fw_by_mac.m_mac_list_head = mac_list;
 			for (i=0; i<dhd->conf->fw_by_mac.count; i++) {
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				strcpy(mac_list[i].name, pch);
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				mac_list[i].count = (uint32)simple_strtol(pch, NULL, 0);
+                /*
 				printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
 					mac_list[i].name, mac_list[i].count);
+                */
 				if (!(mac_range = kmalloc(sizeof(wl_mac_range_t)*mac_list[i].count, GFP_KERNEL))) {
 					mac_list[i].count = 0;
 					CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
@@ -1141,9 +1145,11 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 					mac_range[j].nic_start = (uint32)simple_strtol(pch, NULL, 0);
 					pch = bcmstrtok(&pick_tmp, " ", 0);
 					mac_range[j].nic_end = (uint32)simple_strtol(pch, NULL, 0);
+                    /*
 					printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
 						__FUNCTION__, mac_range[j].oui,
 						mac_range[j].nic_start, mac_range[j].nic_end);
+                    */
 				}
 			}
 		}
@@ -1159,15 +1165,17 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->nv_by_mac.count = 0;
 				CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
 			}
-			printf("%s: nv_count=%d\n", __FUNCTION__, dhd->conf->nv_by_mac.count);
+			//printf("%s: nv_count=%d\n", __FUNCTION__, dhd->conf->nv_by_mac.count);
 			dhd->conf->nv_by_mac.m_mac_list_head = mac_list;
 			for (i=0; i<dhd->conf->nv_by_mac.count; i++) {
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				strcpy(mac_list[i].name, pch);
 				pch = bcmstrtok(&pick_tmp, " ", 0);
 				mac_list[i].count = (uint32)simple_strtol(pch, NULL, 0);
+                /*
 				printf("%s: name=%s, mac_count=%d\n", __FUNCTION__,
 					mac_list[i].name, mac_list[i].count);
+                */
 				if (!(mac_range = kmalloc(sizeof(wl_mac_range_t)*mac_list[i].count, GFP_KERNEL))) {
 					mac_list[i].count = 0;
 					CONFIG_ERROR(("%s: kmalloc failed\n", __FUNCTION__));
@@ -1181,9 +1189,11 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 					mac_range[j].nic_start = (uint32)simple_strtol(pch, NULL, 0);
 					pch = bcmstrtok(&pick_tmp, " ", 0);
 					mac_range[j].nic_end = (uint32)simple_strtol(pch, NULL, 0);
+                    /*
 					printf("%s: oui=0x%06X, nic_start=0x%06X, nic_end=0x%06X\n",
 						__FUNCTION__, mac_range[j].oui,
 						mac_range[j].nic_start, mac_range[j].nic_end);
+                    */
 				}
 			}
 		}
@@ -1505,7 +1515,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 		len_val = process_config_vars(bufp, len, pick, "bcn_timeout=");
 		if (len_val) {
 			dhd->conf->bcn_timeout= (int)simple_strtol(pick, NULL, 10);
-			printf("%s: bcn_timeout = %d\n", __FUNCTION__, dhd->conf->bcn_timeout);
+			///printf("%s: bcn_timeout = %d\n", __FUNCTION__, dhd->conf->bcn_timeout);
 		}
 
 		/* Process bus_txglom */
@@ -1532,7 +1542,7 @@ dhd_conf_read_config(dhd_pub_t *dhd)
 				dhd->conf->kso_enable = FALSE;
 			else
 				dhd->conf->kso_enable = TRUE;
-			printf("%s: kso_enable = %d\n", __FUNCTION__, dhd->conf->kso_enable);
+			//printf("%s: kso_enable = %d\n", __FUNCTION__, dhd->conf->kso_enable);
 		}
 
 		/* Process spect parameters */
