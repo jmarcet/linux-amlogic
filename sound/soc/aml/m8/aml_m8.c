@@ -177,7 +177,7 @@ static void aml_asoc_work_func(struct work_struct *work)
             //amlogic_set_value(p_aml_audio->gpio_mute, 0, "mute_spk");
             switch_set_state(&p_aml_audio->sdev, 2);  // 1 :have mic ;  2 no mic
             adac_wr_reg (71, 0x0101); // use board mic
-            printk(KERN_INFO "aml aduio hp pluged 3 jack_type: %d\n", SND_JACK_HEADPHONE);
+            printk(KERN_INFO "aml audio hp plugged 3 jack_type: %d\n", SND_JACK_HEADPHONE);
             snd_soc_jack_report(&p_aml_audio->jack, status, SND_JACK_HEADPHONE);
 
            // mic port detect
@@ -185,7 +185,7 @@ static void aml_asoc_work_func(struct work_struct *work)
                if(flag & 0x8){
                   switch_set_state(&p_aml_audio->mic_sdev, 1);
                   adac_wr_reg (71, 0x0005); // use hp mic
-                  printk(KERN_INFO "aml aduio mic pluged jack_type: %d\n", SND_JACK_MICROPHONE);
+                  printk(KERN_INFO "aml audio mic plugged jack_type: %d\n", SND_JACK_MICROPHONE);
                   //snd_soc_jack_report(&p_aml_audio->jack, status, SND_JACK_HEADPHONE);
               }
            }
@@ -194,10 +194,10 @@ static void aml_asoc_work_func(struct work_struct *work)
             //amlogic_set_value(p_aml_audio->gpio_mute, 0, "mute_spk");
             switch_set_state(&p_aml_audio->sdev, 1);  // 1 :have mic ;  2 no mic
             adac_wr_reg (71, 0x0005); // use hp mic
-            printk(KERN_INFO "aml aduio hp pluged 4 jack_type: %d\n", SND_JACK_HEADSET);
+            printk(KERN_INFO "aml aduio hp plugged 4 jack_type: %d\n", SND_JACK_HEADSET);
             snd_soc_jack_report(&p_aml_audio->jack, status, SND_JACK_HEADPHONE);
         } else {
-            printk(KERN_INFO "aml audio hp unpluged\n");
+            printk(KERN_INFO "aml audio hp unplugged\n");
             //amlogic_set_value(p_aml_audio->gpio_mute, 1, "mute_spk");
             adac_wr_reg (71, 0x0101); // use board mic
             switch_set_state(&p_aml_audio->sdev, 0);
@@ -208,7 +208,7 @@ static void aml_asoc_work_func(struct work_struct *work)
                 if(flag & 0x8){
                    switch_set_state(&p_aml_audio->mic_sdev, 1);
                    adac_wr_reg (71, 0x0005); // use hp mic
-                   printk(KERN_INFO "aml aduio mic pluged jack_type: %d\n", SND_JACK_MICROPHONE);
+                   printk(KERN_INFO "aml audio mic plugged jack_type: %d\n", SND_JACK_MICROPHONE);
                    //snd_soc_jack_report(&p_aml_audio->jack, status, SND_JACK_HEADPHONE);
                }
             }
@@ -299,7 +299,7 @@ static int aml_m8_set_spk(struct snd_kcontrol *kcontrol,
     struct snd_ctl_elem_value *ucontrol)
 {
     aml_m8_spk_enabled = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_m8_set_spk: aml_m8_spk_enabled=%d\n",aml_m8_spk_enabled);
+    //printk(KERN_INFO "aml_m8_set_spk: aml_m8_spk_enabled=%d\n",aml_m8_spk_enabled);
 
     msleep_interruptible(10);
     amlogic_set_value(p_audio->gpio_mute, aml_m8_spk_enabled, "mute_spk");
@@ -322,7 +322,7 @@ static int aml_audio_set_i2s_mute(struct snd_kcontrol *kcontrol,
     struct snd_ctl_elem_value *ucontrol)
 {
     aml_audio_i2s_mute_flag = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_audio_i2s_mute_flag: flag=%d\n",aml_audio_i2s_mute_flag);
+    //printk(KERN_INFO "aml_audio_i2s_mute_flag: flag=%d\n",aml_audio_i2s_mute_flag);
     if(aml_audio_i2s_mute_flag){
         aml_audio_i2s_mute();
     }else{
@@ -345,7 +345,7 @@ static int aml_audio_set_spdif_mute(struct snd_kcontrol *kcontrol,
 {
     
     aml_audio_spdif_mute_flag = ucontrol->value.integer.value[0];
-    printk(KERN_INFO "aml_audio_set_spdif_mute: flag=%d\n",aml_audio_spdif_mute_flag);
+    //printk(KERN_INFO "aml_audio_set_spdif_mute: flag=%d\n",aml_audio_spdif_mute_flag);
     if(aml_audio_spdif_mute_flag){
         aml_spdif_pinmux_deinit(spdif_dev);
     }else{
@@ -367,7 +367,7 @@ static int aml_set_bias_level(struct snd_soc_card *card,
     struct aml_audio_private_data * p_aml_audio;
     int hp_state;
 
-    printk(KERN_DEBUG "enter %s level: %d\n", __func__, level);
+    //printk(KERN_DEBUG "enter %s level: %d\n", __func__, level);
     p_aml_audio = snd_soc_card_get_drvdata(card);
 	hp_state = p_aml_audio->detect_flag;
 
@@ -670,7 +670,7 @@ static int aml_asoc_init(struct snd_soc_pcm_runtime *rtd)
     int ret = 0;
     int hp_paraments[5];
 	
-    printk(KERN_DEBUG "enter %s \n", __func__);
+    //printk(KERN_DEBUG "enter %s \n", __func__);
 	p_aml_audio = snd_soc_card_get_drvdata(card);
     ret = snd_soc_add_card_controls(codec->card, aml_m8_controls,
                 ARRAY_SIZE(aml_m8_controls));
@@ -834,7 +834,7 @@ static void aml_m8_pinmux_init(struct snd_soc_card *card)
 		amlogic_set_value(p_aml_audio->gpio_mute, 0, "mute_spk");
 	}
 
-	printk("=%s==,aml_m8_pinmux_init done,---%d\n",__func__,p_aml_audio->det_pol_inv);
+	//printk("=%s==,aml_m8_pinmux_init done,---%d\n",__func__,p_aml_audio->det_pol_inv);
 }
 
 static void aml_m8_pinmux_deinit(struct snd_soc_card *card)

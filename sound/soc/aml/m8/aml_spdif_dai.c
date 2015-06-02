@@ -30,11 +30,12 @@
 #include <linux/of.h>
 
 //#define DEBUG_ALSA_SPDIF_DAI
-#define ALSA_PRINT(fmt,args...)	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
 #ifdef DEBUG_ALSA_SPDIF_DAI
+#define ALSA_PRINT(fmt,args...)	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
 #define ALSA_DEBUG(fmt,args...) 	printk(KERN_INFO "[aml-spdif-dai]" fmt,##args)
 #define ALSA_TRACE()     			printk("[aml-spdif-dai] enter func %s,line %d\n",__FUNCTION__,__LINE__)
 #else
+#define ALSA_PRINT(fmt,args...)
 #define ALSA_DEBUG(fmt,args...) 
 #define ALSA_TRACE()   
 #endif

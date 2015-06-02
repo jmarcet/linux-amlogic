@@ -653,7 +653,7 @@ void audio_set_958_clk(unsigned freq, unsigned fs_config)
     int (*audio_clock_config)[2];
 
     int index=0;
-    printk("audio_set_958_clk, freq=%d,\n",freq);
+    //printk("audio_set_958_clk, freq=%d,\n",freq);
     switch(freq)
     {
         case AUDIO_CLK_FREQ_192:
@@ -914,7 +914,7 @@ void audio_set_958_mode(unsigned mode, _aiu_958_raw_setting_t * set)
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 1, 3, 3); // endian
         }
 
-        printk("IEC958 RAW\n");
+        //printk("IEC958 RAW\n");
     }else if(mode == AIU_958_MODE_PCM32){
         audio_hw_set_958_pcm24(set);
         if(ENABLE_IEC958){
@@ -923,7 +923,7 @@ void audio_set_958_mode(unsigned mode, _aiu_958_raw_setting_t * set)
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 0, 7, 1);  // 16bit
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 0, 3, 3); // endian
         }
-        printk("IEC958 PCM32 \n");
+        //printk("IEC958 PCM32 \n");
     }else if (mode == AIU_958_MODE_PCM24) {
         audio_hw_set_958_pcm24(set);
         if (ENABLE_IEC958) {
@@ -933,7 +933,7 @@ void audio_set_958_mode(unsigned mode, _aiu_958_raw_setting_t * set)
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 0, 3, 3); // endian
 
         }
-        printk("IEC958 24bit\n");
+        //printk("IEC958 24bit\n");
     } else if (mode == AIU_958_MODE_PCM16) {
         audio_hw_set_958_pcm24(set);
         if (ENABLE_IEC958) {
@@ -943,7 +943,7 @@ void audio_set_958_mode(unsigned mode, _aiu_958_raw_setting_t * set)
             WRITE_MPEG_REG_BITS(AIU_MEM_IEC958_CONTROL, 0, 3, 3); // endian
 
         }
-        printk("IEC958 16bit\n");
+        //printk("IEC958 16bit\n");
     }
 
     audio_hw_958_reset(0, 1);
