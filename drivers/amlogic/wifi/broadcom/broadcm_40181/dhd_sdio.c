@@ -4587,7 +4587,7 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 		dhd_os_sdlock(bus->dhd);
 
 	if (bus->sih->chip == BCM43362_CHIP_ID) {
-		printf("%s: delay 100ms for BCM43362\n", __FUNCTION__);
+		//printf("%s: delay 100ms for BCM43362\n", __FUNCTION__);
 		OSL_DELAY(100000); // terence 20131209: delay for 43362
 	}
 
@@ -4626,8 +4626,8 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	while (ready != enable && !dhd_timeout_expired(&tmo))
 	        ready = bcmsdh_cfg_read(bus->sdh, SDIO_FUNC_0, SDIOD_CCCR_IORDY, NULL);
 
-	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
-	          __FUNCTION__, enable, ready, tmo.elapsed));
+	//DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
+	//          __FUNCTION__, enable, ready, tmo.elapsed));
 
 
 	/* If F2 successfully enabled, set core and enable interrupts */
@@ -8450,7 +8450,7 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 	} else {
 		/* App must have restored power to device before calling */
 
-		DHD_ERROR(("\n\n%s: == WLAN ON ==\n", __FUNCTION__));
+		DHD_ERROR(("%s: == WLAN ON ==", __FUNCTION__));
 
 		if (bus->dhd->dongle_reset) {
 			/* Turn on WLAN */
@@ -8511,9 +8511,9 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 #endif /* DHDTHREAD */
 		} else {
 			bcmerror = BCME_SDIO_ERROR;
-			DHD_ERROR(("%s called when dongle is not in reset\n",
-				__FUNCTION__));
-			DHD_ERROR(("Will call dhd_bus_start instead\n"));
+			//DHD_ERROR(("%s called when dongle is not in reset\n",
+			//	__FUNCTION__));
+			//DHD_ERROR(("Will call dhd_bus_start instead\n"));
 			sdioh_start(NULL, 1);
 #if defined(HW_OOB)
 			dhd_conf_set_hw_oob_intr(bus->sdh, bus->sih->chip); // terence 20120615: fix for OOB initial issue

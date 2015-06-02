@@ -154,7 +154,7 @@ dhd_customer_gpio_wlan_ctrl(int onoff)
 			sdio_reinit();
 #endif /* CUSTOMER_HW_AMLOGIC */
 			mdelay(100);
-			WL_ERROR(("=========== WLAN going back to live  ========\n"));
+			//WL_ERROR(("=========== WLAN going back to live  ========\n"));
 		break;
 
 		case WLAN_POWER_OFF:
