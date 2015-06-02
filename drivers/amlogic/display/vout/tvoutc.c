@@ -321,7 +321,7 @@ void cvbs_config_vdac(unsigned int flag, unsigned int cfg)
 	else
 		vdac_cfg_valid = 0;
 
-	printk("cvbs trimming.%d.v%d: 0x%x, 0x%x\n", vdac_cfg_valid, version, flag, cfg);
+	//printk("cvbs trimming.%d.v%d: 0x%x, 0x%x\n", vdac_cfg_valid, version, flag, cfg);
 
 	return ;
 }
@@ -480,7 +480,7 @@ int tvoutc_setmode(tvmode_t mode)
     if(uboot_display_flag) {
         uboot_display_flag = 0;
         if(uboot_display_already(mode)) {
-            printk("already display in uboot\n");
+            //printk("already display in uboot\n");
             mutex_unlock(&setmode_mutex);
             return 0;
         }
@@ -509,7 +509,7 @@ int tvoutc_setmode(tvmode_t mode)
 
     while (MREG_END_MARKER != s->reg)
         setreg(s++);
-    printk("%s[%d]\n", __func__, __LINE__);
+    //printk("%s[%d]\n", __func__, __LINE__);
 
 #ifdef CONFIG_CVBS_PERFORMANCE_COMPATIBLITY_SUPPORT
 	cvbs_performance_enhancement(mode);
@@ -520,7 +520,7 @@ int tvoutc_setmode(tvmode_t mode)
     }else{
 	aml_write_reg32(P_PERIPHS_PIN_MUX_0, (aml_read_reg32(P_PERIPHS_PIN_MUX_0)&(~(3<<20))));
     }
-printk("%s[%d] mode is %d\n", __func__, __LINE__, mode);
+//printk("%s[%d] mode is %d\n", __func__, __LINE__, mode);
 #if ((defined CONFIG_ARCH_MESON8) || (defined CONFIG_ARCH_MESON8B))
 	// for hdmi mode, leave the hpll setting to be done by hdmi module.
 	if( (mode==TVMODE_480CVBS) || (mode==TVMODE_576CVBS) )
@@ -531,7 +531,7 @@ printk("%s[%d] mode is %d\n", __func__, __LINE__, mode);
 
 #ifdef CONFIG_ARCH_MESON1
 	tvoutc_setclk(mode);
-    printk("%s[%d]\n", __func__, __LINE__);
+    //printk("%s[%d]\n", __func__, __LINE__);
     enable_vsync_interrupt();
 #endif
 #ifdef CONFIG_AM_TV_OUTPUT2
