@@ -482,7 +482,7 @@ int hdmitx_set_display(hdmitx_dev_t* hdmitx_device, HDMI_Video_Codes_t VideoCode
             switch(hdmitx_device->HWOp.CntlConfig(hdmitx_device, CONF_SYSTEM_ST, 0))
             {
                 case 0:
-                    hdmi_print(1,"No sink attached\n");
+                    //hdmi_print(1,"No sink attached\n");
                     break;
                 case 1:
                     hdmi_print(1,"Source reading EDID\n");
