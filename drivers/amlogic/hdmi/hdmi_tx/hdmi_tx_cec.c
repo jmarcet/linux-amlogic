@@ -470,10 +470,10 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
     for (i = 0; i < 3; i++)
     {
         unsigned char msg = (player_dev[i] << 4) | player_dev[i];
-        hdmi_print(INF, CEC "CEC: start poll dev\n");
+        //hdmi_print(INF, CEC "CEC: start poll dev\n");
         CEC_MISC_ECHO(&msg, 1);
         cec_polling_online_dev(player_dev[i], &bool);
-        hdmi_print(INF, CEC "player_dev[%d]:0x%x\n", i, player_dev[i]);
+        //hdmi_print(INF, CEC "player_dev[%d]:0x%x\n", i, player_dev[i]);
         if (bool == 0)
         {   // 0 means that no any respond
             // If VSDB is not valid,use last or default physical address.
@@ -494,7 +494,7 @@ void cec_node_init(hdmitx_dev_t* hdmitx_device)
             {
                 aml_write_reg32(P_AO_DEBUG_REG1, cec_phy_addr);
             }
-            hdmi_print(INF, CEC "physical address:0x%x\n", aml_read_reg32(P_AO_DEBUG_REG1));
+            //hdmi_print(INF, CEC "physical address:0x%x\n", aml_read_reg32(P_AO_DEBUG_REG1));
 
 #ifdef CONFIG_AML_HDMI_TX_CEC_RAW
             if(misc_reg)
