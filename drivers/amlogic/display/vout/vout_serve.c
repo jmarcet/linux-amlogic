@@ -251,7 +251,7 @@ static  void  set_vout_mode(char * name)
 	amlog_mask_level(LOG_MASK_PARA,LOG_LEVEL_HIGH,"new mode =%s set ok\n",get_name_from_vmode(mode));
 #endif
 	vout_notifier_call_chain(VOUT_EVENT_MODE_CHANGE,&mode) ;
-	printk("%s[%d]\n", __func__, __LINE__);
+	//printk("%s[%d]\n", __func__, __LINE__);
 }
 
 #ifdef CONFIG_AML_VOUT_FRAMERATE_AUTOMATION

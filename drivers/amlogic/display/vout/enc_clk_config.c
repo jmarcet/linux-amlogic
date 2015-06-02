@@ -56,7 +56,7 @@
 static void set_hpll_clk_out(unsigned clk)
 {
     check_clk_config(clk);
-    printk("config HPLL\n");
+    //printk("config HPLL\n");
 
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV
     printk("%s[%d]\n", __FILE__, __LINE__);
@@ -65,7 +65,7 @@ static void set_hpll_clk_out(unsigned clk)
 #endif
 
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
-    printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
+    //printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
     aml_write_reg32(P_HHI_VID_PLL_CNTL2, 0x69c88000);
     aml_write_reg32(P_HHI_VID_PLL_CNTL3, 0xca563823);
     aml_write_reg32(P_HHI_VID_PLL_CNTL4, 0x40238100);
@@ -170,7 +170,7 @@ static void set_hpll_clk_out(unsigned clk)
 #endif
 
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B
-    printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
+    //printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
     aml_write_reg32(P_HHI_VID_PLL_CNTL2, 0x69c88000);
     aml_write_reg32(P_HHI_VID_PLL_CNTL3, 0xca563823);
     aml_write_reg32(P_HHI_VID_PLL_CNTL4, 0x40238100);
@@ -238,7 +238,7 @@ static void set_hpll_clk_out(unsigned clk)
 #endif
 
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
-    printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
+    //printk("%s[%d] clk = %d\n", __func__, __LINE__, clk);
     switch(clk){
         case 1488:
             WRITE_CBUS_REG(HHI_VID_PLL_CNTL, 0x43e);
@@ -262,7 +262,7 @@ static void set_hpll_clk_out(unsigned clk)
             break;
     }
 #endif
-    printk("config HPLL done\n");
+    //printk("config HPLL done\n");
 }
 
 static void set_hpll_hdmi_od(unsigned div)
@@ -321,17 +321,17 @@ int set_viu_path(unsigned viu_channel_sel, viu_type_e viu_type_sel)
     if((viu_channel_sel > 2) || (viu_channel_sel == 0))
         return -1;
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-    printk("VPU_VIU_VENC_MUX_CTRL: 0x%x\n", aml_read_reg32(P_VPU_VIU_VENC_MUX_CTRL));
+    //printk("VPU_VIU_VENC_MUX_CTRL: 0x%x\n", aml_read_reg32(P_VPU_VIU_VENC_MUX_CTRL));
     if(viu_channel_sel == 1){
         aml_set_reg32_bits(P_VPU_VIU_VENC_MUX_CTRL, viu_type_sel, 0, 2);
-        printk("viu chan = 1\n");
+        //printk("viu chan = 1\n");
     }
     else{
         //viu_channel_sel ==2
         aml_set_reg32_bits(P_VPU_VIU_VENC_MUX_CTRL, viu_type_sel, 2, 2);
-        printk("viu chan = 2\n");
+        //printk("viu chan = 2\n");
     }
-    printk("VPU_VIU_VENC_MUX_CTRL: 0x%x\n", aml_read_reg32(P_VPU_VIU_VENC_MUX_CTRL));
+    //printk("VPU_VIU_VENC_MUX_CTRL: 0x%x\n", aml_read_reg32(P_VPU_VIU_VENC_MUX_CTRL));
 #endif
     return 0;
 }
