@@ -45,12 +45,12 @@ __u16 cec_key_map[128] = {
     0 , 0, 0, 0, 0, 0, 0, 0,//0x30
     0 , 0, 0, 0, 0, 0, 0, 0,
     
-    KEY_POWER , KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE, KEY_TAB, KEY_STOP, KEY_PLAYPAUSE, KEY_RECORD,//0x40
+    0, KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_MUTE, KEY_TAB, KEY_STOP, KEY_PLAYPAUSE, KEY_RECORD,//0x40
     KEY_REWIND, KEY_FASTFORWARD, KEY_EJECTCD, KEY_NEXTSONG, KEY_PREVIOUSSONG, 0, 0, 0,
     0 , 0, 0, 0, 0, 0, 0, 0,//0x50
     0 , 0, 0, 0, 0, 0, 0, 0,
     KEY_PLAYCD, KEY_PLAYPAUSE, KEY_RECORD, KEY_PAUSECD, KEY_STOPCD, KEY_MUTE, 0, KEY_TUNER,//0x60
-    0 , KEY_MEDIA, 0, 0, KEY_POWER, 0, 0, 0,
+    0 , KEY_MEDIA, 0, 0, 0, 0, 0, 0,
     0 , KEY_BLUE, KEY_RED, KEY_GREEN, KEY_YELLOW, 0, 0, 0,//0x70
     0 , 0, 0, 0, 0, 0, 0, 0x2fd,
 };
@@ -156,10 +156,10 @@ void cec_standby(cec_rx_message_t* pcec_message)
     if(hdmitx_device->cec_func_config & (1 << CEC_FUNC_MSAK)) {
         if(hdmitx_device->cec_func_config & (1 << ONE_TOUCH_STANDBY_MASK)) {
             hdmi_print(INF, CEC  ": System will be in standby mode\n");
-            input_event(cec_global_info.remote_cec_dev, EV_KEY, KEY_POWER, 1);
-            input_sync(cec_global_info.remote_cec_dev);
-            input_event(cec_global_info.remote_cec_dev, EV_KEY, KEY_POWER, 0);
-            input_sync(cec_global_info.remote_cec_dev);
+            //input_event(cec_global_info.remote_cec_dev, EV_KEY, KEY_POWER, 1);
+            //input_sync(cec_global_info.remote_cec_dev);
+            //input_event(cec_global_info.remote_cec_dev, EV_KEY, KEY_POWER, 0);
+            //input_sync(cec_global_info.remote_cec_dev);
         }
     }
 }
