@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/random.h>
 #include <linux/cdev.h>
 #include <linux/types.h>
 #include <linux/fs.h>
@@ -19,6 +20,7 @@
 #include <linux/delay.h>
 #include <asm/uaccess.h>
 #include <linux/platform_device.h>
+#include <linux/ctype.h>
 //#include <plat/io.h>
 #include <linux/err.h>
 #include <linux/scatterlist.h>
@@ -1294,6 +1296,13 @@ static ssize_t key_name_show(struct device *dev, struct device_attribute *attr,
 	n += sprintf(&buf[n], "\n");
 	return n;
 }
+int to_ascii(int a){
+	if(a<=9)
+		a=a+48;
+	else
+		a=a+55;
+		return a;
+}
 static char security_key_name[AML_KEY_NAMELEN];
 static ssize_t key_name_store(struct device *dev, struct device_attribute *attr,
                              const char *buf, size_t count)
@@ -1352,6 +1361,7 @@ static ssize_t key_name_store(struct device *dev, struct device_attribute *attr,
 			return -EINVAL;
 		}
 		strcpy(security_key_name,newname);
+		printk("yxg----security_key_name is %s \n",security_key_name);
 	}
 	if (!IS_ERR_OR_NULL(name))
 		kfree(name);
@@ -1371,6 +1381,86 @@ static ssize_t key_write_show(struct device *dev, struct device_attribute *attr,
 	return -EINVAL;
 }
 #endif
+ssize_t write_mac_toflash(char *mac_id){
+				u8 ascii;
+	char mac[2];
+	char buf_mac[35];
+//	u8 mac_id[6]={0x00,0xe0,0x11, 0x22, 0x33, 0x44};
+	int err,i;
+	char newname[]="mac";
+		aml_key_t * keys;
+	#if 1
+	printk("yxg----keys_version is %d\n",keys_version);
+		if(keys_version == 0){
+		return -EINVAL;
+	}
+		keys = key_schematic[keys_version]->keys;
+//	get_random_bytes(mac_id, 6);
+//	mac_id[0] &= 0xfe;	/* clear multicast bit */
+//	mac_id[0] |= 0x02;	/* set local assignment bit (IEEE802) */
+	//printk("yxg----mac_id is %s\n",mac_id);
+		printk("yxg----newname is %s \n",newname);
+			curkey = NULL;
+	security_key_name[0]=0;
+	for(i=0;i<key_schematic[keys_version]->count;i++)
+	{
+	//	printk("yxg----keys[i].name is %s \n",keys[i].name);
+		if(strcmp(newname,keys[i].name) == 0){
+			curkey = &keys[i];
+			break;
+		}
+	}
+	if(curkey == NULL)
+	{
+		for(i=0;i<key_schematic[keys_version]->count;i++)
+		{
+			if(keys[i].name[0] == 0){
+				curkey = &keys[i];
+				break;
+			}
+		}
+		if(curkey == NULL){
+			printk("key count too much,%s:%d\n",__func__,__LINE__);
+		
+			return -EINVAL;
+		}
+				strcpy(security_key_name,newname);
+	//	printk("yxg----security_key_name is %s \n",security_key_name);
+	}
+	
+	
+	for(i=0;i<6;i++){
+		ascii=(to_ascii((mac_id[i]>>4)&0xf));
+		//	printk("yxg--ascii %d\n",ascii);
+		mac[0]=to_ascii(ascii>>4&0xf);
+		mac[1]=to_ascii(ascii&0xf);
+		//printk("yxg--mac %c%c\n",mac[0],mac[1]);
+		buf_mac[i*6]=mac[0];
+		buf_mac[i*6+1]=mac[1];
+		ascii=(to_ascii((mac_id[i]&0xf)));
+		mac[0]=to_ascii(ascii>>4&0xf);
+		mac[1]=to_ascii(ascii&0xf);
+		buf_mac[i*6+2]=mac[0];
+		buf_mac[i*6+3]=mac[1];
+		
+		buf_mac[i*6+4]=51;
+		buf_mac[i*6+5]=65;
+	}
+//	memcpy(buf,buf_mac,34);
+	#endif
+	if(curkey == NULL){
+		printk("unkown current key-name,%s:%d\n",__func__,__LINE__);
+		return -EINVAL;
+	}
+	if((security_key_name[0] != 0) &&(curkey->name[0] == 0))
+	{
+		strcpy(curkey->name,security_key_name);
+	}
+	err = aml_key_store(curkey, buf_mac, 34);
+		//	printk("yxg--buf %s\n",buf_mac);
+		return err;
+}
+
 static ssize_t key_write_store(struct device *dev, struct device_attribute *attr,
                              const char *buf, size_t count)
 {
@@ -1507,6 +1597,51 @@ static ssize_t key_usid_show(struct device *dev, struct device_attribute *attr,
 	}
 	return err;
 }
+static ssize_t key_bt_show(struct device *dev, struct device_attribute *attr,
+                            char *buf)
+{
+	aml_key_t * keys,*usidkey=NULL;
+	int i,j,err=0;
+	int count;
+	char * data=NULL;
+	if(keys_version == 0){
+		return -EINVAL;
+	}
+	keys = key_schematic[keys_version]->keys;
+	for(i=0;i<key_schematic[keys_version]->count;i++)
+	{
+		if(strcmp(MAC_BT_KEY_NAME,keys[i].name) == 0){
+			usidkey = &keys[i];
+			break;
+		}
+	}
+	if(usidkey == NULL){
+		printk("don't set %s key-name and key-data,%s:%d\n",MAC_BT_KEY_NAME,__func__,__LINE__);
+		return -EINVAL;
+	}
+
+	data = kzalloc(CONFIG_MAX_STORAGE_KEYSIZE, GFP_KERNEL);
+	if(data == NULL){
+		printk("don't kzalloc mem %s:%d\n",__func__,__LINE__);
+		return -ENOMEM;
+	}
+	memset(data,0,CONFIG_MAX_STORAGE_KEYSIZE);
+	err = key_core_show(dev, (struct device_attribute*)usidkey,data);
+	if(err > 0){
+		count = err;
+		for(i=0,j=0;i<count;j++){
+			buf[j] = twoASCByteToByte(data[i],data[i+1]);
+			i += 2;
+		}
+		err = j;
+	}
+	
+	if(data){
+		kfree(data);
+	}
+	return err;
+}
+
 #if 0
 static ssize_t key_usid_store(struct device *dev, struct device_attribute *attr,
                              const char *buf, size_t count)
@@ -1537,6 +1672,9 @@ static struct key_new_node key_node_name[]={
 	},
 	[5]={
 		.name = HDCP_KEY_NAME,
+	},
+		[6]={
+		.name = MAC_BT_KEY_NAME,
 	},
 };
 static ssize_t key_node_set(struct device *dev)
@@ -1617,6 +1755,19 @@ static ssize_t key_node_set(struct device *dev)
         printk("%s:%d\n", __FILE__, __LINE__);
         return -EINVAL;
     }
+       i=6;
+	mode = KEY_READ_ATTR ;
+	key_new[i].attr.show = key_bt_show;
+	//key_new[i].attr.store = key_usid_store;
+	key_new[i].attr.attr.name = &key_new[i].name[0];
+	key_new[i].attr.attr.mode = mode;
+    ret = device_create_file(dev, (const struct device_attribute *) &key_new[i].attr);
+    if (ret < 0)
+    {
+        printk("%s:%d\n", __FILE__, __LINE__);
+        return -EINVAL;
+    }
+    
     return 0;
 }
 
